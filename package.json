@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.x"
   },
   "scripts": {
-    "install:ci": "npm ci",
+    "install:ci": "npm install",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
