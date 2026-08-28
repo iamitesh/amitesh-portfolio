@@ -6,6 +6,8 @@ import ProjectBrand from "./project-brand";
 import ProjectDisclosure from "./project-disclosure";
 import ExperienceBrand from "./experience-brand";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const metrics = [
   { value: 60, suffix: "%", label: "smaller production bundle", index: "01" },
   { value: 85, suffix: "%+", label: "automated test coverage", index: "02" },
@@ -319,7 +321,7 @@ export default function Home() {
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#work" data-magnetic>Explore nine case studies <span aria-hidden="true">↗</span></a>
-              <a className="button button-secondary" href="/Amitesh-Anand-Resume.pdf" download data-magnetic>Download résumé <span aria-hidden="true">↓</span></a>
+              <a className="button button-secondary" href={`${basePath}/Amitesh-Anand-Resume.pdf`} download data-magnetic>Download résumé <span aria-hidden="true">↓</span></a>
             </div>
             <p className="current-role"><span aria-hidden="true" /> Currently: Software Engineer II at Caterpillar</p>
           </div>
