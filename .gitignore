@@ -41,8 +41,5 @@ next-env.d.ts
 /outputs/
 /work/
 
-# youtube learning pipeline artifacts
-/pipeline/output/
-
 # local Claude Code permissions
 .claude/settings.local.json
