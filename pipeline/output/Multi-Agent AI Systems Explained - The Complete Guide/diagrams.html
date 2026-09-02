@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multi-Agent AI Systems Explained: The Complete Guide — Diagrams</title>
+<style>
+:root{
+  --bg:#0b101c;
+  --panel:#141b2d;
+  --panel-2:#1a2338;
+  --text:#e9edf6;
+  --muted:#94a0b8;
+  --accent:#6ea8fe;
+  --accent-2:#a78bfa;
+  --good:#34d399;
+  --warn:#fbbf24;
+  --bad:#f87171;
+  --border:#273349;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1020px;margin:0 auto;padding:34px 20px 70px}
+.page-head .kicker{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase;margin:0}
+.page-head h1{margin:8px 0 6px;font-size:clamp(22px,3.4vw,32px);line-height:1.2}
+.page-head .byline{color:var(--muted);margin:0;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 6px}
+.tab{background:var(--panel);color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:13px;transition:border-color .15s,color .15s,background .15s}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-color:var(--accent);background:var(--panel-2)}
+.panel{display:none;margin-top:18px;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px 22px 26px}
+.panel.on{display:block}
+.panel-title{margin:0 0 4px;font-size:20px}
+.p-sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.legend .item{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+.sw.accent{background:var(--accent)}.sw.purple{background:var(--accent-2)}.sw.good{background:var(--good)}.sw.warn{background:var(--warn)}.sw.bad{background:var(--bad)}.sw.soft{background:var(--muted)}
+.chips,.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.chip{font-size:12px;padding:4px 12px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+.chip.acc{color:var(--accent);border-color:var(--accent)}
+.chip.pur{color:var(--accent-2);border-color:var(--accent-2)}
+.chip.good{color:var(--good);border-color:var(--good)}
+.chip.warn{color:var(--warn);border-color:var(--warn)}
+.chip.bad{color:var(--bad);border-color:var(--bad)}
+.flow{display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0 4px}
+.sep{color:var(--muted);font-size:15px;line-height:1}
+.b{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:9px 14px;font-size:14px;text-align:center;max-width:560px}
+.b.sm{padding:6px 10px;font-size:12.5px;border-radius:9px;max-width:none}
+.b.lg{padding:12px 18px;font-size:15px}
+.b.orc{border-color:var(--accent);background:rgba(110,168,254,.10)}
+.b.wk{border-color:var(--accent-2);background:rgba(167,139,250,.10)}
+.b.good{border-color:var(--good);background:rgba(52,211,153,.08)}
+.b.bad{border-color:var(--bad);background:rgba(248,113,113,.08)}
+.b.warn{border-color:var(--warn);background:rgba(251,191,36,.08)}
+.b.dim{color:var(--muted)}
+.duel{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;width:100%}
+.lane{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--border);border-radius:14px;padding:16px 12px}
+.lane-tag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.lane-tag.good{color:var(--good)}
+.lane-tag.bad{color:var(--bad)}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin:12px 0}
+.patcard{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:14px}
+.patcard h3{margin:0 0 4px;font-size:13.5px;color:var(--accent)}
+.patcard .note{color:var(--muted);font-size:12px;margin:0}
+.mini{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px}
+.mini .b{padding:5px 8px;font-size:11.5px;border-radius:8px}
+.callout{margin:16px 0 0;border:1px dashed var(--accent);border-radius:12px;padding:12px 16px;font-size:14px;background:rgba(110,168,254,.06)}
+.callout.good{border-color:var(--good);background:rgba(52,211,153,.06)}
+.msgs{display:flex;flex-direction:column;gap:7px;width:100%;max-width:800px;margin:0 auto}
+.msg{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2);font-size:13px;width:100%}
+.msg .txt{color:var(--muted)}
+.msg .arrow{color:var(--muted);font-weight:700}
+.who{font-size:11.5px;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--border)}
+.who.orc{background:rgba(110,168,254,.16);color:var(--accent);border-color:rgba(110,168,254,.35)}
+.who.wk{background:rgba(167,139,250,.16);color:var(--accent-2);border-color:rgba(167,139,250,.35)}
+.who.us{background:rgba(233,237,246,.10);color:var(--text);border-color:var(--border)}
+.who.syn{background:rgba(52,211,153,.14);color:var(--good);border-color:rgba(52,211,153,.35)}
+.stagelabel{display:flex;align-items:center;gap:8px;justify-content:center;margin:6px 0 2px}
+.stagelabel .chip{font-size:11px}
+.branch{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;width:100%}
+.arm{flex:1 1 220px;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.mrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;width:100%;max-width:860px}
+.mrow .mid{color:var(--muted);font-size:11.5px;text-align:center;letter-spacing:.05em;text-transform:uppercase}
+.stepnum{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0b101c;font-size:11.5px;font-weight:700;flex:none}
+.seq .step{cursor:default}
+.glow{outline:2px solid var(--warn);outline-offset:3px}
+.cta-row{display:flex;gap:10px;justify-content:center;margin-top:14px}
+button.run{background:var(--panel-2);color:var(--text);border:1px solid var(--accent);border-radius:999px;padding:7px 16px;cursor:pointer;font-size:13px}
+button.run:hover{background:rgba(110,168,254,.12)}
+.quote{border-left:3px solid var(--accent);padding:4px 14px;color:var(--muted);font-style:italic;margin:14px auto 0;max-width:760px}
+.footnote{color:var(--muted);font-size:12px;margin-top:30px;text-align:center}
+</style>
+</head>
+<body>
+<main id="workflow-content">
+<div class="wrap">
+  <header class="page-head">
+    <p class="kicker">Visual guide</p>
+    <h1>Multi-Agent AI Systems Explained: The Complete Guide</h1>
+    <p class="byline">Channel: Aishwarya Srinivasan &nbsp;&middot;&nbsp; six diagrams mapped to the article sections</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Diagrams">
+    <button class="tab on" data-tab="1">1. Generalist vs. Team</button>
+    <button class="tab" data-tab="2">2. Four Patterns</button>
+    <button class="tab" data-tab="3">3. Research Flow</button>
+    <button class="tab" data-tab="4">4. Support Flow</button>
+    <button class="tab" data-tab="5">5. Dev Loop</button>
+    <button class="tab" data-tab="6">6. Mistakes</button>
+  </nav>
+
+  <!-- Panel 1 -->
+  <section class="panel on" data-panel="1">
+    <h2 class="panel-title">1. From One Generalist to a Coordinated Team</h2>
+    <p class="p-sub">Article Section 1 (Why Multi-Agent AI Systems?). The freelancer-versus-agency shift: an orchestrator coordinates specialists that work in parallel.</p>
+    <div class="legend">
+      <span class="item"><span class="swatch sw.accent"></span>Orchestrator</span>
+      <span class="item"><span class="swatch sw.purple"></span>Specialist worker</span>
+      <span class="item"><span class="swatch sw.bad"></span>Single-agent failure</span>
+      <span class="item"><span class="swatch sw.good"></span>Team outcome</span>
+    </div>
+    <div class="flow">
+      <div class="b lg dim" title="A job too big for one context window">Complex job &mdash; research, analyze, write, validate, format</div>
+      <div class="sep">&darr;</div>
+      <div class="duel">
+        <div class="lane">
+          <div class="lane-tag bad">Single agent &mdash; the freelancer</div>
+          <div class="b bad sm" title="One brain, one focus, one limited context window">One generalist does everything</div>
+          <div class="sep">&darr;</div>
+          <div class="b bad sm">Context window bloat</div>
+          <div class="sep">&darr;</div>
+          <div class="b bad sm">Errors compound and tangle</div>
+          <div class="sep">&darr;</div>
+          <div class="b bad">Weak reliability on complex work</div>
+        </div>
+        <div class="lane">
+          <div class="lane-tag good">Agent team &mdash; the agency</div>
+          <div class="b orc sm" title="The project manager: breaks down the goal, assigns tasks, stitches the deliverable">Orchestrator: plans, delegates, stitches</div>
+          <div class="sep">&darr;</div>
+          <div class="row">
+            <div class="b wk sm" title="Searches the web">Researcher</div>
+            <div class="b wk sm" title="Analyzes the data">Analyst</div>
+            <div class="b wk sm" title="Drafts the report">Writer</div>
+            <div class="b wk sm" title="Validates the numbers">Validator</div>
+          </div>
+          <div class="sep">&darr;</div>
+          <div class="b good">One coherent deliverable</div>
+        </div>
+      </div>
+      <div class="sep">&darr;</div>
+      <div class="chips">
+        <span class="chip good">1. Parallelization &mdash; tasks run at the same time</span>
+        <span class="chip good">2. Specialization &mdash; each agent masters one job</span>
+        <span class="chip good">3. Scalability &mdash; add agents as complexity grows</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Panel 2 -->
+  <section class="panel" data-panel="2">
+    <h2 class="panel-title">2. The Four Design Patterns at a Glance</h2>
+    <p class="p-sub">Article Section 2 (The Four Design Patterns). Every production multi-agent system uses one of these topologies &mdash; or a combination of them.</p>
+    <div class="legend">
+      <span class="item"><span class="swatch sw.accent"></span>Orchestrator</span>
+      <span class="item"><span class="swatch sw.purple"></span>Worker</span>
+      <span class="item"><span class="swatch sw.soft"></span>Data flow</span>
+    </div>
+    <div class="grid4">
+      <div class="patcard">
+        <h3>Pattern 1 &mdash; Orchestrator&ndash;Worker</h3>
+        <p class="note">Most common. The conductor never plays an instrument; it only coordinates.</p>
+        <div class="mini">
+          <div class="b orc sm">Orchestrator</div>
+          <div class="sep">&darr;</div>
+          <div class="row">
+            <div class="b wk sm">Worker</div>
+            <div class="b wk sm">Worker</div>
+            <div class="b wk sm">Worker</div>
+          </div>
+        </div>
+      </div>
+      <div class="patcard">
+        <h3>Pattern 2 &mdash; Hierarchical</h3>
+        <p class="note">Orchestrator&ndash;worker with layers, like an org chart. Built for enterprise scale.</p>
+        <div class="mini">
+          <div class="b orc sm">Master orchestrator</div>
+          <div class="sep">&darr;</div>
+          <div class="row">
+            <div class="mini">
+              <div class="b orc sm">Dept. head</div>
+              <div class="sep">&darr;</div>
+              <div class="b wk sm">Team</div>
+            </div>
+            <div class="mini">
+              <div class="b orc sm">Dept. head</div>
+              <div class="sep">&darr;</div>
+              <div class="b wk sm">Team</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="patcard">
+        <h3>Pattern 3 &mdash; Peer-to-Peer</h3>
+        <p class="note">No central boss; the answer emerges from the conversation. Best for simulations and research.</p>
+        <div class="mini">
+          <div class="row">
+            <div class="b wk sm">Agent A</div>
+            <div class="sep">&harr;</div>
+            <div class="b wk sm">Agent B</div>
+            <div class="sep">&harr;</div>
+            <div class="b wk sm">Agent C</div>
+          </div>
+        </div>
+      </div>
+      <div class="patcard">
+        <h3>Pattern 4 &mdash; Pipeline</h3>
+        <p class="note">Assembly line: each output feeds the next input. Highly predictable, easy to test.</p>
+        <div class="mini">
+          <div class="row">
+            <div class="b sm">Extract</div>
+            <div class="sep">&rarr;</div>
+            <div class="b sm">Transform</div>
+            <div class="sep">&rarr;</div>
+            <div class="b sm">Load</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" title="Section 2.5: the part most people skip">The strongest production systems <strong>combine</strong> patterns &mdash; for example orchestrator&ndash;worker at the top level with pipelines running inside the workers. Pattern choice is a design tool, not a religion.</div>
+  </section>
+
+  <!-- Panel 3 -->
+  <section class="panel" data-panel="3">
+    <h2 class="panel-title">3. Autonomous Research: A Question Becomes a Report</h2>
+    <p class="p-sub">Article Section 3.1 (Autonomous Research and Analysis). What used to take an analyst three days now runs in about three minutes.</p>
+    <div class="legend">
+      <span class="item"><span class="swatch sw.soft"></span>User</span>
+      <span class="item"><span class="swatch sw.accent"></span>Orchestrator</span>
+      <span class="item"><span class="swatch sw.purple"></span>Specialist agents</span>
+      <span class="item"><span class="swatch sw.good"></span>Synthesis</span>
+    </div>
+    <div class="msgs seq">
+      <div class="msg step"><span class="stepnum">1</span><span class="who us">User</span><span class="arrow">&rarr;</span><span class="who orc">Orchestrator</span><span class="txt">Submit the research question</span></div>
+      <div class="msg step"><span class="stepnum">2</span><span class="who orc">Orchestrator</span><span class="arrow">&#8635;</span><span class="who orc">Orchestrator</span><span class="txt">Break the question into subtasks and gaps</span></div>
+      <div class="stagelabel"><span class="chip acc">run in parallel</span></div>
+      <div class="msg step"><span class="stepnum">3</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who wk">Web Search Agent</span><span class="txt">Search the web and rank sources</span></div>
+      <div class="msg step"><span class="stepnum">4</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who wk">Internal Docs Agent</span><span class="txt">Pull internal documents and data</span></div>
+      <div class="msg step"><span class="stepnum">5</span><span class="who wk">Web Search Agent</span><span class="arrow">&larr;</span><span class="who orc">Orchestrator</span><span class="txt">Ranked external findings</span></div>
+      <div class="msg step"><span class="stepnum">6</span><span class="who wk">Internal Docs Agent</span><span class="arrow">&larr;</span><span class="who orc">Orchestrator</span><span class="txt">Internal context</span></div>
+      <div class="msg step"><span class="stepnum">7</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who syn">Synthesis Agent</span><span class="txt">Hand over all the material</span></div>
+      <div class="stagelabel"><span class="chip warn">loop: close the gaps</span></div>
+      <div class="msg step"><span class="stepnum">8</span><span class="who syn">Synthesis Agent</span><span class="arrow">&larr;</span><span class="who orc">Orchestrator</span><span class="txt">Ask for missing pieces</span></div>
+      <div class="msg step"><span class="stepnum">9</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who wk">Web Search Agent</span><span class="txt">Run targeted searches</span></div>
+      <div class="msg step"><span class="stepnum">10</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who syn">Synthesis Agent</span><span class="txt">Structured report draft</span></div>
+      <div class="msg step"><span class="stepnum">11</span><span class="who orc">Orchestrator</span><span class="arrow">&rarr;</span><span class="who us">User</span><span class="txt">Final report with sources and gaps identified</span></div>
+    </div>
+    <div class="cta-row"><button class="run" data-run="3" type="button">Highlight the flow</button><button class="run" data-reset="3" type="button">Reset</button></div>
+  </section>
+
+  <!-- Panel 4 -->
+  <section class="panel" data-panel="4">
+    <h2 class="panel-title">4. Customer Support: Triage to Human Review</h2>
+    <p class="p-sub">Article Section 3.2 (Customer Support Automation). A specialist team answers the query; a human sees it only when the case is complex enough.</p>
+    <div class="flow seq">
+      <div class="step b" title="Far beyond a single chatbot">Incoming customer query</div>
+      <div class="sep">&darr;</div>
+      <div class="step b orc" title="Agent 1: triages the incoming query">Triage agent: classify the issue</div>
+      <div class="sep">&darr;</div>
+      <div class="row">
+        <div class="step b wk sm">Account agent: pull history</div>
+        <div class="step b wk sm">Knowledge base agent: find known fixes</div>
+      </div>
+      <div class="sep">&darr;</div>
+      <div class="step b orc">Resolution agent: draft the answer</div>
+      <div class="sep">&darr;</div>
+      <div class="step b warn" title="Humans stay in the loop for review where it matters">Complex or high-stakes case?</div>
+      <div class="sep">&darr;</div>
+      <div class="branch">
+        <div class="arm">
+          <div class="chip good">No</div>
+          <div class="step b good sm">Answer sent automatically</div>
+        </div>
+        <div class="arm">
+          <div class="chip warn">Yes</div>
+          <div class="step b warn sm">Routed to human review</div>
+        </div>
+      </div>
+      <div class="sep">&darr;</div>
+      <div class="step b good">Query resolved</div>
+    </div>
+    <div class="callout" title="Scale in production">The article points to a publicly reported example: Klarna&rsquo;s AI assistant does work equivalent to about 700 full-time agents.</div>
+    <div class="cta-row"><button class="run" data-run="4" type="button">Highlight the flow</button><button class="run" data-reset="4" type="button">Reset</button></div>
+  </section>
+
+  <!-- Panel 5 -->
+  <section class="panel" data-panel="5">
+    <h2 class="panel-title">5. Software Development and QA: The Self-Correcting Loop</h2>
+    <p class="p-sub">Article Section 3.3 (Software Development and QA). Agents that write, run, test and review code &mdash; then catch their own bugs.</p>
+    <div class="flow seq">
+      <div class="step b dim sm">Task from the orchestrator</div>
+      <div class="sep">&darr;</div>
+      <div class="step b wk">Coding agent: write the code</div>
+      <div class="sep">&darr;</div>
+      <div class="step b wk">Sandbox agent: run it safely</div>
+      <div class="sep">&darr;</div>
+      <div class="step b wk">Testing agent: write and run tests</div>
+      <div class="sep">&darr;</div>
+      <div class="step b warn" title="The review agent checks quality">Review agent: any bugs or regressions?</div>
+      <div class="sep">&darr;</div>
+      <div class="branch">
+        <div class="arm">
+          <div class="chip bad">Issues found</div>
+          <div class="step b bad sm" title="The fix agent patches and the loop repeats">Fix agent: patch the code</div>
+          <div class="sep">&uarr; back to the coding agent</div>
+        </div>
+        <div class="arm">
+          <div class="chip good">Clean</div>
+          <div class="step b good sm">Delivered code</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout good">This architecture powers tools such as Claude Code, Devin and Cursor agents &mdash; the systems iterate, catch bugs and self-correct instead of writing code once.</div>
+    <div class="cta-row"><button class="run" data-run="5" type="button">Highlight the loop</button><button class="run" data-reset="5" type="button">Reset</button></div>
+  </section>
+
+  <!-- Panel 6 -->
+  <section class="panel" data-panel="6">
+    <h2 class="panel-title">6. Five Mistakes, Five Guardrails: The Build Path</h2>
+    <p class="p-sub">Article Section 4 (Five Mistakes to Avoid When Building Multi-Agent Systems), ending on Section 5&rsquo;s one rule.</p>
+    <div class="flow">
+      <div class="b orc">New multi-agent build &mdash; design before you type</div>
+      <div class="sep">&darr;</div>
+      <div class="mrow step"><div class="b good sm">1. Decompose roles and handoffs on paper</div><div class="mid">instead of</div><div class="b bad sm">Jumping straight into code</div></div>
+      <div class="mrow step"><div class="b good sm">2. Design memory and shared state on day one</div><div class="mid">instead of</div><div class="b bad sm">Ignoring memory architecture</div></div>
+      <div class="mrow step"><div class="b good sm">3. Add retries, fallbacks and checkpoints</div><div class="mid">instead of</div><div class="b bad sm">Building only for happy paths</div></div>
+      <div class="mrow step"><div class="b good sm">4. Trace and evaluate every agent step</div><div class="mid">instead of</div><div class="b bad sm">Skipping observability</div></div>
+      <div class="mrow step"><div class="b good sm">5. Start with one orchestrator and two workers</div><div class="mid">instead of</div><div class="b bad sm">Eight-agent designs on day one</div></div>
+      <div class="sep">&darr;</div>
+      <div class="b good">Working end to end, shipped</div>
+      <div class="sep">&darr;</div>
+      <div class="b dim sm">Grow the team of agents only when the problem genuinely demands it</div>
+    </div>
+    <div class="quote" title="Section 5: the one rule to remember">&ldquo;The simplest multi-agent system that solves the problem will always beat the most elegant one that does not ship.&rdquo;</div>
+  </section>
+
+  <p class="footnote">Hover any card for a short note. Use the buttons inside a flow to highlight it step by step.</p>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) { t.classList.remove('on'); });
+      tab.classList.add('on');
+      panels.forEach(function (p) {
+        p.classList.toggle('on', p.getAttribute('data-panel') === tab.getAttribute('data-tab'));
+      });
+    });
+  });
+
+  var timers = {};
+  function stop(key) { if (timers[key]) { clearInterval(timers[key]); delete timers[key]; } }
+
+  Array.prototype.slice.call(document.querySelectorAll('[data-run]')).forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-run');
+      var panel = btn.closest('.panel');
+      var steps = panel.querySelectorAll('.seq .step');
+      var i = 0;
+      stop(key);
+      steps.forEach(function (s) { s.classList.remove('glow'); });
+      timers[key] = setInterval(function () {
+        if (i > 0) { steps[i - 1].classList.remove('glow'); }
+        if (i < steps.length) {
+          steps[i].classList.add('glow');
+          i += 1;
+        } else {
+          stop(key);
+        }
+      }, 850);
+    });
+  });
+
+  Array.prototype.slice.call(document.querySelectorAll('[data-reset]')).forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-reset');
+      stop(key);
+      var panel = btn.closest('.panel');
+      panel.querySelectorAll('.seq .step').forEach(function (s) { s.classList.remove('glow'); });
+    });
+  });
+})();
+</script>
+</main>
+</body>
+</html>
