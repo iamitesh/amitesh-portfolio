@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nvidia CUDA in 100 Seconds</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+  --bg:#0b101c;
+  --panel:#141b2d;
+  --panel-2:#1a2338;
+  --text:#e9edf6;
+  --muted:#94a0b8;
+  --accent:#6ea8fe;
+  --accent-2:#a78bfa;
+  --good:#34d399;
+  --warn:#fbbf24;
+  --bad:#f87171;
+  --border:#273349;
+}
+#view-workflow *{box-sizing:border-box}
+#view-workflow html, #view-workflow body{margin:0;padding:0}
+#view-workflow body{background:var(--bg);color:var(--text)}
+#view-workflow code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+#view-workflow #workflow-content{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;padding:30px clamp(18px,4vw,60px) 44px;max-width:960px;margin:0 auto}
+#view-workflow /* header */
+.deck-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:22px}
+#view-workflow .kicker{margin:0 0 6px;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-2);font-weight:700}
+#view-workflow .deck-header h1{margin:0;font-size:clamp(1.3rem,3vw,1.85rem);line-height:1.25;letter-spacing:-.01em}
+#view-workflow .chanchip{display:flex;flex-direction:column;align-items:flex-end;gap:3px;background:var(--panel);border:1px solid var(--border);padding:7px 14px;border-radius:999px;font-size:.92rem}
+#view-workflow .chanlabel{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+#view-workflow /* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+#view-workflow .tab{appearance:none;background:var(--panel);border:1px solid var(--border);color:var(--muted);font:inherit;font-size:.85rem;padding:8px 14px;border-radius:999px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+#view-workflow .tab:hover{color:var(--text);border-color:var(--muted)}
+#view-workflow .tab.on{background:var(--panel-2);border-color:var(--accent);color:var(--text);font-weight:700}
+#view-workflow .deck-panel{display:none}
+#view-workflow .deck-panel.open{display:block;animation:dkfade .28s ease}
+@keyframes dkfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+#view-workflow /* shared */
+.panel-head{margin-bottom:16px}
+#view-workflow .panel-head h2{margin:0 0 4px;font-size:1.18rem;line-height:1.3}
+#view-workflow .panel-cap{margin:0;color:var(--muted);font-size:.9rem;max-width:64ch}
+#view-workflow .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+#view-workflow .note{color:var(--muted);font-size:.78rem}
+#view-workflow .tag{flex:none;justify-self:end;border:1px solid currentColor;background:var(--panel-2);border-radius:999px;padding:3px 9px;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800;white-space:nowrap}
+#view-workflow .tag-host{color:var(--accent)}
+#view-workflow .tag-device{color:var(--accent-2)}
+#view-workflow .tag-move{color:var(--warn)}
+#view-workflow .takeaway{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent-2);border-radius:12px;padding:12px 16px;margin-top:16px}
+#view-workflow .tk{flex:none;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--accent-2);padding-top:3px}
+#view-workflow .takeaway p{margin:0;font-size:.9rem}
+#view-workflow .linkv{height:26px;display:grid;place-items:center;color:var(--muted);font-size:1rem;line-height:1}
+#view-workflow /* panel 1 - CPU vs GPU */
+.context{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+#view-workflow .ctx-label{flex:none;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--warn);padding-top:3px}
+#view-workflow .context p{margin:0;font-size:.92rem}
+#view-workflow .cmp{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 24px}
+#view-workflow .vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.06em}
+#view-workflow .side-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px}
+#view-workflow .side h3{margin:8px 0 0;font-size:1.05rem}
+#view-workflow .side-name{margin:2px 0 0;color:var(--muted);font-size:.8rem}
+#view-workflow .big{margin:0;font-size:2rem;font-weight:800;line-height:1.05;text-align:right}
+#view-workflow .big-cpu{color:var(--accent)}
+#view-workflow .big-gpu{color:var(--accent-2)}
+#view-workflow .big-unit{margin:2px 0 0;color:var(--muted);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;text-align:right}
+#view-workflow .facts{margin:0;padding-left:18px;font-size:.88rem}
+#view-workflow .facts li{margin:6px 0}
+#view-workflow .facts-cpu li::marker{color:var(--accent)}
+#view-workflow .facts-gpu li::marker{color:var(--accent-2)}
+#view-workflow /* panel 2 - stepper */
+.legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 16px;color:var(--muted);font-size:.8rem}
+#view-workflow .flow{display:flex;flex-direction:column}
+#view-workflow .fstep{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;position:relative;width:100%;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:13px 16px 24px;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s,opacity .15s;opacity:.62;text-align:left;font:inherit;color:inherit}
+#view-workflow .fstep:hover{opacity:.85;border-color:var(--muted)}
+#view-workflow .fstep:not(:last-child)::after{content:"";position:absolute;left:33px;top:calc(100% - 12px);height:13px;width:2px;background:var(--border)}
+#view-workflow .num{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--panel-2);display:grid;place-items:center;font-weight:800;font-size:.85rem;color:var(--muted);position:relative;flex:none}
+#view-workflow .step-body{min-width:0}
+#view-workflow .step-t{display:block;font-weight:700;font-size:.95rem}
+#view-workflow .step-d{display:block;margin-top:2px;color:var(--muted);font-size:.82rem}
+#view-workflow .fstep.done{opacity:.75}
+#view-workflow .fstep.done .num{color:transparent;border-color:var(--good)}
+#view-workflow .fstep.done .num::after{content:"\2713";position:absolute;inset:0;display:grid;place-items:center;color:var(--good);font-size:.8rem}
+#view-workflow .fstep.active{opacity:1;background:var(--panel-2);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+#view-workflow .fstep.active .num{background:var(--accent);border-color:var(--accent);color:#0b101c}
+#view-workflow .flow-ctl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+#view-workflow .ctl{appearance:none;font:inherit;font-size:.85rem;padding:8px 18px;border-radius:9px;cursor:pointer;background:var(--panel-2);color:var(--text);border:1px solid var(--border);transition:border-color .15s}
+#view-workflow .ctl:hover:not(:disabled){border-color:var(--accent)}
+#view-workflow .ctl:disabled{opacity:.35;cursor:default}
+#view-workflow .ctl.primary{background:var(--accent);border-color:var(--accent);color:#0b101c;font-weight:700}
+#view-workflow .ctl.primary:hover:not(:disabled){border-color:var(--text)}
+#view-workflow .ctlcount{color:var(--muted);font-size:.8rem;letter-spacing:.08em}
+#view-workflow .ctlhint{width:100%;margin:4px 0 0;color:var(--muted);font-size:.75rem}
+#view-workflow /* panel 3 - grid, #view-workflow blocks, #view-workflow threads */
+.launchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:11px 16px}
+#view-workflow .launchbar code{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:.85rem}
+#view-workflow .frame{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+#view-workflow .f-label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#view-workflow .f-label .name{font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--accent-2)}
+#view-workflow .f-inner{background:var(--panel-2);border:1px dashed var(--accent-2);border-radius:10px;padding:12px 14px}
+#view-workflow .threads{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#view-workflow .tchip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;padding:4px 9px;background:var(--panel);border:1px solid var(--border);border-radius:7px;font-size:.7rem}
+#view-workflow .tchip:hover{border-color:var(--accent-2)}
+#view-workflow .tdots{color:var(--muted);letter-spacing:2px;padding:0 4px}
+#view-workflow .formula-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+#view-workflow .formula-cap{margin:0 0 10px;font-size:.9rem}
+#view-workflow .fcode{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:.95rem;overflow-x:auto;white-space:nowrap}
+#view-workflow .c-acc{color:var(--accent)}
+#view-workflow .c-good{color:var(--good)}
+#view-workflow .c-warn{color:var(--warn)}
+#view-workflow .defs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+#view-workflow .def{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+#view-workflow .def code{font-size:.78rem;font-weight:700}
+#view-workflow .def p{margin:6px 0 0;color:var(--muted);font-size:.78rem;line-height:1.45}
+#view-workflow .result{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent-2);border-radius:12px;padding:12px 16px}
+#view-workflow .result code{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:inline-block;white-space:nowrap;font-size:.82rem}
+#view-workflow .result p{margin:0;color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+#view-workflow .result p code{background:none;border:none;padding:0;color:var(--text)}
+@media (max-width:640px){#view-workflow .cmp{grid-template-columns:1fr;padding:0}
+#view-workflow .vs{display:none}
+#view-workflow .defs{grid-template-columns:1fr}
+#view-workflow .fstep{grid-template-columns:38px 1fr;padding:12px 14px 22px}
+#view-workflow .fstep:not(:last-child)::after{left:27px}
+#view-workflow .fstep .tag{grid-column:2;justify-self:start;margin-top:2px}
+
+}
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Fireship</p>
+  <h1>Nvidia CUDA in 100 Seconds</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=pPStdjuYzSI">Watch on YouTube</a> &middot; Fireship &middot; Transcript fetched 2026-09-02 &middot; Captions are auto-generated.</p>
+</header>
+<h1 id="nvidia-cuda-in-100-seconds">Nvidia CUDA in 100 Seconds</h1>
+<p>CUDA is NVIDIA&#x27;s parallel computing platform, and it is the technology that lets developers put the GPU to work on far more than video games. This article covers everything the video teaches: what CUDA is and where it came from, why GPU hardware is built for massive parallelism, how CUDA&#x27;s programming model works, and a step-by-step walkthrough of a first CUDA program in C++. It is written for developers and data scientists who want a clear mental model of the platform that powers modern AI training.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>What Is CUDA?</li><li>Why GPUs Are Built for Parallel Work</li><li>How CUDA Works: Host, Device, and Execution</li><li>Building Your First CUDA Application</li><li>Where to Go Next</li></ol>
+<h2 id="1-what-is-cuda">1. What Is CUDA?</h2>
+<p>CUDA — Compute Unified Device Architecture — is a parallel computing platform that allows you to use your GPU for more than just playing video games. Developed by NVIDIA in 2007 and based on the prior work of Ian Buck and John Nickolls, CUDA has since revolutionized the field by letting people compute over large blocks of data in parallel. In doing so, it unlocked the true potential of the deep neural networks behind artificial intelligence: a CUDA kernel lets a developer tap directly into the GPU&#x27;s raw power, and data scientists around the world are using it at this very moment to train the most powerful machine learning models.</p>
+<h2 id="2-why-gpus-are-built-for-parallel-work">2. Why GPUs Are Built for Parallel Work</h2>
+<p>To understand CUDA, you first have to understand the hardware it targets. The Graphics Processing Unit (GPU) was historically used for exactly what its name implies: computing graphics. When you play a game at 1080p and 60 FPS, you have over two million pixels on the screen, each of which may need to be recalculated after every frame. That demands hardware capable of doing a lot of matrix multiplication and vector transformations in parallel — and &quot;a lot&quot; is an understatement.</p>
+<p>Modern GPUs are measured in teraflops: how many trillions of floating-point operations the chip can handle per second. The gap between CPU and GPU is enormous. A modern CPU such as the Intel Core i9 has 24 cores, while a modern GPU like the RTX 4090 has over 16,000 cores. A CPU is designed to be versatile, handling whatever task you throw at it, whereas a GPU is designed to do one thing really well: go fast in parallel. CUDA exists to give developers a way to harness all of those cores.</p>
+<h2 id="3-how-cuda-works-host-device-and-execution">3. How CUDA Works: Host, Device, and Execution</h2>
+<p>CUDA splits the work between two processors: the host (your CPU) and the device (the GPU). The flow of a typical CUDA program looks like this:</p>
+<ol><li>You write a function called a CUDA <strong>kernel</strong> that runs on the GPU.</li><li>You copy data from your main RAM over to the GPU&#x27;s memory.</li><li>The CPU tells the GPU to execute the kernel in parallel.</li><li>The GPU executes the kernel in units called <strong>blocks</strong>, which themselves organize threads into a multi-dimensional <strong>grid</strong>.</li><li>The final result is copied back from the GPU to main memory.</li></ol>
+<p>The multi-dimensional grid is a key idea: it lets the arrangement of threads mirror the shape of the data being processed, which matters when that data is itself multi-dimensional.</p>
+<h2 id="4-building-your-first-cuda-application">4. Building Your First CUDA Application</h2>
+<p>To build a CUDA application you first need an NVIDIA GPU, then you install the CUDA toolkit, which includes device drivers, a runtime, compilers, and developer tools. The actual code is most often written in C++ — as in this demo, developed in Visual Studio.</p>
+<p>First, the <code>__global__</code> specifier defines a function — a CUDA kernel — that runs on the actual GPU. The example kernel adds two vectors together: it takes pointer arguments <code>A</code> and <code>B</code>, the two vectors to add, and a pointer <code>C</code> for the result. Because the kernel may execute billions of times in parallel across threads, each invocation must first calculate the global index of the thread it is running on, so that every thread writes to its own distinct element:</p>
+<pre><code>__global__ void add(int *A, int *B, int *C) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  C[index] = A[index] + B[index];
+}</code></pre>
+<p>Here <code>blockIdx</code>, <code>blockDim</code>, and <code>threadIdx</code> describe where the current thread sits inside the block-and-grid structure: which block it belongs to, how large the blocks are, and its position within its block.</p>
+<p>Next, the demo uses <strong>managed memory</strong> (<code>cudaMallocManaged</code>), which tells CUDA that the allocated data can be accessed from both the host CPU and the device GPU, without the need to manually copy data between them — a convenience that skips the explicit copy step described in the general flow above. The CPU-side <code>main</code> function then uses a <code>for</code> loop to initialize the arrays with data, ready to be handed to the GPU.</p>
+<p>To actually run the kernel, the data is passed to <code>add</code> with some unusual syntax: <code>add&lt;&lt;&lt;1, 256&gt;&gt;&gt;(A, B, C);</code>. Those triple brackets configure the kernel launch, controlling how many blocks and how many threads per block are used to run the code in parallel. Getting that configuration right is crucial for optimizing multi-dimensional data structures, such as the tensors used in deep learning.</p>
+<pre><code>// Allocate managed memory and initialize A and B on the CPU,
+// then launch one block of 256 threads to run add() on the GPU.
+add&lt;&lt;&lt;1, 256&gt;&gt;&gt;(A, B, C);
+cudaDeviceSynchronize();</code></pre>
+<p><code>cudaDeviceSynchronize</code> pauses the execution of the CPU-side code and waits until the GPU work is complete. When the kernel finishes, the data is available back on the host machine, and the program can use the result — printing it to standard output, for instance. Compile and run with the CUDA compiler (<code>nvcc</code>), and congratulations: you just ran 256 threads in parallel on your GPU.</p>
+<h2 id="5-where-to-go-next">5. Where to Go Next</h2>
+<p>To go beyond this introduction, NVIDIA&#x27;s GTC conference is a natural next step: it comes up every year, it is free to attend virtually, and it features talks on building massive parallel systems with CUDA.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>CUDA (Compute Unified Device Architecture) is NVIDIA&#x27;s parallel computing platform, introduced in 2007, that lets developers use the GPU for general-purpose computation — including the deep neural networks behind AI.</li><li>GPUs are hardware built for parallelism: where a high-end CPU has dozens of cores (e.g., 24 on the Intel Core i9), a modern GPU has over 16,000, and its throughput is measured in teraflops.</li><li>CUDA programs split work between a host (CPU) and a device (GPU): define a kernel that runs on the GPU, get the data into GPU memory, launch the kernel, and copy results back.</li><li>Kernel execution is organized into blocks of threads arranged in a multi-dimensional grid — a structure that maps naturally onto multi-dimensional data like the tensors used in deep learning.</li><li>A kernel is marked with the <code>__global__</code> specifier, and each thread computes its own global index to operate on the right element.</li><li>Managed memory (<code>cudaMallocManaged</code>) lets the CPU and GPU share data without manual copying; <code>cudaDeviceSynchronize</code> makes the host wait for GPU work to finish.</li><li>A minimal CUDA program is short: one kernel, a launch configured with the triple-bracket syntax, and a synchronization call — the demo runs 256 threads in parallel.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=pPStdjuYzSI">Nvidia CUDA in 100 Seconds</a></li><li>Channel: Fireship</li><li>Fetched at: 2026-09-02T10:24:15.624214+00:00</li><li>Note: captions are auto-generated and were lightly reconstructed for this article.</li></ul>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart LR
+    Task[&quot;A frame at 60 FPS: millions of pixels, each recomputed in parallel&quot;] --&gt; CPUBox
+    Task --&gt; GPUBox
+
+    subgraph CPUBox[&quot;CPU: the generalist&quot;]
+        direction TB
+        C1[&quot;24 cores - each one powerful&quot;]
+        C2[&quot;Different tasks, handled one at a time&quot;]
+        C3[&quot;Versatile: runs anything you throw at it&quot;]
+        C1 --&gt; C2 --&gt; C3
+    end
+
+    subgraph GPUBox[&quot;GPU: the specialist&quot;]
+        direction TB
+        G1[&quot;16,000+ cores - each one simple&quot;]
+        G2[&quot;One operation, repeated on every pixel at once&quot;]
+        G3[&quot;Throughput measured in teraflops&quot;]
+        G1 --&gt; G2 --&gt; G3
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart LR
+    Task[&quot;A frame at 60 FPS: millions of pixels, each recomputed in parallel&quot;] --&gt; CPUBox
+    Task --&gt; GPUBox
+
+    subgraph CPUBox[&quot;CPU: the generalist&quot;]
+        direction TB
+        C1[&quot;24 cores - each one powerful&quot;]
+        C2[&quot;Different tasks, handled one at a time&quot;]
+        C3[&quot;Versatile: runs anything you throw at it&quot;]
+        C1 --&gt; C2 --&gt; C3
+    end
+
+    subgraph GPUBox[&quot;GPU: the specialist&quot;]
+        direction TB
+        G1[&quot;16,000+ cores - each one simple&quot;]
+        G2[&quot;One operation, repeated on every pixel at once&quot;]
+        G3[&quot;Throughput measured in teraflops&quot;]
+        G1 --&gt; G2 --&gt; G3
+    end
+</code></pre></details>
+<figcaption>1. Why GPUs Win at Parallel Work</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">sequenceDiagram
+    participant H as &quot;Host (CPU)&quot;
+    participant D as &quot;Device (GPU)&quot;
+    Note over H: 1. Write a CUDA kernel - a function that runs on the GPU
+    H-&gt;&gt;D: 2. Copy input data into GPU memory
+    H-&gt;&gt;D: 3. Launch the kernel
+    Note over D: 4. Execute in parallel - blocks of threads on a grid
+    D--&gt;&gt;H: 5. Copy the result back to main memory
+</pre>
+<details><summary>Source</summary><pre><code>sequenceDiagram
+    participant H as &quot;Host (CPU)&quot;
+    participant D as &quot;Device (GPU)&quot;
+    Note over H: 1. Write a CUDA kernel - a function that runs on the GPU
+    H-&gt;&gt;D: 2. Copy input data into GPU memory
+    H-&gt;&gt;D: 3. Launch the kernel
+    Note over D: 4. Execute in parallel - blocks of threads on a grid
+    D--&gt;&gt;H: 5. Copy the result back to main memory
+</code></pre></details>
+<figcaption>2. Host and Device: The Five-Step CUDA Flow</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    Launch[&quot;Host launches the kernel: add&lt;&lt;&lt;1, 256&gt;&gt;&gt;(A, B, C)&quot;] --&gt; Grid
+
+    subgraph Grid[&quot;Grid - a multi-dimensional array of blocks&quot;]
+        subgraph Block[&quot;Block 0 - 256 threads&quot;]
+            direction LR
+            T0[&quot;Thread 0&quot;] --&gt; T1[&quot;Thread 1&quot;] --&gt; Dots[&quot;...&quot;] --&gt; T255[&quot;Thread 255&quot;]
+        end
+    end
+
+    Grid --&gt; Index[&quot;Every thread finds its own element&quot;]
+    Index --&gt; Formula[&quot;index = blockIdx.x * blockDim.x + threadIdx.x&quot;]
+    Formula --&gt; Add[&quot;C[index] = A[index] + B[index]&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    Launch[&quot;Host launches the kernel: add&lt;&lt;&lt;1, 256&gt;&gt;&gt;(A, B, C)&quot;] --&gt; Grid
+
+    subgraph Grid[&quot;Grid - a multi-dimensional array of blocks&quot;]
+        subgraph Block[&quot;Block 0 - 256 threads&quot;]
+            direction LR
+            T0[&quot;Thread 0&quot;] --&gt; T1[&quot;Thread 1&quot;] --&gt; Dots[&quot;...&quot;] --&gt; T255[&quot;Thread 255&quot;]
+        end
+    end
+
+    Grid --&gt; Index[&quot;Every thread finds its own element&quot;]
+    Index --&gt; Formula[&quot;index = blockIdx.x * blockDim.x + threadIdx.x&quot;]
+    Formula --&gt; Add[&quot;C[index] = A[index] + B[index]&quot;]
+</code></pre></details>
+<figcaption>3. Grid, Blocks, and Threads: Inside a Kernel Launch</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+  <header class="deck-header">
+    <div>
+      <p class="kicker">Diagram deck</p>
+      <h1>Nvidia CUDA in 100 Seconds</h1>
+    </div>
+    <div class="chanchip">
+      <span class="chanlabel">Channel</span>
+      <span>Fireship</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Diagrams">
+    <button type="button" class="tab on" role="tab" aria-selected="true">1 · CPU vs GPU</button>
+    <button type="button" class="tab" role="tab" aria-selected="false">2 · CUDA flow</button>
+    <button type="button" class="tab" role="tab" aria-selected="false">3 · Grid &amp; threads</button>
+  </div>
+
+  <section class="deck-panel open" data-panel="0">
+    <div class="panel-head">
+      <h2>1. Why GPUs Win at Parallel Work</h2>
+      <p class="panel-cap">From Section 2, "Why GPUs Are Built for Parallel Work": when one operation must run on millions of pixels at once, thousands of simple GPU cores beat a handful of powerful CPU cores.</p>
+    </div>
+
+    <div class="context">
+      <span class="ctx-label">The problem</span>
+      <p>A 1080p frame holds over 2 million pixels, and at 60 FPS each one is recomputed every frame. Graphics, matrix math, and AI training all share this shape: the same operation, repeated enormously.</p>
+    </div>
+
+    <div class="cmp">
+      <div class="card side">
+        <div class="side-top">
+          <div>
+            <span class="tag tag-host">Generalist</span>
+            <h3>CPU</h3>
+            <p class="side-name">Intel Core i9</p>
+          </div>
+          <div>
+            <p class="big big-cpu">24</p>
+            <p class="big-unit">cores</p>
+          </div>
+        </div>
+        <ul class="facts facts-cpu">
+          <li>Each core is large and powerful.</li>
+          <li>Very different tasks, handled one at a time.</li>
+          <li>Versatile: runs whatever you throw at it.</li>
+        </ul>
+      </div>
+
+      <div class="vs" aria-hidden="true">vs</div>
+
+      <div class="card side">
+        <div class="side-top">
+          <div>
+            <span class="tag tag-device">Specialist</span>
+            <h3>GPU</h3>
+            <p class="side-name">NVIDIA RTX 4090</p>
+          </div>
+          <div>
+            <p class="big big-gpu">16,000+</p>
+            <p class="big-unit">cores</p>
+          </div>
+        </div>
+        <ul class="facts facts-gpu">
+          <li>Thousands of small, simple cores.</li>
+          <li>The same math, executed on every pixel at once.</li>
+          <li>Throughput measured in teraflops.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <span class="tk">Takeaway</span>
+      <p>A GPU is not one faster brain; it is thousands of tiny ones working together. CUDA is the tool that points all that parallelism at real computing problems.</p>
+    </div>
+  </section>
+
+  <section class="deck-panel" data-panel="1">
+    <div class="panel-head">
+      <h2>2. Host and Device: The Five-Step CUDA Flow</h2>
+      <p class="panel-cap">From Section 3, "How CUDA Works: Host, Device, and Execution": every CUDA program is a handshake across the CPU-GPU boundary - kernel first, data over, launch, execute, results back. Step through it below.</p>
+    </div>
+
+    <div class="legend">
+      <span>Legend:</span>
+      <span class="tag tag-host">Host · CPU</span>
+      <span class="tag tag-device">Device · GPU</span>
+      <span class="tag tag-move">Crosses the boundary</span>
+    </div>
+
+    <div class="flow">
+      <button type="button" class="fstep" title="Everything starts on the CPU side">
+        <span class="num">1</span>
+        <span class="step-body">
+          <span class="step-t">Write the kernel</span>
+          <span class="step-d">Define a function tagged __global__ that will run on the GPU when it is launched.</span>
+        </span>
+        <span class="tag tag-host">Host · CPU</span>
+      </button>
+
+      <button type="button" class="fstep" title="The bus carries data across the CPU-GPU boundary">
+        <span class="num">2</span>
+        <span class="step-body">
+          <span class="step-t">Copy data into GPU memory</span>
+          <span class="step-d">Input arrays move from main RAM across to the device.</span>
+        </span>
+        <span class="tag tag-move">CPU to GPU</span>
+      </button>
+
+      <button type="button" class="fstep" title="The launch instruction is issued from the host">
+        <span class="num">3</span>
+        <span class="step-body">
+          <span class="step-t">Launch the kernel</span>
+          <span class="step-d">The CPU tells the GPU to execute the kernel in parallel.</span>
+        </span>
+        <span class="tag tag-host">Host · CPU</span>
+      </button>
+
+      <button type="button" class="fstep" title="All the parallel work happens on the device">
+        <span class="num">4</span>
+        <span class="step-body">
+          <span class="step-t">Execute on the device</span>
+          <span class="step-d">The GPU runs the kernel: threads grouped into blocks, laid out on a multi-dimensional grid.</span>
+        </span>
+        <span class="tag tag-device">Device · GPU</span>
+      </button>
+
+      <button type="button" class="fstep" title="Results cross back over the boundary">
+        <span class="num">5</span>
+        <span class="step-body">
+          <span class="step-t">Copy the result back</span>
+          <span class="step-d">The final data returns from GPU memory to main RAM, where the CPU can use it.</span>
+        </span>
+        <span class="tag tag-move">GPU to CPU</span>
+      </button>
+    </div>
+
+    <div class="flow-ctl">
+      <button type="button" class="ctl" id="dkPrev">Prev</button>
+      <span class="ctlcount" id="dkCount">Step 1 of 5</span>
+      <button type="button" class="ctl primary" id="dkNext">Next</button>
+      <p class="ctlhint">Click any step to jump to it. Steps before the current one are complete.</p>
+    </div>
+  </section>
+
+  <section class="deck-panel" data-panel="2">
+    <div class="panel-head">
+      <h2>3. Grid, Blocks, and Threads: Inside a Kernel Launch</h2>
+      <p class="panel-cap">From Section 4, "Building Your First CUDA Application": how the launch add&lt;&lt;&lt;1, 256&gt;&gt;&gt; maps 256 threads onto the grid, and why every thread computes its own index before touching data.</p>
+    </div>
+
+    <div class="launchbar">
+      <span class="tag tag-host">Host code</span>
+      <code>add&lt;&lt;&lt;1, 256&gt;&gt;&gt;(A, B, C);</code>
+      <span class="note">one block, 256 threads</span>
+    </div>
+
+    <div class="linkv" aria-hidden="true">&#8595;</div>
+
+    <div class="frame">
+      <div class="f-label">
+        <span class="name">Grid</span>
+        <span class="note">The full launch - one block in this demo; grids can hold many blocks and reach into multiple dimensions.</span>
+      </div>
+      <div class="f-inner">
+        <div class="f-label">
+          <span class="name">Block 0</span>
+          <span class="note">256 threads, all running the same kernel</span>
+        </div>
+        <div class="threads">
+          <span class="tchip" title="threadIdx.x = 0">0</span>
+          <span class="tchip" title="threadIdx.x = 1">1</span>
+          <span class="tchip" title="threadIdx.x = 2">2</span>
+          <span class="tchip" title="threadIdx.x = 3">3</span>
+          <span class="tdots">&#8230;</span>
+          <span class="tchip" title="threadIdx.x = 255">255</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="linkv" aria-hidden="true">&#8595;</div>
+
+    <div class="formula-card">
+      <p class="formula-cap">Every thread works out which element it owns:</p>
+      <div class="fcode">index = <span class="c-acc">blockIdx.x</span> &times; <span class="c-good">blockDim.x</span> + <span class="c-warn">threadIdx.x</span></div>
+      <div class="defs">
+        <div class="def">
+          <code class="c-acc">blockIdx.x</code>
+          <p>Which block the thread lives in. The demo launches one block, so this is 0.</p>
+        </div>
+        <div class="def">
+          <code class="c-good">blockDim.x</code>
+          <p>How many threads each block holds. The launch asks for 256.</p>
+        </div>
+        <div class="def">
+          <code class="c-warn">threadIdx.x</code>
+          <p>The thread's position inside its block: 0 to 255.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="linkv" aria-hidden="true">&#8595;</div>
+
+    <div class="result">
+      <span class="tag tag-device">Each thread</span>
+      <code>C[index] = A[index] + B[index];</code>
+      <p>256 threads, each adding the pair of elements at its own index - 256 additions in parallel. Afterwards, <code>cudaDeviceSynchronize()</code> pauses the host until every thread has finished.</p>
+    </div>
+  </section>
+
+  <script>
+  (function(){
+    var root = document.getElementById('workflow-content');
+    var tabs = [].slice.call(root.querySelectorAll('.tab'));
+    var panels = [].slice.call(root.querySelectorAll('.deck-panel'));
+    tabs.forEach(function(t, i){
+      t.addEventListener('click', function(){
+        tabs.forEach(function(x, k){
+          x.classList.toggle('on', k === i);
+          x.setAttribute('aria-selected', k === i ? 'true' : 'false');
+        });
+        panels.forEach(function(p, k){ p.classList.toggle('open', k === i); });
+      });
+    });
+
+    var steps = [].slice.call(root.querySelectorAll('.fstep'));
+    var prev = document.getElementById('dkPrev');
+    var next = document.getElementById('dkNext');
+    var count = document.getElementById('dkCount');
+    var cur = 0;
+    function render(){
+      steps.forEach(function(s, k){
+        s.classList.toggle('done', k < cur);
+        s.classList.toggle('active', k === cur);
+      });
+      if (prev){ prev.disabled = cur === 0; }
+      if (next){ next.disabled = cur === steps.length - 1; }
+      if (count){ count.textContent = 'Step ' + (cur + 1) + ' of ' + steps.length; }
+    }
+    steps.forEach(function(s, k){
+      s.addEventListener('click', function(){ cur = k; render(); });
+    });
+    if (prev){ prev.addEventListener('click', function(){ cur = Math.max(0, cur - 1); render(); }); }
+    if (next){ next.addEventListener('click', function(){ cur = Math.min(steps.length - 1, cur + 1); render(); }); }
+    render();
+  })();
+  </script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>
