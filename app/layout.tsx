@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: "Amitesh Anand | Frontend Architecture, Design Systems & AI",
   description:
@@ -53,8 +55,8 @@ export const metadata: Metadata = {
     "codex-preview": "development",
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: `${basePath}/favicon.svg`,
+    shortcut: `${basePath}/favicon.svg`,
   },
 };
 
@@ -75,6 +77,29 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <a
+          href={`${basePath}/knowledge-base/`}
+          aria-label="Open Knowledge Base"
+          style={{
+            position: "fixed",
+            right: "1rem",
+            bottom: "1rem",
+            zIndex: 90,
+            padding: ".72rem 1rem",
+            border: "1px solid var(--line)",
+            borderRadius: "999px",
+            background: "var(--control-bg)",
+            color: "var(--ink)",
+            textDecoration: "none",
+            fontSize: ".82rem",
+            fontWeight: 800,
+            letterSpacing: "-.01em",
+            backdropFilter: "blur(16px)",
+            boxShadow: "0 10px 32px rgba(0,0,0,.12)",
+          }}
+        >
+          Knowledge Base ↗
+        </a>
         {children}
       </body>
     </html>
