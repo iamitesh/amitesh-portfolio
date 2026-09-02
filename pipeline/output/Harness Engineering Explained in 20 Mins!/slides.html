@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Engineering Explained in 20 Minutes — The Harness Is the Product</title>
+<style>
+  :root {
+    --bg: #0b101c;
+    --panel: #141b2d;
+    --panel-2: #1a2338;
+    --text: #e9edf6;
+    --muted: #94a0b8;
+    --accent: #6ea8fe;
+    --accent-2: #a78bfa;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --border: #273349;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* progress bar */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    z-index: 30; transition: width .25s ease;
+  }
+
+  /* deck */
+  #deck { height: 100%; width: 100%; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 7vh 9vw;
+    opacity: 0; transform: translateX(40px);
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease;
+    max-height: 100vh; overflow: auto;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  .kicker {
+    font-size: .8rem; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 1.1rem;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 3.4vw, 2.7rem);
+    line-height: 1.15; font-weight: 800;
+    margin-bottom: 1.4rem; letter-spacing: -.02em;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p, li { color: var(--text); }
+  .lead { font-size: clamp(1rem, 1.6vw, 1.25rem); color: var(--muted); line-height: 1.6; max-width: 60ch; }
+  .sub { color: var(--muted); font-size: .95rem; margin-top: .8rem; }
+
+  /* layout helpers */
+  .grid { display: grid; gap: 1.1rem; }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 820px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .slide { padding: 6vh 6vw; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.4rem;
+  }
+  .card h3 { font-size: 1.02rem; margin-bottom: .6rem; color: var(--accent); letter-spacing: -.01em; }
+  .card p, .card li { font-size: .92rem; color: var(--muted); line-height: 1.55; }
+  .card li { margin: .35rem 0 .35rem 1.1rem; }
+  .card .big { font-size: 1.05rem; color: var(--text); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: .45rem .95rem;
+    font-size: .88rem; color: var(--text);
+  }
+  .chip.accent { border-color: var(--accent); color: var(--accent); }
+  .chip.bad { border-color: var(--bad); color: var(--bad); }
+  .chip.good { border-color: var(--good); color: var(--good); }
+  .chip.warn { border-color: var(--warn); color: var(--warn); }
+
+  table {
+    width: 100%; border-collapse: collapse; font-size: .92rem;
+    background: var(--panel); border-radius: 12px; overflow: hidden;
+  }
+  th, td {
+    text-align: left; padding: .72rem .95rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--panel-2); color: var(--accent);
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .1em;
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 600; }
+  td { color: var(--muted); line-height: 1.5; }
+
+  .steps { display: flex; flex-wrap: wrap; gap: .6rem; counter-reset: step; }
+  .step {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; color: var(--text);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b101c; font-weight: 800; font-size: .72rem;
+    border-radius: 6px; padding: .25rem .45rem;
+  }
+
+  .quote {
+    border-left: 3px solid var(--accent-2);
+    padding: .9rem 1.2rem; margin-top: 1.2rem;
+    background: var(--panel); border-radius: 0 12px 12px 0;
+    font-size: 1.02rem; color: var(--text); font-style: italic; line-height: 1.55;
+  }
+
+  .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  @media (max-width: 820px) { .checklist { grid-template-columns: 1fr; } }
+  .check {
+    display: flex; align-items: center; gap: .7rem;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .75rem 1rem; font-size: .95rem;
+  }
+  .check::before {
+    content: "✓"; color: var(--good); font-weight: 800;
+    background: rgba(52,211,153,.12); border-radius: 6px; padding: .15rem .5rem;
+  }
+
+  /* controls */
+  #counter {
+    position: fixed; right: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .85rem; z-index: 30;
+    font-variant-numeric: tabular-nums;
+  }
+  #hint {
+    position: fixed; left: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .78rem; z-index: 30; opacity: .7;
+  }
+  #nav {
+    position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+    display: flex; gap: .5rem; z-index: 30;
+  }
+  #nav button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: .45rem .95rem; cursor: pointer; font-size: .9rem;
+  }
+  #nav button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<main id="deck">
+
+  <!-- 1 · Title -->
+  <section class="slide">
+    <p class="kicker">Aishwarya Srinivasan · 20-Minute Explainer</p>
+    <h1>Harness Engineering<br><span class="grad">Explained in 20 Minutes</span></h1>
+    <p class="lead">Why the teams shipping the most impressive AI systems say the model is the easy part — and why the harness, the entire layer built around the model, is what turns raw model power into dependable, directed work.</p>
+    <p class="sub">Source: youtube.com/watch?v=bsmUh5bTNZ4 · Channel: youtube.com/@aishwaryasrinivasan</p>
+  </section>
+
+  <!-- 2 · Agenda -->
+  <section class="slide">
+    <p class="kicker">Agenda</p>
+    <h1>What We'll Cover</h1>
+    <div class="grid g2">
+      <div class="card"><h3>The Core Idea</h3>
+        <ul>
+          <li>The model is the easy part — the OpenAI story</li>
+          <li>The horse and the harness: what a model can't do alone</li>
+          <li>Prompt vs context vs harness engineering</li>
+          <li>A term that spread in weeks — with proof</li>
+        </ul>
+      </div>
+      <div class="card"><h3>In Practice</h3>
+        <ul>
+          <li>Harnesses inside the ChatGPT desktop app: Chat, Work, Codex</li>
+          <li>The five components of a production-grade harness</li>
+          <li>A five-step roadmap to build your own</li>
+          <li>Why the harness — not the model — becomes the product</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · The Model Is the Easy Part -->
+  <section class="slide">
+    <p class="kicker">Part 1 · The Model Is the Easy Part</p>
+    <h1>They Wrote No Code for Five Months</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>The OpenAI story</h3>
+        <p class="big">A three-person team started with an empty repository in late August 2025 — and wrote no code themselves for five months.</p>
+        <ul>
+          <li>A million lines of production code</li>
+          <li>1,500 merged pull requests</li>
+          <li>Every line generated by Codex, their coding agent</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>What they obsessed over</h3>
+        <p class="big">Not the prompt, and not even the model — the harness.</p>
+        <p>They focused on the execution environment that made the agent's work possible, reviewable, and safe.</p>
+      </div>
+    </div>
+    <p class="sub">Instructor context: Aishwarya Srinivasan — 10+ years in ML/AI as a data scientist at Microsoft, Google, and IBM; master's in data science from Columbia; developer-relations lead at Fireworks AI; co-founder of Gen Academy. Harness engineering builds on her earlier loop-engineering and context-engineering explainers.</p>
+  </section>
+
+  <!-- 4 · The Horse and the Harness -->
+  <section class="slide">
+    <p class="kicker">Part 2 · What a Harness Is</p>
+    <h1>The Horse and the Harness</h1>
+    <p class="lead" style="margin-bottom:1.2rem">A horse is powerful and fast — but raw power is not useful work. Without a harness it cannot pull a cart or plow a field; the harness converts raw power into directed, useful work.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>The model is the horse</h3>
+        <p class="big">Raw capability, no direction on its own.</p>
+        <p>Powerful and fast — but unable to do useful work unless something wraps it and directs it.</p>
+      </div>
+      <div class="card">
+        <h3>The harness is everything you build around it</h3>
+        <ul>
+          <li>The tools it may call and the schemas for calling them</li>
+          <li>Information piped into its context before each run</li>
+          <li>Checks that run on its outputs</li>
+          <li>Permission boundaries — what it can touch</li>
+          <li>Logging that records what it actually did</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote">Boiled down to a single phrase: the harness is the plumbing around the model.</div>
+  </section>
+
+  <!-- 5 · A Bare LLM Is a Pure Function -->
+  <section class="slide">
+    <p class="kicker">Part 2 · What a Harness Is (cont.)</p>
+    <h1>A Bare LLM Is a Pure Function</h1>
+    <p class="lead" style="margin-bottom:1.1rem">Strip away the product around the model and what remains is a frozen set of weights mapping input tokens to output tokens — that is the entire interface. On its own, the model:</p>
+    <div class="chip-row" style="margin-bottom:1.2rem">
+      <span class="chip bad">Has no persistent state</span>
+      <span class="chip bad">Cannot execute code</span>
+      <span class="chip bad">Cannot read a file from disk</span>
+      <span class="chip bad">Cannot make an API call</span>
+      <span class="chip bad">Cannot verify a single claim it produces</span>
+    </div>
+    <div class="quote">Everything you experience as "AI doing useful work" comes from the layer wrapped around the model — and that layer is the harness.</div>
+  </section>
+
+  <!-- 6 · Prompt, Context & Harness Engineering -->
+  <section class="slide">
+    <p class="kicker">Part 2 · Three Disciplines</p>
+    <h1>Prompt, Context &amp; Harness Engineering</h1>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Prompt engineering</h3>
+        <p><strong style="color:var(--text)">What you say to the horse.</strong> Optimizes a single exchange: one instruction, one output.</p>
+      </div>
+      <div class="card">
+        <h3>Context engineering</h3>
+        <p><strong style="color:var(--text)">What you let the horse see.</strong> Manages what gets retrieved and what fits inside the context window.</p>
+      </div>
+      <div class="card">
+        <h3>Harness engineering</h3>
+        <p><strong style="color:var(--text)">Everything else that keeps the horse on the track.</strong> The deliberate design of the execution environment.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1rem">What harness engineering governs: which tools the agent gets · where its information comes from · how it validates its own work · when it stops and hands control back to a human. Neither prompt nor context engineering covers an agent running autonomously for hours, making hundreds of unsupervised decisions.</p>
+  </section>
+
+  <!-- 7 · A Term That Spread in Weeks -->
+  <section class="slide">
+    <p class="kicker">Part 2 · Origin &amp; Proof</p>
+    <h1>A Term That Spread in Weeks</h1>
+    <div class="chip-row" style="margin-bottom:1.1rem">
+      <span class="chip accent">Feb 2026 · Hashimoto's post on "engineering the harness"</span>
+      <span class="chip accent">Six days later · OpenAI's million-lines write-up</span>
+      <span class="chip accent">Then · Anthropic on harnesses for long-running agents</span>
+      <span class="chip accent">Within weeks · the term is everywhere</span>
+    </div>
+    <div class="quote">Every time an agent makes a mistake, you engineer the environment so it cannot make that mistake again. It is not a better prompt — it is a permanent fix.</div>
+    <p class="sub">Mitchell Hashimoto — HashiCorp co-founder and creator of Terraform, February 2026.</p>
+    <div class="card" style="margin-top:1rem">
+      <h3 style="color:var(--good)">Better results without a better model</h3>
+      <p>One engineer took 15 different LLMs and improved the coding performance of all of them in a single afternoon — without touching a single model. Only the harness changed: same weights, better environment, measurably better results.</p>
+    </div>
+  </section>
+
+  <!-- 8 · One App, Three Harnesses -->
+  <section class="slide">
+    <p class="kicker">Part 3 · Harnesses You Already Use</p>
+    <h1>One App, Three Harnesses</h1>
+    <p class="lead" style="margin-bottom:1.2rem">In July 2026, OpenAI merged the Codex app and the ChatGPT app into one desktop application with three experiences. The headline shipment that day was not a new model — it was a harness.</p>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Chat — thin harness</h3>
+        <p class="big">Tuned for turn-by-turn conversation.</p>
+        <p>A system prompt, a few tools, memory across sessions, sandboxed Python, image generation, and safety filters.</p>
+      </div>
+      <div class="card">
+        <h3>Work — heavier harness</h3>
+        <p class="big">Now you talk to an agent, not a model.</p>
+        <p>Gathers context, plans, and runs for hours to produce finished documents, spreadsheets, and presentations.</p>
+      </div>
+      <div class="card">
+        <h3>Codex — heaviest harness</h3>
+        <p class="big">Scoped execution, feedback loops everywhere.</p>
+        <p>Explicitly granted access, AGENTS.md conventions, a terminal for builds and tests, inline diffs, PR review.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1rem">The same underlying model family behaves like three completely different products depending on which environment it runs in — and once you see it here, you will see it everywhere.</p>
+  </section>
+
+  <!-- 9 · Chat vs Work -->
+  <section class="slide">
+    <p class="kicker">Part 3 · Chat vs Work</p>
+    <h1>Thin Harness vs Heavier Harness</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Chat: a thin harness for conversation</h3>
+        <ul>
+          <li>System prompt that shapes behavior before you type a word</li>
+          <li>Tools it can invoke — e.g. web search for fresh information</li>
+          <li>Memory that persists facts across your sessions</li>
+          <li>Sandboxed Python for file analysis + built-in image generation</li>
+          <li>Safety filters running on inputs and outputs</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Work: a heavier harness</h3>
+        <ul>
+          <li>Planning loop — decomposes a goal into steps</li>
+          <li>Connectors that take actions across your real tools</li>
+          <li>Approval checkpoints before anything consequential</li>
+          <li>Scheduled tasks that keep running after you walk away</li>
+          <li>Runs for hours to finished documents and presentations</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1rem">The model's raw capability did not change — the harness got heavier. Those approval checkpoints are a guardrail placed there by an engineer who decided the agent should stop at exactly that point rather than guess.</p>
+  </section>
+
+  <!-- 10 · Codex -->
+  <section class="slide">
+    <p class="kicker">Part 3 · Codex — The Heaviest Harness</p>
+    <h1>Codex: The Heaviest Harness of All</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>What the harness gives it</h3>
+        <ul>
+          <li>Sandboxed execution or scoped access to a folder — you grant what it can touch</li>
+          <li>Reads AGENTS.md at the repo root before writing a single line</li>
+          <li>A terminal — runs your build and test suite, observes its own failures</li>
+          <li>Inline diffs for your review; can review pull requests</li>
+          <li>Every capability scoped, logged, wrapped in a feedback loop</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Why the same intelligence acts so differently</h3>
+        <p>The weights of the model did not change between tabs. The environment and the harness did — that is why the intelligence that makes small talk in Chat can autonomously refactor a codebase in Codex.</p>
+      </div>
+    </div>
+    <div class="quote">When someone asks "which AI is the best?", the honest answer is that they are asking about the horse when they should be asking about the harness.</div>
+  </section>
+
+  <!-- 11 · The Five Components -->
+  <section class="slide">
+    <p class="kicker">Part 4 · The Five Components</p>
+    <h1>Anatomy of a Production Harness</h1>
+    <p class="lead" style="margin-bottom:1.2rem">Whenever you use Chat, Work, or Codex — or Claude Code on the Anthropic side — you are a harness customer: someone else engineered that environment for you. Almost every production system combines five components, and you feel it even when one is missing.</p>
+    <table>
+      <tr><th>Component</th><th>Role</th><th>Concrete form</th></tr>
+      <tr><td>1 · System of record</td><td>How the agent should work</td><td>AGENTS.md / CLAUDE.md instruction files</td></tr>
+      <tr><td>2 · Tools</td><td>What the agent can actually do</td><td>A small, deliberate set — shell, files, web, database</td></tr>
+      <tr><td>3 · Feedback loops &amp; verification</td><td>Checking its own work</td><td>Linters, type checks, test suites</td></tr>
+      <tr><td>4 · Guardrails &amp; permissions</td><td>What it is explicitly not allowed to do</td><td>Read-only scopes and approval gates</td></tr>
+      <tr><td>5 · Observability &amp; memory</td><td>Record of every run + state across sessions</td><td>Logs of every call; memory that persists</td></tr>
+    </table>
+  </section>
+
+  <!-- 12 · System of Record & Tools -->
+  <section class="slide">
+    <p class="kicker">Part 4 · Components 1 &amp; 2</p>
+    <h1>System of Record &amp; Tools</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>1 · The system of record</h3>
+        <p class="big">A plain Markdown file the agent reads before working: project structure, conventions, build commands, and decisions your team has already made.</p>
+        <p style="margin-top:.6rem">The OpenAI trap: without written answers — "what abstractions should I use?" — the agent guesses, and guesses wrong, repeatedly.</p>
+        <p style="margin-top:.6rem">If knowledge lives in Slack threads and Google Docs instead of the repository, the agents cannot really see it — it might as well not exist. Everything the agent needs has to live where the agent works.</p>
+      </div>
+      <div class="card">
+        <h3>2 · Tools</h3>
+        <p class="big">Most people fall into one of two extremes.</p>
+        <div class="chip-row" style="margin-top:.6rem">
+          <span class="chip bad">Access to everything → unpredictable behavior</span>
+          <span class="chip bad">Access to almost nothing → talks but doesn't act</span>
+          <span class="chip good">In between: a small, deliberate set</span>
+        </div>
+        <p style="margin-top:.8rem">Good harness design sits in the middle: for each tool in the set, you can justify why the agent needs it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · Feedback Loops & Verification -->
+  <section class="slide">
+    <p class="kicker">Part 4 · Component 3</p>
+    <h1>Feedback Loops &amp; Verification</h1>
+    <p class="lead" style="margin-bottom:1.1rem">The component most people skip — and the video is explicit that you should not. An agent needs a way to check its own work without asking you.</p>
+    <div class="steps" style="margin-bottom:1.1rem">
+      <span class="step">Plan — break the goal into steps</span>
+      <span class="step">Act — take an action</span>
+      <span class="step">Verify — checks run automatically</span>
+      <span class="step">Fix — the agent corrects its own work</span>
+      <span class="step">Hand off — every check passes</span>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>For code, the machinery already exists</h3>
+        <p>A linter, a type checker, or a real test suite that runs automatically after every change — so the agent observes its own failures and fixes them before you even look at the output.</p>
+      </div>
+      <div class="card">
+        <h3>Not writing code?</h3>
+        <p>The principle still holds: define what correct output looks like, write a script or checklist that validates it, and make that check part of every single run.</p>
+      </div>
+    </div>
+    <div class="quote">The goal is simple: agents should discover their own mistakes before you do.</div>
+  </section>
+
+  <!-- 14 · Guardrails, Observability & Memory -->
+  <section class="slide">
+    <p class="kicker">Part 4 · Components 4 &amp; 5</p>
+    <h1>Guardrails, Observability &amp; Memory</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>4 · Guardrails &amp; permissions</h3>
+        <ul>
+          <li>Which parts are read-only?</li>
+          <li>Which commands require approval?</li>
+          <li>At what point does it stop and ask, instead of guessing?</li>
+          <li>The approval prompts in ChatGPT's Work experience are this exact component, engineered at OpenAI scale</li>
+          <li>Every serious agent tool exposes these settings — most people never touch them. Set them deliberately.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>5 · Observability &amp; memory</h3>
+        <ul>
+          <li>Observability: a record of everything the agent did — every tool call, every decision, every error</li>
+          <li>Memory: carries useful state across sessions, because the model itself cannot carry anything</li>
+          <li>When a run goes wrong — and it will — the record is the only way to reconstruct what happened, instead of guessing</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · The Five-Step Roadmap -->
+  <section class="slide">
+    <p class="kicker">Part 5 · The Roadmap</p>
+    <h1>Five Steps, Worked Week by Week</h1>
+    <table>
+      <tr><th>Step</th><th>What to do</th></tr>
+      <tr><td>1 · Create your system of record</td><td>Write AGENTS.md / CLAUDE.md this week: project structure, how to run, how to test, top five conventions — under a page</td></tr>
+      <tr><td>2 · Build a verification loop</td><td>A linter (e.g. Ruff) plus real tests — wired to run after every change, not left to the agent's memory</td></tr>
+      <tr><td>3 · Choose tools deliberately</td><td>Spend a week inside a serious harness (Claude Code or Codex), then connect one real system via MCP</td></tr>
+      <tr><td>4 · Read your failures</td><td>Turn on logging; every failed run names the next piece of harness to build</td></tr>
+      <tr><td>5 · One narrow workflow</td><td>Instruction file + small tool set + automated checks + permissions + logging — end to end, without babysitting</td></tr>
+    </table>
+    <div class="quote">Your harness roadmap is written in your failure logs.</div>
+    <p class="sub">Step-1 discipline: when the agent makes the same mistake twice, do not explain the fix in the chat — write it into the file permanently. Almost every line in Hashimoto's own AGENTS.md came from a past agent failure, and once a rule is in the file, that mistake essentially never recurs.</p>
+  </section>
+
+  <!-- 16 · The Commodity Argument -->
+  <section class="slide">
+    <p class="kicker">Part 6 · Where This Is Going</p>
+    <h1>The Model Is the Commodity,<br><span class="grad">The Harness Is the Product</span></h1>
+    <p class="lead" style="margin-bottom:1.2rem">In 2026 and 2027, everyone has access to roughly the same frontier intelligence — especially with open-source models, such as the latest open releases like Kimi K3. What you compete on is the environment you build around the model.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>The new differentiator</h3>
+        <p>Instruction files, feedback loops, permissions, and observability — harness engineering is increasingly becoming the standard for most companies.</p>
+      </div>
+      <div class="card">
+        <h3>What it really is</h3>
+        <p>At the end of the day, this is all software engineering — engineering and plumbing the thing around the model.</p>
+      </div>
+    </div>
+    <div class="quote">You don't get a better agent by finding a better model. You get a better agent by building it with a better harness.</div>
+  </section>
+
+  <!-- 17 · Key Takeaways -->
+  <section class="slide">
+    <p class="kicker">Key Takeaways</p>
+    <h1>The Complete Checklist</h1>
+    <div class="checklist">
+      <div class="check">A bare LLM is a pure function — no memory, no code, no files, no APIs, no self-verification</div>
+      <div class="check">Harness engineering sits on top of prompt &amp; context engineering — it governs long, autonomous runs</div>
+      <div class="check">The term spread in weeks — and one experiment improved all 15 tested LLMs without touching their weights</div>
+      <div class="check">Chat = thin harness, Work = heavier, Codex = heaviest — same model, three products</div>
+      <div class="check">Five components: system of record, tools, feedback loops &amp; verification, guardrails &amp; permissions, observability &amp; memory</div>
+      <div class="check">Write AGENTS.md / CLAUDE.md this week — and fix repeated mistakes in the file, not the chat</div>
+      <div class="check">Automate checks into every run; study a real harness; connect tools via MCP one at a time</div>
+      <div class="check">As model access commoditizes, competition shifts to the environment you build</div>
+    </div>
+  </section>
+
+  <!-- 18 · End -->
+  <section class="slide">
+    <p class="kicker">The End</p>
+    <h1>Go Build the <span class="grad">Harness</span></h1>
+    <p class="lead">The model is the easy part. Everything wrapped around it — tools, context, checks, permissions, logging — is where the product is made. Write one instruction file this week, and let each failure name the next piece to build.</p>
+    <p class="sub">Source: "Harness Engineering Explained in 20 Mins!" — Aishwarya Srinivasan (youtube.com/watch?v=bsmUh5bTNZ4) · Full article and transcripts in this repo.</p>
+  </section>
+
+</main>
+
+<div id="counter"></div>
+<div id="hint">← → to navigate · swipe on mobile</div>
+<div id="nav">
+  <button id="prev">← Prev</button>
+  <button id="next">Next →</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+
+  // touch swipe
+  let touchX = null;
+  window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, { passive: true });
+
+  show(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness Engineering Explained in 20 Mins!</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+}
+#view-workflow *{box-sizing:border-box;margin:0;padding:0}
+#view-workflow body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+#view-workflow #workflow-content{max-width:1040px;margin:0 auto;padding:34px 26px 60px;background:var(--bg)}
+#view-workflow /* ---------- header ---------- */
+.wf-header{margin-bottom:22px}
+#view-workflow .wf-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px}
+#view-workflow .wf-eyebrow::before{content:"";width:22px;height:2px;background:var(--accent-2);border-radius:2px}
+#view-workflow .wf-header h1{font-size:clamp(22px,3.4vw,34px);line-height:1.2;font-weight:800;letter-spacing:-.01em;max-width:780px}
+#view-workflow .wf-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#view-workflow .chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap}
+#view-workflow .chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+#view-workflow .chip.channel .dot{background:var(--accent-2)}
+#view-workflow .chip.good .dot{background:var(--good)}
+#view-workflow /* ---------- tabs ---------- */
+.wf-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;background:var(--bg);padding:4px 0}
+#view-workflow .wf-tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;transition:all .18s ease}
+#view-workflow .wf-tab:hover{color:var(--text);border-color:var(--accent)}
+#view-workflow .wf-tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+#view-workflow /* ---------- diagram panels ---------- */
+.dgm{display:none;animation:fadeIn .25s ease}
+#view-workflow .dgm.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#view-workflow .dgm-title{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:2px 0 4px}
+#view-workflow .dgm-section{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#view-workflow .dgm-sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:860px}
+#view-workflow .controls{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
+#view-workflow .ctl{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease}
+#view-workflow .ctl:hover{border-color:var(--accent);color:var(--accent)}
+#view-workflow .ctl-state{font-size:11.5px;color:var(--muted);font-weight:700;background:var(--panel);border:1px solid var(--border);padding:6px 11px;border-radius:8px;letter-spacing:.03em}
+#view-workflow /* ---------- tooltips ---------- */
+[data-tip]{position:relative;cursor:help}
+#view-workflow [data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);background:#0b101c;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;line-height:1.45;padding:7px 10px;border-radius:8px;width:max-content;max-width:250px;opacity:0;pointer-events:none;transition:opacity .15s ease;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#view-workflow [data-tip]:hover::after{opacity:1}
+#view-workflow /* ---------- diagram 1 : two-column compare ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0 16px}
+#view-workflow .duo-card{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--bad);border-radius:12px;padding:15px 16px}
+#view-workflow .duo-card.good{border-top-color:var(--good)}
+#view-workflow .duo-tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--bad);margin-bottom:3px}
+#view-workflow .duo-card.good .duo-tag{color:var(--good)}
+#view-workflow .duo-card h3{font-size:15.5px;font-weight:800;margin-bottom:10px}
+#view-workflow .duo-card ul{list-style:none;font-size:12.5px;color:var(--muted)}
+#view-workflow .duo-card li{padding:4px 0 4px 16px;position:relative}
+#view-workflow .duo-card li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:2px;background:var(--bad)}
+#view-workflow .duo-card.good li::before{background:var(--good)}
+#view-workflow .duo-out{margin-top:11px;padding-top:9px;border-top:1px solid var(--border);font-size:12.5px;font-weight:700;color:var(--text)}
+#view-workflow .rule-card{display:flex;gap:12px;align-items:flex-start;background:rgba(110,168,254,.06);border:1px dashed rgba(110,168,254,.5);border-radius:12px;padding:13px 16px;font-size:13px}
+#view-workflow .rule-card .flag{flex:0 0 auto;color:var(--accent);font-weight:800}
+#view-workflow .rule-card strong{display:block;margin-bottom:2px}
+#view-workflow .rule-card.warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.5)}
+#view-workflow .rule-card.warn .flag{color:var(--warn)}
+#view-workflow .rule-card.good{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.5)}
+#view-workflow .rule-card.good .flag{color:var(--good)}
+#view-workflow /* ---------- diagram 2 : discipline stack ---------- */
+.discs{display:flex;flex-direction:column;margin:4px 0 6px}
+#view-workflow .disc{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:13px 16px;transition:all .2s ease;cursor:default}
+#view-workflow .disc:nth-of-type(2){border-left-color:var(--accent-2)}
+#view-workflow .disc:nth-of-type(3){border-left-color:var(--warn)}
+#view-workflow .disc-top{flex:1;min-width:0}
+#view-workflow .disc-name{font-size:14.5px;font-weight:800}
+#view-workflow .disc-q{font-size:12.5px;color:var(--muted);margin-top:1px}
+#view-workflow .scope{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:4px 11px;white-space:nowrap}
+#view-workflow .disc-arr{display:flex;flex-direction:column;align-items:center;color:var(--border);font-size:11px;line-height:1;margin:2px 0}
+#view-workflow .disc.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.5);box-shadow:0 0 0 3px rgba(110,168,254,.12)}
+#view-workflow .discs .mini-row{margin-top:10px}
+#view-workflow /* ---------- lanes / chips ---------- */
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 14px}
+#view-workflow .lane{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;padding:13px 14px}
+#view-workflow .lane.violet{border-top-color:var(--accent-2)}
+#view-workflow .lane.amber{border-top-color:var(--warn)}
+#view-workflow .lane-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:3px}
+#view-workflow .lane-name{font-size:13.5px;font-weight:800}
+#view-workflow .weight{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.4);border-radius:999px;padding:2px 8px;white-space:nowrap}
+#view-workflow .lane.violet .weight{color:var(--accent-2);background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.4)}
+#view-workflow .lane.amber .weight{color:var(--warn);background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.4)}
+#view-workflow .lane-desc{font-size:12px;color:var(--muted);margin-bottom:9px}
+#view-workflow .lane-tags{display:flex;flex-wrap:wrap;gap:5px}
+#view-workflow .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+#view-workflow .lane .tag{border-color:rgba(110,168,254,.35);color:var(--accent)}
+#view-workflow .lane.violet .tag{border-color:rgba(167,139,250,.35);color:var(--accent-2)}
+#view-workflow .lane.amber .tag{border-color:rgba(251,191,36,.35);color:var(--warn)}
+#view-workflow .lane-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:11px 15px;margin:4px 0 12px;font-size:13px;color:var(--muted)}
+#view-workflow .lane-banner b{color:var(--text)}
+#view-workflow .hand{display:inline-flex;align-items:center;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text)}
+#view-workflow .hand-arrow{color:var(--accent-2);font-weight:800;font-size:12px}
+#view-workflow /* ---------- diagram 4 : component grid ---------- */
+.comp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:6px 0 14px}
+#view-workflow .comp{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:13px 13px 12px;display:flex;flex-direction:column;gap:8px;transition:all .2s ease}
+#view-workflow .comp.c1{border-top-color:var(--accent)}
+#view-workflow .comp.c2{border-top-color:var(--accent-2)}
+#view-workflow .comp.c3{border-top-color:var(--good)}
+#view-workflow .comp.c4{border-top-color:var(--warn)}
+#view-workflow .comp.c5{border-top-color:var(--bad)}
+#view-workflow .comp.on{transform:translateY(-3px);box-shadow:0 8px 22px rgba(110,168,254,.22)}
+#view-workflow .comp.c2.on{box-shadow:0 8px 22px rgba(167,139,250,.22)}
+#view-workflow .comp.c3.on{box-shadow:0 8px 22px rgba(52,211,153,.22)}
+#view-workflow .comp.c4.on{box-shadow:0 8px 22px rgba(251,191,36,.22)}
+#view-workflow .comp.c5.on{box-shadow:0 8px 22px rgba(248,113,113,.22)}
+#view-workflow .comp-num{font-size:20px;font-weight:800;color:var(--muted);line-height:1}
+#view-workflow .comp-name{font-size:13px;font-weight:800;line-height:1.3}
+#view-workflow .comp-note{font-size:11.5px;color:var(--muted);line-height:1.55;flex:1}
+#view-workflow .mini-tags{display:flex;flex-wrap:wrap;gap:5px}
+#view-workflow .mini{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+#view-workflow /* ---------- diagram 5 : verification machine ---------- */
+.machine{display:flex;align-items:stretch;gap:4px;margin:4px 0}
+#view-workflow .m-state{flex:1;min-width:0;background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:12px 10px;text-align:center;transition:all .2s ease}
+#view-workflow .m-state .who{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+#view-workflow .m-state .what{font-size:12.5px;font-weight:700;line-height:1.35}
+#view-workflow .m-state.a{border-top-color:var(--accent)}
+#view-workflow .m-state.b{border-top-color:var(--accent-2)}
+#view-workflow .m-state.c{border-top-color:var(--good)}
+#view-workflow .m-state.d{border-top-color:var(--warn)}
+#view-workflow .m-state.on{transform:translateY(-3px)}
+#view-workflow .m-state.a.on{box-shadow:0 8px 22px rgba(110,168,254,.3)}
+#view-workflow .m-state.b.on{box-shadow:0 8px 22px rgba(167,139,250,.3)}
+#view-workflow .m-state.c.on{box-shadow:0 8px 22px rgba(52,211,153,.3)}
+#view-workflow .m-state.d.on{box-shadow:0 8px 22px rgba(251,191,36,.3)}
+#view-workflow .m-arrow{display:flex;align-items:center;justify-content:center;color:var(--border);font-size:16px;font-weight:800}
+#view-workflow .fix-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0 6px}
+#view-workflow .fix-card{display:inline-flex;align-items:center;gap:10px;background:rgba(251,191,36,.07);border:1px dashed rgba(251,191,36,.55);border-radius:12px;padding:11px 16px;font-size:13px;transition:all .2s ease}
+#view-workflow .fix-card .flag{color:var(--warn);font-weight:800}
+#view-workflow .fix-card b{white-space:nowrap}
+#view-workflow .fix-card.on{background:rgba(251,191,36,.16);box-shadow:0 0 0 3px rgba(251,191,36,.15)}
+#view-workflow .fix-return{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#view-workflow .msg{margin:12px 0 0;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:11px 14px;font-size:13px;min-height:44px}
+#view-workflow /* ---------- diagram 6 : roadmap flow ---------- */
+.flow{display:flex;flex-direction:column;padding:4px 0}
+#view-workflow .flow-step{display:flex;gap:14px;position:relative;padding:10px 12px;border-radius:12px;border:1px solid transparent;transition:background .2s ease,border-color .2s ease}
+#view-workflow .flow-step::before{content:"";position:absolute;left:27px;top:54px;bottom:-8px;width:2px;background:var(--border)}
+#view-workflow .flow-step:last-child::before{display:none}
+#view-workflow .flow-num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;z-index:1;transition:all .2s ease}
+#view-workflow .flow-body{flex:1;min-width:0;padding:2px 0 0}
+#view-workflow .flow-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#view-workflow .flow-note{font-size:12.5px;color:var(--muted);margin-top:2px;max-width:720px}
+#view-workflow .flow-step.on .flow-num{background:var(--accent);color:#0b101c;box-shadow:0 0 0 6px rgba(110,168,254,.16)}
+#view-workflow .flow-step.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.4)}
+#view-workflow .flow-step.warn .flow-num{border-color:var(--warn);color:var(--warn)}
+#view-workflow .flow-step.warn.on{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.45)}
+#view-workflow .flow-step.warn.on .flow-num{background:var(--warn);color:#0b101c}
+#view-workflow .flow-step.good .flow-num{border-color:var(--good);color:var(--good)}
+#view-workflow .flow-step.good.on{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.45)}
+#view-workflow .flow-step.good.on .flow-num{background:var(--good);color:#0b101c}
+#view-workflow .flow-step.violet .flow-num{border-color:var(--accent-2);color:var(--accent-2)}
+#view-workflow .flow-step.violet.on{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+#view-workflow .flow-step.violet.on .flow-num{background:var(--accent-2);color:#0b101c}
+#view-workflow .loop-band{display:flex;gap:12px;align-items:flex-start;background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.45);border-radius:12px;padding:12px 16px;margin:10px 0 0;font-size:13px}
+#view-workflow .loop-arrow{flex:0 0 auto;color:var(--accent-2);font-size:16px;font-weight:800;line-height:1.2}
+#view-workflow .loop-band .why{color:var(--muted);font-size:12px}
+#view-workflow .loop-band.warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.5)}
+#view-workflow .loop-band.warn .loop-arrow{color:var(--warn)}
+#view-workflow /* ---------- footer ---------- */
+.wf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+@media (max-width:820px){#view-workflow .duo, #view-workflow .lanes{grid-template-columns:1fr}
+#view-workflow .comp-grid{grid-template-columns:repeat(2,1fr)}
+#view-workflow .machine{flex-direction:column;gap:2px}
+#view-workflow .m-arrow{transform:rotate(90deg);height:12px}
+#view-workflow #workflow-content{padding:24px 14px 52px}
+#view-workflow .scope{display:none}
+
+}
+@media (max-width:480px){#view-workflow .comp-grid{grid-template-columns:1fr}
+
+}
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>Harness Engineering Explained in 20 Mins!</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=bsmUh5bTNZ4">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Translated from hi by this pipeline.</p>
+</header>
+<h1 id="harness-engineering-explained-in-20-mins">Harness Engineering Explained in 20 Mins!</h1>
+<p>The most important thing in AI right now has nothing to do with picking the right model — in fact, the teams shipping the most impressive AI systems will tell you the model is the easy part. This article, distilled from a video by AI educator and practitioner Aishwarya Srinivasan, explains what harness engineering is, why it is quickly becoming the discipline that separates AI demos from AI products, and how you can start practicing it this week. It is written for software engineers, AI engineers, and technical builders who want their agents to do dependable work for hours at a time rather than produce one-off answers.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<p>1. The Model Is the Easy Part 2. What a Harness Is — and Why a Model Alone Can&#x27;t Do Real Work - 2.1 The Horse and the Harness - 2.2 What an LLM Can and Cannot Do on Its Own - 2.3 Where Harness Engineering Sits Next to Prompt and Context Engineering - 2.4 A Term That Spread in Weeks - 2.5 Better Results Without a Better Model 3. Finding the Harness in the ChatGPT Desktop App - 3.1 Chat: A Thin Harness for Conversation - 3.2 Work: A Heavier Harness for Getting Things Done - 3.3 Codex: The Heaviest Harness of All 4. The Five Components of a Production-Grade Harness - 4.1 The System of Record - 4.2 Tools - 4.3 Feedback Loops and Verification - 4.4 Guardrails and Permissions - 4.5 Observability and Memory 5. A Five-Step Roadmap to Building Your Own Harness - 5.1 Step 1 — Create Your System of Record This Week - 5.2 Step 2 — Build a Verification Loop - 5.3 Step 3 — Choose Tools Deliberately - 5.4 Step 4 — Read Your Failures - 5.5 Step 5 — Build One Complete Harness for One Narrow Workflow 6. The Model Is the Commodity, the Harness Is the Product</p>
+<h2 id="1-the-model-is-the-easy-part">1. The Model Is the Easy Part</h2>
+<p>Walk into any conversation about building with AI and the question you will hear most often is &quot;which model should we use?&quot; The video argues this is the wrong question. The teams shipping the most impressive AI systems in 2026 will tell you that model selection is the easy part; the hard part, and the part where value is actually created, is everything wrapped around the model.</p>
+<p>The story that frames the whole video comes from OpenAI. A three-person team started with an empty repository in late August 2025, wrote no code themselves for five months, and ended up with a million lines of production code and 1,500 merged pull requests — every line of it generated by Codex, their coding agent. The detail the team obsessed over, according to the video, was not the prompt and not even the model. It was the harness: the execution environment that made the agent&#x27;s work possible, reviewable, and safe.</p>
+<p>The video covers three things. First, what a harness even is, and why a model by itself — no matter how smart — is genuinely handicapped without one. Second, a close look at a product most people use every day, the ChatGPT desktop app, to find the real harness inside its Chat, Work, and Codex experiences; the argument is that once you see it there, you will see it everywhere. Third, the five components of every production-grade harness, plus a step-by-step roadmap for building one yourself.</p>
+<p>The instructor&#x27;s background is worth noting as context: Aishwarya Srinivasan spent more than ten years in machine learning and AI, holding data-scientist roles at Microsoft, Google, and IBM, has a master&#x27;s degree in data science from Columbia University, and led developer relations at the AI startup Fireworks AI before leaving to build her own AI startup. She has also co-founded Gen Academy, an AI skill-building platform focused on what teams actually build in production. She frames harness engineering as building directly on top of two ideas she has covered in earlier videos, loop engineering and context engineering, both linked from the video&#x27;s description.</p>
+<h2 id="2-what-a-harness-is-and-why-a-model-alone-can-t-do-real-work">2. What a Harness Is — and Why a Model Alone Can&#x27;t Do Real Work</h2>
+<p>The name carries its own explanation. A horse is powerful and fast — but raw power is not useful work. Without a harness, a horse cannot pull a cart or plow a field. The harness is the piece of equipment that converts raw power into directed, useful work. In this analogy the model is the horse, and the harness is everything you build around it: the tools it is allowed to call and the schemas for calling them, the information piped into its context before each run, the checks that run on its outputs, the permission boundaries defining what it can touch, and the logging that records what it actually did.</p>
+<p>The reason this matters is that a large language model on its own is a far more limited object than most people realize. Strip away the product around it and what remains is a frozen set of weights that maps input tokens to output tokens — that is the entire interface. Concretely, the model by itself:</p>
+<ul><li>Has no persistent state — everything is gone once the context window closes.</li><li>Cannot execute code.</li><li>Cannot read a file from disk.</li><li>Cannot make an API call.</li><li>Cannot even verify a single claim it produces.</li></ul>
+<p>In other words, a bare LLM is a pure function: tokens in, tokens out. Everything you experience as &quot;AI doing useful work&quot; comes from the layer wrapped around that model, and that layer is the harness. Boiled down to a single phrase: the harness is the plumbing around the model.</p>
+<p>Harness engineering is easy to confuse with two terms you already know, and the video places all three precisely:</p>
+<ul><li><strong>Prompt engineering</strong> optimizes a single exchange: one instruction, one output. It is what you say to the horse.</li><li><strong>Context engineering</strong> manages what the model can see: what gets retrieved and what fits inside the context window. It is what you let the horse see.</li><li><strong>Harness engineering</strong> covers everything else that keeps the horse on the track. Neither of the other two disciplines addresses what happens when an agent runs autonomously for hours and makes hundreds of decisions without any supervision — and that gap is exactly what harness engineering fills.</li></ul>
+<p>Harness engineering is the deliberate design of that execution environment: which tools the agent gets, where its information comes from, how it validates its own work, and when it stops and hands control back to a human.</p>
+<p>The term itself is very new, and its origin story explains why it spread so fast. In February 2026, Mitchell Hashimoto — co-founder of HashiCorp and creator of Terraform — published a post about his AI adoption journey in which he described a stage he called &quot;engineering the harness.&quot; His rule was simple:</p>
+<blockquote>Every time an agent makes a mistake, you engineer the environment so it cannot make that mistake again. It is not a better prompt — it is a permanent fix.</blockquote>
+<p>Six days later, OpenAI published its write-up of the million lines of Codex-generated code, and Anthropic followed up with a piece on building efficient harnesses for long-running agents. Within weeks, the term was everywhere.</p>
+<p>If you suspect harness engineering is just model quality in disguise, the video points to a clean experiment on exactly this question: one engineer took 15 different LLMs and improved the coding performance of all of them in a single afternoon — without touching a single model. The only thing that changed was the harness. Same weights, better environment, measurably better results. That is the concept in its purest form.</p>
+<h2 id="3-finding-the-harness-in-the-chatgpt-desktop-app">3. Finding the Harness in the ChatGPT Desktop App</h2>
+<p>To make the idea concrete, the video takes a product that is sitting on most viewers&#x27; desktops and pulls back the layers. In July 2026, OpenAI merged the Codex app and the ChatGPT app into one desktop application containing three experiences: Chat, Work, and Codex. The detail most people missed, the video argues, is that the headline shipment that day was not a new model — it was a harness. The same underlying model family behaves like three completely different products depending on which of these environments it runs in.</p>
+<p>The Chat experience feels like just talking to a model, but it isn&#x27;t. Even here there is a thin harness at work, tuned for the turn-by-turn conversations that happen in a chat window:</p>
+<ul><li>A <strong>system prompt</strong> that shapes behavior before you type a single word.</li><li>A <strong>set of tools</strong> the model can invoke — for example, web search when you ask a question that needs fresh information.</li><li>A <strong>memory system</strong> that persists facts across your sessions.</li><li>A <strong>sandboxed Python environment</strong> for any file analysis.</li><li>Built-in <strong>image generation</strong>.</li><li><strong>Safety filters</strong> running on inputs and outputs.</li></ul>
+<p>Work mode is the same application with a toggle flipped, but now you are talking to an agent, not a model. It gathers context from your files and connected applications, decomposes a goal into steps, and runs for hours to produce finished documents, spreadsheets, and presentations. The model&#x27;s raw capability did not change — the harness got heavier. Work adds:</p>
+<ul><li>A <strong>planning loop</strong>.</li><li><strong>Connectors</strong> into your actual tools and the ability to take actions across them.</li><li><strong>Approval checkpoints</strong> where the agent pauses before doing anything consequential.</li><li><strong>Scheduled tasks</strong> that keep running even after you walk away.</li></ul>
+<p>Those approval checkpoints deserve attention: they are a guardrail, a harness component, placed there by an engineer who decided the agent should stop at exactly that point rather than guess. The video flags this as a detail to remember — it returns when the five components are laid out.</p>
+<p>Codex mode is the heaviest harness of the three and, for technical viewers, the most instructive. It gets a sandboxed execution environment or scoped access to a local folder, where you explicitly grant what it can touch. Before it writes a single line, it reads the <code>AGENTS.md</code> file at the root of your repository — your team&#x27;s accumulated instructions and conventions. It has a terminal, so it can actually run your build and your test suite and observe its own failures. It produces diffs for your review, inline, and it can actually review pull requests. Every capability is scoped, logged, and wrapped in a feedback loop.</p>
+<p>That, the video says, is exactly why the same intelligence that makes small talk in the Chat tab can autonomously refactor a codebase in the Codex tab: the weights of the model did not change — the environment and the harness did. So when someone asks &quot;which AI is the best?&quot;, the honest answer is that they are asking about the horse when they should be asking about the harness.</p>
+<h2 id="4-the-five-components-of-a-production-grade-harness">4. The Five Components of a Production-Grade Harness</h2>
+<p>Whenever you use Chat, Work, or Codex — or Claude Code on the Anthropic side — you are a harness <em>customer</em>: someone else engineered that environment for you. Harness engineering is learning to build that layer yourself, for your own agents and your own workflows. Which raises the obvious question: what is that layer actually made of?</p>
+<p>Almost every production system uses some combination of five components, and you will feel it even if one of them is missing.</p>
+<p>The first component is instruction files — the system of record for how an agent should work. If you have used Claude Code or Cursor, you have seen <code>CLAUDE.md</code> or <code>AGENTS.md</code> in the root of a project: a plain Markdown file the agent reads before working, containing the project structure, the conventions, the build commands, and the decisions your team has already made.</p>
+<p>The OpenAI team hit this trap directly. Without written answers to questions like &quot;what abstractions should I use?&quot;, the agent guesses — and guesses wrong, repeatedly. Their conclusion: if knowledge lives in Slack threads and Google Docs instead of the repository, the agents cannot really see it, so it might as well not exist. Everything the agent needs has to live where the agent works.</p>
+<p>The second component is tools: what can your agent actually do? Run shell commands, edit files, search the web, query a database, and so on. Most people fall into one of two extremes — access to everything, which makes behavior unpredictable, or access to almost nothing, which makes the agent talk but not really act. Good harness design sits in between: a small, deliberate set of tools, where you can justify for each one why the agent needs it.</p>
+<p>The third component is the one most people skip — and the video is explicit that you should not. An agent needs a way to check its own work without asking you. In code, that machinery already exists: a linter, a type checker, or a real test suite that runs automatically after every change, so the agent observes its own failures and fixes them before you even look at the output.</p>
+<p>The fourth component answers a different question: what is the agent explicitly <em>not</em> allowed to do? Which parts are read-only? Which commands require approval? At what point does it stop and ask, instead of guessing? The approval prompts you see in ChatGPT&#x27;s Work experience are this exact component, designed at OpenAI scale. Every serious agent tool exposes these settings — and most people never touch them. You need to set them deliberately.</p>
+<p>The fifth component is observability and memory. Observability is a record of everything the agent did: every tool call, every decision, every error. Memory carries useful state across different sessions, because the model itself cannot carry anything. When a run goes wrong — and it will — the record is the only way to reconstruct what happened, instead of guessing.</p>
+<h2 id="5-a-five-step-roadmap-to-building-your-own-harness">5. A Five-Step Roadmap to Building Your Own Harness</h2>
+<p>Theory is useful, but the video closes with the practitioner&#x27;s question: how do you actually go build one? The roadmap below is meant to be worked through week by week.</p>
+<p>The instruction file already has a home in every tool you might use. In Codex — whether the CLI or the Codex tab inside the ChatGPT desktop app — the file is <code>AGENTS.md</code> at your repository&#x27;s root, and Codex picks it up automatically. In Claude Code it is called <code>CLAUDE.md</code>, and you can run the <code>/init</code> command to have it generate a starting point for you. Cursor also reads <code>AGENTS.md</code>.</p>
+<p>Whatever tool you are in, write down four things: how the project is structured, how to run it, how to test it, and your top five conventions. Keep it under a page. Then adopt Hashimoto&#x27;s discipline as a personal rule: when the agent makes the same mistake twice, do not explain the fix in the chat — write it into the file permanently. Hashimoto has said that almost every line in the <code>AGENTS.md</code> of his own project came from a past agent failure. Once a rule is in the file, that mistake essentially never recurs. That single habit is harness engineering in miniature — and it compounds.</p>
+<p>Learn to build your own verification loop. In Python, that means a linter like Ruff plus a handful of real tests; the same idea applies in JavaScript with the standard tooling. Configure your agent to run those checks after every single change — in Claude Code you can wire this up with hooks so the checks fire automatically, instead of relying on the agent to remember.</p>
+<p>If your agent is not writing code, the principle still holds: define what correct output looks like, write a script or checklist that validates it, and make that check part of every single run. The goal is simple: agents should discover their own mistakes before you do.</p>
+<p>Before building anything custom, spend a week working inside one serious existing harness — either Claude Code or Codex — and actually study how it behaves. When does it ask for permission? How does it use your instruction file? How does it run your tests? You will learn more from watching a well-built harness than from any YouTube tutorial — including, as the video puts it, this one.</p>
+<p>Then extend outward: connect your agent to one real system you use every day, using MCP (the Model Context Protocol, covered in a separate video by the same instructor). For every single tool connection, ask the harness question: <em>What is the worst thing the agent could do with this access — and how have I done anything to prevent it?</em></p>
+<p>Turn on whatever logging your agent tool provides. When a run goes wrong, read through what the agent did, step by step. It might sound tedious, but it is the single highest-leverage habit in the entire video. Every failed run tells you exactly which piece of the harness to build next: is it a missing instruction, a missing check, or a tool the agent should never have had access to? As the video puts it, your harness roadmap is written in your failure logs.</p>
+<p>This is the graduation project. Pick one repetitive, well-defined task you will be doing every single week, and build the full loop around it: an instruction file, a small set of tools, automated verification, a clear set of permissions, and logging. It should be one workflow, end to end, running reliably without you babysitting it. Do that once, and you will understand the discipline at a level no blog post can ever teach you.</p>
+<h2 id="6-the-model-is-the-commodity-the-harness-is-the-product">6. The Model Is the Commodity, the Harness Is the Product</h2>
+<p>The video&#x27;s closing argument looks forward. In 2026 and 2027, the model is increasingly becoming the commodity in the stack: everyone has access to roughly the same frontier intelligence, especially with open-source models — the video name-checks the latest open releases such as Kimi K3 as worth trying out. What you actually compete on is the environment you build around the model: the instruction files, the feedback loops, the permissions, the observability. That is harness engineering, and it is increasingly becoming the standard for most companies.</p>
+<blockquote>You don&#x27;t get a better agent by finding a better model. You get a better agent by building it with a better harness.</blockquote>
+<p>At the end of the day, this is all software engineering — engineering and plumbing the thing around the model. For viewers who want to go further, the video points to its own follow-ups: earlier explainers on loop engineering and context engineering, a free live masterclass on building agentic loops and harnesses, and the six-week &quot;Mastering Agentic AI&quot; program at Gen Academy, which offers both no-code/low-code and code-heavy project tracks and runs cohorts with educational partners including NVIDIA, OpenAI, Pinecone, Replicate, and ElevenLabs.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>A bare LLM is a pure function — tokens in, tokens out. It has no memory, cannot run code, read files, make API calls, or verify its own claims; everything useful comes from the layer around it, and that layer is the harness.</li><li>Harness engineering sits on top of prompt engineering (what you say to the horse) and context engineering (what you let the horse see): it governs long-running, autonomous runs where an agent makes hundreds of unsupervised decisions.</li><li>The term went mainstream in weeks after Mitchell Hashimoto&#x27;s February 2026 post, OpenAI&#x27;s million-lines-of-Codex write-up, and Anthropic&#x27;s piece on harnesses for long-running agents — and an experiment improving all 15 tested LLMs without touching their weights shows the harness, not the model, drives measurable gains.</li><li>The ChatGPT desktop app demonstrates the idea: Chat runs on a thin harness, Work on a heavier one with planning loops, connectors, approval checkpoints, and scheduled tasks, and Codex on the heaviest — sandboxed execution, <code>AGENTS.md</code>, a terminal for running builds and tests, and inline diffs.</li><li>Five components make up a production-grade harness: system of record (instruction files), tools, feedback loops and verification, guardrails and permissions, and observability and memory.</li><li>Start by writing a short <code>AGENTS.md</code>/<code>CLAUDE.md</code> this week, and adopt Hashimoto&#x27;s rule: never explain the same mistake twice in chat — write the fix into the file permanently.</li><li>Wire automated checks (linters, tests, hooks) into every run, spend a week studying a serious existing harness before building your own, connect tools via MCP one at a time, and treat failure logs as your roadmap.</li><li>As model access commoditizes, competition shifts to the environment: instruction files, feedback loops, permissions, and observability.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=bsmUh5bTNZ4">Harness Engineering Explained in 20 Mins!</a></li><li>Channel: <a href="https://www.youtube.com/@aishwaryasrinivasan">Aishwarya Srinivasan</a></li><li>Fetched at: 2026-09-02T10:58:03.084913+00:00</li><li>Captions note: this article was written from captions transcribed in Hindi (<code>source_lang: hi</code>) and translated into English by this pipeline.</li></ul>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart LR
+    subgraph A1[&quot;Bare model alone&quot;]
+        direction TB
+        a1[&quot;No persistent state&quot;]
+        a2[&quot;Cannot run code or read files&quot;]
+        a3[&quot;Cannot make API calls&quot;]
+        a4[&quot;Cannot verify a claim&quot;]
+        a5[&quot;Pure function: tokens in, tokens out&quot;]
+        a1 --&gt; a2 --&gt; a3 --&gt; a4 --&gt; a5
+    end
+    subgraph A2[&quot;Same model in a harness&quot;]
+        direction TB
+        b1[&quot;Tools it may call&quot;]
+        b2[&quot;Context piped in before each run&quot;]
+        b3[&quot;Checks that run on outputs&quot;]
+        b4[&quot;Permission boundaries and logging&quot;]
+        b5[&quot;Directed, useful work&quot;]
+        b1 --&gt; b5
+        b2 --&gt; b5
+        b3 --&gt; b5
+        b4 --&gt; b5
+    end
+    a5 -. &quot;the difference is the harness&quot; .-&gt; b5
+</pre>
+<details><summary>Source</summary><pre><code>flowchart LR
+    subgraph A1[&quot;Bare model alone&quot;]
+        direction TB
+        a1[&quot;No persistent state&quot;]
+        a2[&quot;Cannot run code or read files&quot;]
+        a3[&quot;Cannot make API calls&quot;]
+        a4[&quot;Cannot verify a claim&quot;]
+        a5[&quot;Pure function: tokens in, tokens out&quot;]
+        a1 --&gt; a2 --&gt; a3 --&gt; a4 --&gt; a5
+    end
+    subgraph A2[&quot;Same model in a harness&quot;]
+        direction TB
+        b1[&quot;Tools it may call&quot;]
+        b2[&quot;Context piped in before each run&quot;]
+        b3[&quot;Checks that run on outputs&quot;]
+        b4[&quot;Permission boundaries and logging&quot;]
+        b5[&quot;Directed, useful work&quot;]
+        b1 --&gt; b5
+        b2 --&gt; b5
+        b3 --&gt; b5
+        b4 --&gt; b5
+    end
+    a5 -. &quot;the difference is the harness&quot; .-&gt; b5
+</code></pre></details>
+<figcaption>1. The Horse and the Harness: Turning Raw Power into Directed Work</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    P[&quot;Prompt engineering&quot;] --&gt; P1[&quot;What you say to the horse&quot;]
+    P1 --&gt; P2[&quot;One instruction, one output&quot;]
+    C[&quot;Context engineering&quot;] --&gt; C1[&quot;What you let the horse see&quot;]
+    C1 --&gt; C2[&quot;Retrieval that fits the window&quot;]
+    H[&quot;Harness engineering&quot;] --&gt; H1[&quot;Everything else that keeps the horse on the track&quot;]
+    H1 --&gt; H2[&quot;Which tools the agent gets&quot;]
+    H1 --&gt; H3[&quot;Where its information comes from&quot;]
+    H1 --&gt; H4[&quot;How it validates its own work&quot;]
+    H1 --&gt; H5[&quot;When it stops and hands back to a human&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    P[&quot;Prompt engineering&quot;] --&gt; P1[&quot;What you say to the horse&quot;]
+    P1 --&gt; P2[&quot;One instruction, one output&quot;]
+    C[&quot;Context engineering&quot;] --&gt; C1[&quot;What you let the horse see&quot;]
+    C1 --&gt; C2[&quot;Retrieval that fits the window&quot;]
+    H[&quot;Harness engineering&quot;] --&gt; H1[&quot;Everything else that keeps the horse on the track&quot;]
+    H1 --&gt; H2[&quot;Which tools the agent gets&quot;]
+    H1 --&gt; H3[&quot;Where its information comes from&quot;]
+    H1 --&gt; H4[&quot;How it validates its own work&quot;]
+    H1 --&gt; H5[&quot;When it stops and hands back to a human&quot;]
+</code></pre></details>
+<figcaption>2. Three Disciplines: Prompt, Context, and Harness Engineering</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    M[&quot;Same model family — one desktop app&quot;]
+    M --&gt; c1
+    M --&gt; w1
+    M --&gt; x1
+    subgraph S1[&quot;Chat — thin harness&quot;]
+        direction TB
+        c1[&quot;System prompt shapes behavior&quot;]
+        c2[&quot;Web search and a few tools&quot;]
+        c3[&quot;Memory across sessions&quot;]
+        c4[&quot;Sandboxed Python and image generation&quot;]
+        c1 --&gt; c2 --&gt; c3 --&gt; c4
+    end
+    subgraph S2[&quot;Work — heavier harness&quot;]
+        direction TB
+        w1[&quot;Planning loop&quot;]
+        w2[&quot;Connectors that take actions&quot;]
+        w3[&quot;Approval checkpoints&quot;]
+        w4[&quot;Scheduled tasks&quot;]
+        w1 --&gt; w2 --&gt; w3 --&gt; w4
+    end
+    subgraph S3[&quot;Codex — heaviest harness&quot;]
+        direction TB
+        x1[&quot;Scoped access to a folder&quot;]
+        x2[&quot;Reads AGENTS.md conventions&quot;]
+        x3[&quot;Terminal for builds and tests&quot;]
+        x4[&quot;Inline diffs and PR review&quot;]
+        x1 --&gt; x2 --&gt; x3 --&gt; x4
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    M[&quot;Same model family — one desktop app&quot;]
+    M --&gt; c1
+    M --&gt; w1
+    M --&gt; x1
+    subgraph S1[&quot;Chat — thin harness&quot;]
+        direction TB
+        c1[&quot;System prompt shapes behavior&quot;]
+        c2[&quot;Web search and a few tools&quot;]
+        c3[&quot;Memory across sessions&quot;]
+        c4[&quot;Sandboxed Python and image generation&quot;]
+        c1 --&gt; c2 --&gt; c3 --&gt; c4
+    end
+    subgraph S2[&quot;Work — heavier harness&quot;]
+        direction TB
+        w1[&quot;Planning loop&quot;]
+        w2[&quot;Connectors that take actions&quot;]
+        w3[&quot;Approval checkpoints&quot;]
+        w4[&quot;Scheduled tasks&quot;]
+        w1 --&gt; w2 --&gt; w3 --&gt; w4
+    end
+    subgraph S3[&quot;Codex — heaviest harness&quot;]
+        direction TB
+        x1[&quot;Scoped access to a folder&quot;]
+        x2[&quot;Reads AGENTS.md conventions&quot;]
+        x3[&quot;Terminal for builds and tests&quot;]
+        x4[&quot;Inline diffs and PR review&quot;]
+        x1 --&gt; x2 --&gt; x3 --&gt; x4
+    end
+</code></pre></details>
+<figcaption>3. Chat, Work, and Codex: Three Harnesses in One App</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    H[&quot;Production-grade harness&quot;] --&gt; C1[&quot;1. System of record&quot;]
+    H --&gt; C2[&quot;2. Tools&quot;]
+    H --&gt; C3[&quot;3. Feedback loops and verification&quot;]
+    H --&gt; C4[&quot;4. Guardrails and permissions&quot;]
+    H --&gt; C5[&quot;5. Observability and memory&quot;]
+    C1 --&gt; E1[&quot;AGENTS.md and CLAUDE.md&quot;]
+    C2 --&gt; E2[&quot;A small, deliberate set&quot;]
+    C3 --&gt; E3[&quot;Linters, type checks, test suites&quot;]
+    C4 --&gt; E4[&quot;Read-only scopes and approval gates&quot;]
+    C5 --&gt; E5[&quot;Logs and memory across sessions&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    H[&quot;Production-grade harness&quot;] --&gt; C1[&quot;1. System of record&quot;]
+    H --&gt; C2[&quot;2. Tools&quot;]
+    H --&gt; C3[&quot;3. Feedback loops and verification&quot;]
+    H --&gt; C4[&quot;4. Guardrails and permissions&quot;]
+    H --&gt; C5[&quot;5. Observability and memory&quot;]
+    C1 --&gt; E1[&quot;AGENTS.md and CLAUDE.md&quot;]
+    C2 --&gt; E2[&quot;A small, deliberate set&quot;]
+    C3 --&gt; E3[&quot;Linters, type checks, test suites&quot;]
+    C4 --&gt; E4[&quot;Read-only scopes and approval gates&quot;]
+    C5 --&gt; E5[&quot;Logs and memory across sessions&quot;]
+</code></pre></details>
+<figcaption>4. The Five Components of a Production-Grade Harness</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Plan: goal arrives
+    Plan --&gt; Act: break it into steps
+    Act --&gt; Verify: the agent takes an action
+    Verify --&gt; Fix: a check fails
+    Fix --&gt; Verify: it corrects its own work
+    Verify --&gt; Handoff: every check passes
+    Handoff --&gt; [*]
+</pre>
+<details><summary>Source</summary><pre><code>stateDiagram-v2
+    [*] --&gt; Plan: goal arrives
+    Plan --&gt; Act: break it into steps
+    Act --&gt; Verify: the agent takes an action
+    Verify --&gt; Fix: a check fails
+    Fix --&gt; Verify: it corrects its own work
+    Verify --&gt; Handoff: every check passes
+    Handoff --&gt; [*]
+</code></pre></details>
+<figcaption>5. The Verification Loop: An Agent That Checks Its Own Work</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    S1[&quot;Step 1 — write the system of record this week&quot;] --&gt; S2[&quot;Step 2 — build a verification loop&quot;]
+    S2 --&gt; S3[&quot;Step 3 — choose tools deliberately&quot;]
+    S3 --&gt; S4[&quot;Step 4 — read your failures&quot;]
+    S4 --&gt; S5[&quot;Step 5 — one harness for one narrow workflow&quot;]
+    S5 --&gt; O[&quot;Runs end to end without babysitting&quot;]
+    S4 -. &quot;each failure names the next fix&quot; .-&gt; S1
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    S1[&quot;Step 1 — write the system of record this week&quot;] --&gt; S2[&quot;Step 2 — build a verification loop&quot;]
+    S2 --&gt; S3[&quot;Step 3 — choose tools deliberately&quot;]
+    S3 --&gt; S4[&quot;Step 4 — read your failures&quot;]
+    S4 --&gt; S5[&quot;Step 5 — one harness for one narrow workflow&quot;]
+    S5 --&gt; O[&quot;Runs end to end without babysitting&quot;]
+    S4 -. &quot;each failure names the next fix&quot; .-&gt; S1
+</code></pre></details>
+<figcaption>6. The Five-Step Roadmap: From One File to One Workflow</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+<style>
+:root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+#workflow-content{max-width:1040px;margin:0 auto;padding:34px 26px 60px;background:var(--bg)}
+
+/* ---------- header ---------- */
+.wf-header{margin-bottom:22px}
+.wf-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px}
+.wf-eyebrow::before{content:"";width:22px;height:2px;background:var(--accent-2);border-radius:2px}
+.wf-header h1{font-size:clamp(22px,3.4vw,34px);line-height:1.2;font-weight:800;letter-spacing:-.01em;max-width:780px}
+.wf-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.chip.channel .dot{background:var(--accent-2)}
+.chip.good .dot{background:var(--good)}
+
+/* ---------- tabs ---------- */
+.wf-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;background:var(--bg);padding:4px 0}
+.wf-tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;transition:all .18s ease}
+.wf-tab:hover{color:var(--text);border-color:var(--accent)}
+.wf-tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+
+/* ---------- diagram panels ---------- */
+.dgm{display:none;animation:fadeIn .25s ease}
+.dgm.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.dgm-title{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:2px 0 4px}
+.dgm-section{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.dgm-sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:860px}
+.controls{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
+.ctl{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease}
+.ctl:hover{border-color:var(--accent);color:var(--accent)}
+.ctl-state{font-size:11.5px;color:var(--muted);font-weight:700;background:var(--panel);border:1px solid var(--border);padding:6px 11px;border-radius:8px;letter-spacing:.03em}
+
+/* ---------- tooltips ---------- */
+[data-tip]{position:relative;cursor:help}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);background:#0b101c;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;line-height:1.45;padding:7px 10px;border-radius:8px;width:max-content;max-width:250px;opacity:0;pointer-events:none;transition:opacity .15s ease;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+[data-tip]:hover::after{opacity:1}
+
+/* ---------- diagram 1 : two-column compare ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0 16px}
+.duo-card{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--bad);border-radius:12px;padding:15px 16px}
+.duo-card.good{border-top-color:var(--good)}
+.duo-tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--bad);margin-bottom:3px}
+.duo-card.good .duo-tag{color:var(--good)}
+.duo-card h3{font-size:15.5px;font-weight:800;margin-bottom:10px}
+.duo-card ul{list-style:none;font-size:12.5px;color:var(--muted)}
+.duo-card li{padding:4px 0 4px 16px;position:relative}
+.duo-card li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:2px;background:var(--bad)}
+.duo-card.good li::before{background:var(--good)}
+.duo-out{margin-top:11px;padding-top:9px;border-top:1px solid var(--border);font-size:12.5px;font-weight:700;color:var(--text)}
+.rule-card{display:flex;gap:12px;align-items:flex-start;background:rgba(110,168,254,.06);border:1px dashed rgba(110,168,254,.5);border-radius:12px;padding:13px 16px;font-size:13px}
+.rule-card .flag{flex:0 0 auto;color:var(--accent);font-weight:800}
+.rule-card strong{display:block;margin-bottom:2px}
+.rule-card.warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.5)}
+.rule-card.warn .flag{color:var(--warn)}
+.rule-card.good{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.5)}
+.rule-card.good .flag{color:var(--good)}
+
+/* ---------- diagram 2 : discipline stack ---------- */
+.discs{display:flex;flex-direction:column;margin:4px 0 6px}
+.disc{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:13px 16px;transition:all .2s ease;cursor:default}
+.disc:nth-of-type(2){border-left-color:var(--accent-2)}
+.disc:nth-of-type(3){border-left-color:var(--warn)}
+.disc-top{flex:1;min-width:0}
+.disc-name{font-size:14.5px;font-weight:800}
+.disc-q{font-size:12.5px;color:var(--muted);margin-top:1px}
+.scope{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:4px 11px;white-space:nowrap}
+.disc-arr{display:flex;flex-direction:column;align-items:center;color:var(--border);font-size:11px;line-height:1;margin:2px 0}
+.disc.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.5);box-shadow:0 0 0 3px rgba(110,168,254,.12)}
+.discs .mini-row{margin-top:10px}
+
+/* ---------- lanes / chips ---------- */
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 14px}
+.lane{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;padding:13px 14px}
+.lane.violet{border-top-color:var(--accent-2)}
+.lane.amber{border-top-color:var(--warn)}
+.lane-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:3px}
+.lane-name{font-size:13.5px;font-weight:800}
+.weight{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.4);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.lane.violet .weight{color:var(--accent-2);background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.4)}
+.lane.amber .weight{color:var(--warn);background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.4)}
+.lane-desc{font-size:12px;color:var(--muted);margin-bottom:9px}
+.lane-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+.lane .tag{border-color:rgba(110,168,254,.35);color:var(--accent)}
+.lane.violet .tag{border-color:rgba(167,139,250,.35);color:var(--accent-2)}
+.lane.amber .tag{border-color:rgba(251,191,36,.35);color:var(--warn)}
+.lane-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:11px 15px;margin:4px 0 12px;font-size:13px;color:var(--muted)}
+.lane-banner b{color:var(--text)}
+.hand{display:inline-flex;align-items:center;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text)}
+.hand-arrow{color:var(--accent-2);font-weight:800;font-size:12px}
+
+/* ---------- diagram 4 : component grid ---------- */
+.comp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:6px 0 14px}
+.comp{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:13px 13px 12px;display:flex;flex-direction:column;gap:8px;transition:all .2s ease}
+.comp.c1{border-top-color:var(--accent)}
+.comp.c2{border-top-color:var(--accent-2)}
+.comp.c3{border-top-color:var(--good)}
+.comp.c4{border-top-color:var(--warn)}
+.comp.c5{border-top-color:var(--bad)}
+.comp.on{transform:translateY(-3px);box-shadow:0 8px 22px rgba(110,168,254,.22)}
+.comp.c2.on{box-shadow:0 8px 22px rgba(167,139,250,.22)}
+.comp.c3.on{box-shadow:0 8px 22px rgba(52,211,153,.22)}
+.comp.c4.on{box-shadow:0 8px 22px rgba(251,191,36,.22)}
+.comp.c5.on{box-shadow:0 8px 22px rgba(248,113,113,.22)}
+.comp-num{font-size:20px;font-weight:800;color:var(--muted);line-height:1}
+.comp-name{font-size:13px;font-weight:800;line-height:1.3}
+.comp-note{font-size:11.5px;color:var(--muted);line-height:1.55;flex:1}
+.mini-tags{display:flex;flex-wrap:wrap;gap:5px}
+.mini{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+
+/* ---------- diagram 5 : verification machine ---------- */
+.machine{display:flex;align-items:stretch;gap:4px;margin:4px 0}
+.m-state{flex:1;min-width:0;background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:12px 10px;text-align:center;transition:all .2s ease}
+.m-state .who{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.m-state .what{font-size:12.5px;font-weight:700;line-height:1.35}
+.m-state.a{border-top-color:var(--accent)}
+.m-state.b{border-top-color:var(--accent-2)}
+.m-state.c{border-top-color:var(--good)}
+.m-state.d{border-top-color:var(--warn)}
+.m-state.on{transform:translateY(-3px)}
+.m-state.a.on{box-shadow:0 8px 22px rgba(110,168,254,.3)}
+.m-state.b.on{box-shadow:0 8px 22px rgba(167,139,250,.3)}
+.m-state.c.on{box-shadow:0 8px 22px rgba(52,211,153,.3)}
+.m-state.d.on{box-shadow:0 8px 22px rgba(251,191,36,.3)}
+.m-arrow{display:flex;align-items:center;justify-content:center;color:var(--border);font-size:16px;font-weight:800}
+.fix-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0 6px}
+.fix-card{display:inline-flex;align-items:center;gap:10px;background:rgba(251,191,36,.07);border:1px dashed rgba(251,191,36,.55);border-radius:12px;padding:11px 16px;font-size:13px;transition:all .2s ease}
+.fix-card .flag{color:var(--warn);font-weight:800}
+.fix-card b{white-space:nowrap}
+.fix-card.on{background:rgba(251,191,36,.16);box-shadow:0 0 0 3px rgba(251,191,36,.15)}
+.fix-return{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.msg{margin:12px 0 0;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:11px 14px;font-size:13px;min-height:44px}
+
+/* ---------- diagram 6 : roadmap flow ---------- */
+.flow{display:flex;flex-direction:column;padding:4px 0}
+.flow-step{display:flex;gap:14px;position:relative;padding:10px 12px;border-radius:12px;border:1px solid transparent;transition:background .2s ease,border-color .2s ease}
+.flow-step::before{content:"";position:absolute;left:27px;top:54px;bottom:-8px;width:2px;background:var(--border)}
+.flow-step:last-child::before{display:none}
+.flow-num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;z-index:1;transition:all .2s ease}
+.flow-body{flex:1;min-width:0;padding:2px 0 0}
+.flow-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-note{font-size:12.5px;color:var(--muted);margin-top:2px;max-width:720px}
+.flow-step.on .flow-num{background:var(--accent);color:#0b101c;box-shadow:0 0 0 6px rgba(110,168,254,.16)}
+.flow-step.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.4)}
+.flow-step.warn .flow-num{border-color:var(--warn);color:var(--warn)}
+.flow-step.warn.on{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.45)}
+.flow-step.warn.on .flow-num{background:var(--warn);color:#0b101c}
+.flow-step.good .flow-num{border-color:var(--good);color:var(--good)}
+.flow-step.good.on{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.45)}
+.flow-step.good.on .flow-num{background:var(--good);color:#0b101c}
+.flow-step.violet .flow-num{border-color:var(--accent-2);color:var(--accent-2)}
+.flow-step.violet.on{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.flow-step.violet.on .flow-num{background:var(--accent-2);color:#0b101c}
+.loop-band{display:flex;gap:12px;align-items:flex-start;background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.45);border-radius:12px;padding:12px 16px;margin:10px 0 0;font-size:13px}
+.loop-arrow{flex:0 0 auto;color:var(--accent-2);font-size:16px;font-weight:800;line-height:1.2}
+.loop-band .why{color:var(--muted);font-size:12px}
+.loop-band.warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.5)}
+.loop-band.warn .loop-arrow{color:var(--warn)}
+
+/* ---------- footer ---------- */
+.wf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+@media (max-width:820px){
+  .duo,.lanes{grid-template-columns:1fr}
+  .comp-grid{grid-template-columns:repeat(2,1fr)}
+  .machine{flex-direction:column;gap:2px}
+  .m-arrow{transform:rotate(90deg);height:12px}
+  #workflow-content{padding:24px 14px 52px}
+  .scope{display:none}
+}
+@media (max-width:480px){
+  .comp-grid{grid-template-columns:1fr}
+}
+</style>
+
+<header class="wf-header">
+  <div class="wf-eyebrow">Workflow diagrams</div>
+  <h1>Harness Engineering Explained in 20 Mins!</h1>
+  <div class="wf-meta">
+    <span class="chip channel"><span class="dot"></span>Aishwarya Srinivasan</span>
+    <span class="chip"><span class="dot"></span>6 diagrams</span>
+    <span class="chip good"><span class="dot"></span>model · harness · work</span>
+  </div>
+</header>
+
+<nav class="wf-tabs" role="tablist" aria-label="Diagrams">
+  <button class="wf-tab active" data-tab="d1" role="tab" aria-selected="true">1 · Horse and Harness</button>
+  <button class="wf-tab" data-tab="d2" role="tab" aria-selected="false">2 · Three Disciplines</button>
+  <button class="wf-tab" data-tab="d3" role="tab" aria-selected="false">3 · Chat · Work · Codex</button>
+  <button class="wf-tab" data-tab="d4" role="tab" aria-selected="false">4 · Five Components</button>
+  <button class="wf-tab" data-tab="d5" role="tab" aria-selected="false">5 · Verification Loop</button>
+  <button class="wf-tab" data-tab="d6" role="tab" aria-selected="false">6 · Five-Step Roadmap</button>
+</nav>
+
+<!-- ============ DIAGRAM 1 : HORSE AND HARNESS ============ -->
+<section class="dgm active" id="d1" role="tabpanel">
+  <div class="dgm-section">Section 2 · What a harness is — and why a model alone cannot do real work</div>
+  <h2 class="dgm-title">1. The Horse and the Harness: Raw Power into Directed Work</h2>
+  <p class="dgm-sub">A horse is powerful and fast — but raw power is not useful work. The harness is the equipment that converts raw power into directed work. In this analogy the model is the horse, and the harness is everything you build around it.</p>
+
+  <div class="duo">
+    <div class="duo-card">
+      <div class="duo-tag">A frozen set of weights</div>
+      <h3>A bare LLM, by itself</h3>
+      <ul>
+        <li data-tip="Everything is gone once the context window closes">Has no persistent state</li>
+        <li data-tip="Its only interface maps input tokens to output tokens">Cannot execute code</li>
+        <li data-tip="No disk, no network — nothing outside the conversation">Cannot read a file or make an API call</li>
+        <li data-tip="It cannot check a single claim it produces">Cannot verify its own output</li>
+      </ul>
+      <div class="duo-out">A pure function: tokens in, tokens out.</div>
+    </div>
+    <div class="duo-card good">
+      <div class="duo-tag">The plumbing around the model</div>
+      <h3>The same model, in a harness</h3>
+      <ul>
+        <li data-tip="What it may call, plus the schemas for calling it">Tools and call schemas</li>
+        <li data-tip="The information piped into its context before each run">Context loaded per run</li>
+        <li data-tip="Checks that run on everything it produces">Checks on its outputs</li>
+        <li data-tip="Permission boundaries defining what it can touch">Permissions and guardrails</li>
+        <li data-tip="A record of what it actually did">Logging and memory</li>
+      </ul>
+      <div class="duo-out">Directed, useful work — everything you experience as “AI doing useful work”.</div>
+    </div>
+  </div>
+
+  <div class="rule-card good"><span class="flag">!</span><div><strong>Better results without a better model</strong>In a clean experiment, one engineer improved the coding performance of 15 different LLMs in a single afternoon — without touching a single model. Same weights, better environment, measurably better results.</div></div>
+</section>
+
+<!-- ============ DIAGRAM 2 : THREE DISCIPLINES ============ -->
+<section class="dgm" id="d2" role="tabpanel">
+  <div class="dgm-section">Section 2.3 · Where harness engineering sits next to prompt and context engineering</div>
+  <h2 class="dgm-title">2. Three Disciplines: Prompt, Context, and Harness Engineering</h2>
+  <p class="dgm-sub">Prompt engineering optimizes a single exchange. Context engineering manages what the model can see. Harness engineering covers everything else that keeps the horse on the track — the gap the other two disciplines do not fill.</p>
+  <div class="controls">
+    <span class="ctl-state" id="st2">Layer 1 of 3</span>
+    <button class="ctl" id="play2">Walk the layers</button>
+    <button class="ctl" id="reset2">Reset</button>
+  </div>
+
+  <div class="discs" id="discs2">
+    <div class="disc" data-step="1">
+      <div class="disc-top"><div class="disc-name">Prompt engineering</div><div class="disc-q">What you say to the horse — one instruction, one output.</div></div>
+      <span class="scope">single exchange</span>
+    </div>
+    <div class="disc-arr">▼</div>
+    <div class="disc" data-step="2">
+      <div class="disc-top"><div class="disc-name">Context engineering</div><div class="disc-q">What you let the horse see — what gets retrieved and what fits inside the context window.</div></div>
+      <span class="scope">inside the window</span>
+    </div>
+    <div class="disc-arr">▼</div>
+    <div class="disc" data-step="3">
+      <div class="disc-top"><div class="disc-name">Harness engineering</div><div class="disc-q">Everything else that keeps the horse on the track — the deliberate design of the execution environment for long, unsupervised runs.</div></div>
+      <span class="scope">hours · hundreds of decisions</span>
+    </div>
+  </div>
+  <div class="lane-tags" style="margin:4px 0 0 46px">
+    <span class="tag" data-tip="Which tools the agent gets">tool selection</span>
+    <span class="tag" data-tip="Where the agent's information comes from">information sources</span>
+    <span class="tag" data-tip="How the agent validates its own work">self-validation</span>
+    <span class="tag" data-tip="When it stops and hands control back to a human">stop and hand off</span>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 3 : CHAT / WORK / CODEX ============ -->
+<section class="dgm" id="d3" role="tabpanel">
+  <div class="dgm-section">Section 3 · Finding the harness in the ChatGPT desktop app</div>
+  <h2 class="dgm-title">3. Chat, Work, and Codex: Three Harnesses in One App</h2>
+  <p class="dgm-sub">The same underlying model family behaves like three completely different products depending on which environment it runs in. The headline shipment was not a new model — it was a heavier harness.</p>
+
+  <div class="lane-banner"><b>One model family</b><span class="hand-arrow">→</span><span class="hand" data-tip="Thin harness tuned for turn-by-turn conversation">Chat</span><span class="hand" data-tip="Heavier harness that plans, connects, and runs for hours">Work</span><span class="hand" data-tip="The heaviest harness — sandboxed, scoped, logged">Codex</span><span class="hand-arrow">→</span><b style="color:var(--accent-2)">three products</b></div>
+
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-head"><div class="lane-name">Chat</div><span class="weight">thinnest</span></div>
+      <div class="lane-desc">Turn-by-turn conversation — still a harness, just tuned thin.</div>
+      <div class="lane-tags">
+        <span class="tag" data-tip="Shapes behavior before you type a single word">system prompt</span>
+        <span class="tag" data-tip="Web search fires when a question needs fresh information">web search</span>
+        <span class="tag" data-tip="Persists facts across your sessions">memory</span>
+        <span class="tag" data-tip="Sandboxed Python for file analysis">sandboxed Python</span>
+        <span class="tag" data-tip="Safety filters run on inputs and outputs">safety filters</span>
+      </div>
+    </div>
+    <div class="lane violet">
+      <div class="lane-head"><div class="lane-name">Work</div><span class="weight">heavier</span></div>
+      <div class="lane-desc">The same app with a toggle flipped — now you are talking to an agent.</div>
+      <div class="lane-tags">
+        <span class="tag" data-tip="Decomposes a goal into steps and runs for hours">planning loop</span>
+        <span class="tag" data-tip="Reaches into your files and connected apps and takes actions across them">connectors</span>
+        <span class="tag" data-tip="Pauses before anything consequential — a guardrail placed by an engineer">approval checkpoints</span>
+        <span class="tag" data-tip="Keep running even after you walk away">scheduled tasks</span>
+      </div>
+    </div>
+    <div class="lane amber">
+      <div class="lane-head"><div class="lane-name">Codex</div><span class="weight">heaviest</span></div>
+      <div class="lane-desc">Built for autonomous engineering — every capability scoped, logged, and looped.</div>
+      <div class="lane-tags">
+        <span class="tag" data-tip="Sandboxed execution or a local folder you explicitly grant">scoped access</span>
+        <span class="tag" data-tip="Reads your team's accumulated instructions before writing a line">AGENTS.md</span>
+        <span class="tag" data-tip="Runs your build and tests, observing its own failures">terminal</span>
+        <span class="tag" data-tip="Diffs for review, inline — plus pull request review">inline diffs</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-card warn"><span class="flag">!</span><div><strong>Approval checkpoints deserve attention</strong>They are a guardrail — a harness component placed by an engineer who decided the agent should stop at exactly that point rather than guess. This detail returns when the five components are laid out.</div></div>
+</section>
+
+<!-- ============ DIAGRAM 4 : FIVE COMPONENTS ============ -->
+<section class="dgm" id="d4" role="tabpanel">
+  <div class="dgm-section">Section 4 · The five components of a production-grade harness</div>
+  <h2 class="dgm-title">4. The Five Components of a Production-Grade Harness</h2>
+  <p class="dgm-sub">Whenever you use Chat, Work, or Codex — or Claude Code on the Anthropic side — you are a harness customer. Almost every production system uses some combination of these five components, and you feel it when one is missing.</p>
+  <div class="controls">
+    <span class="ctl-state" id="st4">Component 1 of 5</span>
+    <button class="ctl" id="play4">Walk the components</button>
+    <button class="ctl" id="reset4">Reset</button>
+  </div>
+
+  <div class="comp-grid">
+    <div class="comp c1" data-step="1">
+      <div class="comp-num">1</div>
+      <div class="comp-name">System of record</div>
+      <div class="comp-note">How the agent should work, written down where the agent works — not in Slack threads.</div>
+      <div class="mini-tags"><span class="mini">AGENTS.md</span><span class="mini">CLAUDE.md</span></div>
+    </div>
+    <div class="comp c2" data-step="2">
+      <div class="comp-num">2</div>
+      <div class="comp-name">Tools</div>
+      <div class="comp-note">What the agent can actually do — a small, deliberate set you can justify for each one.</div>
+      <div class="mini-tags"><span class="mini">shell</span><span class="mini">file edits</span><span class="mini">web search</span><span class="mini">database</span></div>
+    </div>
+    <div class="comp c3" data-step="3">
+      <div class="comp-num">3</div>
+      <div class="comp-name">Feedback loops and verification</div>
+      <div class="comp-note">The component most people skip: a way to check its own work without asking you.</div>
+      <div class="mini-tags"><span class="mini">linter</span><span class="mini">type checker</span><span class="mini">test suite</span></div>
+    </div>
+    <div class="comp c4" data-step="4">
+      <div class="comp-num">4</div>
+      <div class="comp-name">Guardrails and permissions</div>
+      <div class="comp-note">What the agent is explicitly not allowed to do — and at what point it stops and asks.</div>
+      <div class="mini-tags"><span class="mini">read-only scopes</span><span class="mini">approval gates</span></div>
+    </div>
+    <div class="comp c5" data-step="5">
+      <div class="comp-num">5</div>
+      <div class="comp-name">Observability and memory</div>
+      <div class="comp-note">A record of every tool call and decision, plus useful state carried across sessions.</div>
+      <div class="mini-tags"><span class="mini">logs</span><span class="mini">cross-session memory</span></div>
+    </div>
+  </div>
+
+  <div class="rule-card warn"><span class="flag">!</span><div><strong>Component 4, at product scale</strong>The approval prompts in ChatGPT's Work experience are exactly this component — designed at OpenAI scale. Every serious agent tool exposes these settings, and most people never touch them. Set them deliberately.</div></div>
+</section>
+
+<!-- ============ DIAGRAM 5 : VERIFICATION LOOP ============ -->
+<section class="dgm" id="d5" role="tabpanel">
+  <div class="dgm-section">Section 4.3 · Feedback loops and verification — and Step 2 of the roadmap</div>
+  <h2 class="dgm-title">5. The Verification Loop: An Agent That Checks Its Own Work</h2>
+  <p class="dgm-sub">An agent needs a way to check its own work without asking you. In code, that machinery already exists: a linter, a type checker, or a real test suite that runs automatically after every change — so the agent observes its own failures and fixes them before you ever look.</p>
+  <div class="controls">
+    <span class="ctl-state" id="st5">Step 1 of 6</span>
+    <button class="ctl" id="play5">Run the loop</button>
+    <button class="ctl" id="reset5">Reset</button>
+  </div>
+
+  <div class="machine">
+    <div class="m-state a" data-s="1"><div class="who">1 · Plan</div><div class="what">Break the goal into steps</div></div>
+    <div class="m-arrow"><span>→</span></div>
+    <div class="m-state b" data-s="2"><div class="who">2 · Act</div><div class="what">Edit, run, call — take an action</div></div>
+    <div class="m-arrow"><span>→</span></div>
+    <div class="m-state c" data-s="3"><div class="who">3 · Verify</div><div class="what">Checks fire after every change</div></div>
+    <div class="m-arrow"><span>→</span></div>
+    <div class="m-state d" data-s="4"><div class="who">4 · Hand off</div><div class="what">Work returns to you</div></div>
+  </div>
+
+  <div class="fix-row">
+    <span class="fix-return">✕ a check fails</span>
+    <div class="fix-card" id="fix5"><span class="flag">↺</span><b>Fix</b><span style="color:var(--muted)">the agent corrects its own work, then verification reruns</span></div>
+  </div>
+
+  <div class="msg" id="msg5">Press “Run the loop” to walk one full cycle — a failing check, a fix, and a clean hand-off.</div>
+
+  <div class="loop-band warn"><span class="loop-arrow">↺</span><div><strong>Why this matters</strong>Agents should discover their own mistakes before you do. Define what correct output looks like, write a script or checklist that validates it, and make that check part of every single run — with hooks, not by relying on the agent to remember. <span class="why">If your agent is not writing code, the principle still holds: the check just takes a different shape.</span></div></div>
+</section>
+
+<!-- ============ DIAGRAM 6 : ROADMAP ============ -->
+<section class="dgm" id="d6" role="tabpanel">
+  <div class="dgm-section">Section 5 · A five-step roadmap to building your own harness</div>
+  <h2 class="dgm-title">6. The Five-Step Roadmap: From One File to One Workflow</h2>
+  <p class="dgm-sub">Theory is useful — but this roadmap is meant to be worked through week by week, and it ends with a graduation project: one narrow workflow running end to end without you babysitting it.</p>
+  <div class="controls">
+    <span class="ctl-state" id="st6">Step 1 of 6</span>
+    <button class="ctl" id="play6">Walk the roadmap</button>
+    <button class="ctl" id="reset6">Reset</button>
+  </div>
+
+  <div class="flow" id="flow6">
+    <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">Create your system of record — this week</div><div class="flow-note">Write down how the project is structured, how to run it, how to test it, and your top five conventions — under a page. In Codex it is <b>AGENTS.md</b>; in Claude Code it is <b>CLAUDE.md</b> (the <b>/init</b> command writes a starting point). Then adopt Hashimoto's rule: when the agent makes the same mistake twice, do not explain the fix in chat — write it into the file permanently.</div></div></div>
+    <div class="flow-step" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Build a verification loop</div><div class="flow-note">A linter like Ruff plus a handful of real tests in Python — the same idea with standard tooling in JavaScript. Configure the checks to fire after every single change, e.g. with Claude Code hooks, so they run automatically instead of relying on the agent to remember.</div></div></div>
+    <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Choose tools deliberately</div><div class="flow-note">Spend a week inside one serious existing harness — Claude Code or Codex — and study when it asks for permission, how it uses the instruction file, how it runs tests. Then connect one real system you use daily via MCP, and for every connection ask the harness question: what is the worst thing the agent could do with this access — and how have I prevented it?</div></div></div>
+    <div class="flow-step warn" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">Read your failures</div><div class="flow-note">Turn on whatever logging your agent tool provides. When a run goes wrong, read through what the agent did, step by step — the single highest-leverage habit in the whole video. Every failed run tells you exactly which piece of the harness to build next.</div></div></div>
+    <div class="flow-step violet" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Build one complete harness for one narrow workflow</div><div class="flow-note">The graduation project. Pick one repetitive, well-defined task you will do every single week and build the full loop around it: instruction file, a small set of tools, automated verification, clear permissions, and logging.</div></div></div>
+    <div class="flow-step good" data-step="6"><div class="flow-num">✓</div><div class="flow-body"><div class="flow-name">Outcome</div><div class="flow-note">One workflow, end to end, running reliably without you babysitting it. Do that once, and you understand the discipline at a level no blog post can teach you.</div></div></div>
+  </div>
+
+  <div class="loop-band"><span class="loop-arrow">↺</span><div><strong>Step 4 feeds back into steps 1–3</strong>Each failed run names the next piece of the harness to build: a missing instruction, a missing check, or a tool the agent should never have had access to. <span class="why">As the video puts it — your harness roadmap is written in your failure logs.</span></div></div>
+</section>
+
+<footer class="wf-foot">
+  <span>Companion diagrams for the article “Harness Engineering Explained in 20 Mins!”.</span>
+  <span>Video by Aishwarya Srinivasan · article distilled from captions translated from Hindi</span>
+</footer>
+
+<script>
+(function(){
+  var tabBtns = document.querySelectorAll('.wf-tab');
+  var panels = document.querySelectorAll('.dgm');
+
+  function show(n){
+    for(var i=0;i<panels.length;i++){
+      panels[i].classList.toggle('active', panels[i].id === 'd' + n);
+    }
+    for(var j=0;j<tabBtns.length;j++){
+      var on = tabBtns[j].getAttribute('data-tab') === 'd' + n;
+      tabBtns[j].classList.toggle('active', on);
+      tabBtns[j].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+  for(var t=0;t<tabBtns.length;t++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        show(parseInt(btn.getAttribute('data-tab').slice(1), 10));
+      });
+    })(tabBtns[t]);
+  }
+  show(1);
+
+  /* Generic walker: cycles a highlight through an ordered list of nodes */
+  function makeWalker(els, labelEl, kind, names, msgEl, msgs){
+    var idx = 0;
+    function paint(){
+      for(var i=0;i<els.length;i++){ els[i].classList.remove('on'); }
+      if(els[idx]){ els[idx].classList.add('on'); }
+      if(labelEl){
+        var label = kind + ' ' + (idx+1) + ' of ' + els.length;
+        if(names && names[idx]){ label += ' · ' + names[idx]; }
+        labelEl.textContent = label;
+      }
+      if(msgEl && msgs && msgs[idx]){ msgEl.textContent = msgs[idx]; }
+    }
+    return {
+      next: function(){ idx = (idx + 1) % els.length; paint(); },
+      reset: function(){ idx = 0; paint(); },
+      paint: paint
+    };
+  }
+
+  var w2 = makeWalker(
+    document.querySelectorAll('#discs2 .disc'),
+    document.getElementById('st2'), 'Layer',
+    ['Prompt engineering','Context engineering','Harness engineering'],
+    null, null);
+
+  var w4 = makeWalker(
+    document.querySelectorAll('#d4 .comp'),
+    document.getElementById('st4'), 'Component',
+    ['System of record','Tools','Feedback loops and verification','Guardrails and permissions','Observability and memory'],
+    null, null);
+
+  var sels5 = ['#d5 .m-state[data-s="1"]','#d5 .m-state[data-s="2"]','#d5 .m-state[data-s="3"]','#fix5','#d5 .m-state[data-s="3"]','#d5 .m-state[data-s="4"]'];
+  var els5 = [];
+  for(var s=0;s<sels5.length;s++){
+    var f = document.querySelector(sels5[s]);
+    if(f){ els5.push(f); }
+  }
+  var w5 = makeWalker(
+    els5, document.getElementById('st5'), 'Step',
+    ['Plan','Act','Verify','Fix','Verify again','Hand off'],
+    document.getElementById('msg5'),
+    ['A goal arrives; the agent plans steps, guided by the project instruction file.',
+     'The agent takes an action through a tool: edit a file, run a command, query a system.',
+     'Linter and test suite fire automatically after every change — the agent checks its own work.',
+     'A check fails. The agent sees its own mistake and corrects the work before you look.',
+     'Checks rerun — this time every check passes.',
+     'Work is handed back to you. Mistakes were discovered by the agent, not by you.']);
+
+  var w6 = makeWalker(
+    document.querySelectorAll('#flow6 .flow-step'),
+    document.getElementById('st6'), 'Step',
+    ['Write the file','Build the verification loop','Choose tools deliberately','Read your failures','The graduation project','Outcome'],
+    null, null);
+
+  document.getElementById('play2').addEventListener('click', w2.next);
+  document.getElementById('reset2').addEventListener('click', w2.reset);
+  document.getElementById('play4').addEventListener('click', w4.next);
+  document.getElementById('reset4').addEventListener('click', w4.reset);
+  document.getElementById('play5').addEventListener('click', w5.next);
+  document.getElementById('reset5').addEventListener('click', w5.reset);
+  document.getElementById('play6').addEventListener('click', w6.next);
+  document.getElementById('reset6').addEventListener('click', w6.reset);
+
+  w2.paint();
+  w4.paint();
+  w5.paint();
+  w6.paint();
+})();
+</script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>
