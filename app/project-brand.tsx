@@ -1,7 +1,7 @@
 import { siCaterpillar, siDiscover } from "simple-icons";
 import type { CSSProperties } from "react";
 
-type Brand = "caterpillar" | "discover" | "lseg" | "everest" | "epam";
+type Brand = "caterpillar" | "discover" | "lseg" | "everest" | "epam" | "cognizant";
 
 const localBrands = {
   caterpillar: siCaterpillar,
@@ -12,6 +12,7 @@ const remoteBrands: Partial<Record<Brand, string>> = {
   lseg: "https://img.logokit.com/lseg.com",
   everest: "https://img.logokit.com/everestglobal.com",
   epam: "https://img.logokit.com/epam.com",
+  cognizant: "https://img.logokit.com/cognizant.com",
 };
 
 const brandLabels: Record<Brand, string> = {
@@ -20,6 +21,7 @@ const brandLabels: Record<Brand, string> = {
   lseg: "LSEG",
   everest: "Everest",
   epam: "EPAM",
+  cognizant: "Cognizant",
 };
 
 export default function ProjectBrand({ brand }: { brand: Brand }) {
