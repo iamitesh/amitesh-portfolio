@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Evals Explained | How to evaluate AI Agents?</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+    --bg:#0b101c;
+    --panel:#141b2d;
+    --panel-2:#1a2338;
+    --text:#e9edf6;
+    --muted:#94a0b8;
+    --accent:#6ea8fe;
+    --accent-2:#a78bfa;
+    --good:#34d399;
+    --warn:#fbbf24;
+    --bad:#f87171;
+    --border:#273349;
+  }
+#view-workflow #workflow-content{
+    box-sizing:border-box;
+    background:var(--bg);
+    color:var(--text);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    max-width:1040px;
+    margin:0 auto;
+    padding:26px 22px 30px;
+    border-radius:18px;
+    border:1px solid var(--border);
+  }
+#view-workflow #workflow-content *{box-sizing:border-box}
+#view-workflow .wf-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:4px}
+#view-workflow .wf-head h1{font-size:23px;line-height:1.3;margin:0;letter-spacing:.2px}
+#view-workflow .wf-head .chan{color:var(--muted);font-size:13px}
+#view-workflow .wf-sub{color:var(--muted);font-size:13px;margin:6px 0 0}
+#view-workflow .eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin:0 0 6px}
+#view-workflow .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 20px}
+#view-workflow .tab-btn{
+    appearance:none;-webkit-appearance:none;
+    background:var(--panel);
+    color:var(--muted);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+  }
+#view-workflow .tab-btn:hover{color:var(--text);border-color:#3b4a6b}
+#view-workflow .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#08101f;font-weight:800}
+#view-workflow .deck{display:none}
+#view-workflow .deck.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#view-workflow .deck-head h3{font-size:19px;margin:0 0 3px;color:var(--text)}
+#view-workflow .deck-cap{color:var(--muted);font-size:12.5px;margin:0 0 18px}
+#view-workflow .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+#view-workflow .card + .card{margin-top:0}
+#view-workflow .kicker{display:block;font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+#view-workflow .arr{text-align:center;color:#5b6b8c;font-size:17px;line-height:1;padding:7px 0}
+#view-workflow .arr small{display:block;font-size:11px;color:var(--muted);letter-spacing:.3px}
+#view-workflow .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:999px;
+    padding:5px 11px;
+    font-size:12px;
+    font-weight:600;
+    white-space:normal;
+    text-align:left;
+  }
+#view-workflow .chip.c-accent{border-color:rgba(110,168,254,.55);color:var(--accent)}
+#view-workflow .chip.c-alt{border-color:rgba(167,139,250,.55);color:var(--accent-2)}
+#view-workflow .chip.c-good{border-color:rgba(52,211,153,.55);color:var(--good)}
+#view-workflow .chip.c-warn{border-color:rgba(251,191,36,.55);color:var(--warn)}
+#view-workflow .chip.c-bad{border-color:rgba(248,113,113,.55);color:var(--bad)}
+#view-workflow .chip.c-dim{color:var(--muted)}
+#view-workflow .chips{display:flex;flex-wrap:wrap;gap:7px}
+#view-workflow .lane-card{border-top:3px solid var(--border)}
+#view-workflow .lane-card.edge-warn{border-top-color:var(--warn)}
+#view-workflow .lane-card.edge-accent{border-top-color:var(--accent)}
+#view-workflow .lane-card.edge-alt{border-top-color:var(--accent-2)}
+#view-workflow .lane-card.edge-good{border-top-color:var(--good)}
+#view-workflow .lane-card.edge-bad{border-top-color:var(--bad)}
+#view-workflow .lane-card h4{font-size:15px;margin:0 0 4px}
+#view-workflow .lane-card .role{color:var(--muted);font-size:12.5px;margin:0 0 12px;line-height:1.5}
+#view-workflow .lane-card .metric-list{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px dashed var(--border);display:flex;flex-wrap:wrap;gap:7px}
+#view-workflow .grid{display:grid;gap:14px}
+#view-workflow .g2{grid-template-columns:repeat(2,1fr)}
+#view-workflow .g3{grid-template-columns:repeat(3,1fr)}
+#view-workflow .g4{grid-template-columns:repeat(4,1fr)}
+#view-workflow .banner{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent);
+    border-radius:12px;
+    padding:12px 15px;
+    font-size:13.5px;
+    margin-top:16px;
+  }
+#view-workflow .banner b{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px}
+#view-workflow .banner.edge-good{border-left-color:var(--good)}
+#view-workflow .banner.edge-warn{border-left-color:var(--warn)}
+#view-workflow .banner.edge-bad{border-left-color:var(--bad)}
+#view-workflow .banner.edge-alt{border-left-color:var(--accent-2)}
+#view-workflow .note{color:var(--muted);font-size:12.5px}
+#view-workflow .mid-note{text-align:center;color:var(--muted);font-size:12px;padding:2px 0 4px}
+#view-workflow .stepflow{display:flex;flex-direction:column}
+#view-workflow .num{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#08101f;font-size:12px;font-weight:800;margin-right:8px}
+#view-workflow .num.alt{background:var(--accent-2)}
+#view-workflow .num.ok{background:var(--good)}
+#view-workflow .num.warn{background:var(--warn)}
+#view-workflow .rowline{display:flex;align-items:center}
+#view-workflow .rev-note{margin-top:10px;font-size:12px;color:var(--accent-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#view-workflow .stack-v{display:flex;flex-direction:column;gap:0}
+#view-workflow .zone-title{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-2);margin:6px 0 10px}
+#view-workflow .step-labels{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#view-workflow .transfer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin:4px 0}
+#view-workflow .transfer .chip{font-size:11.5px}
+#view-workflow /* tooltips */
+  [data-tip]{position:relative;cursor:help}
+#view-workflow [data-tip]:hover::after, #view-workflow [data-tip]:focus-visible::after{
+    content:attr(data-tip);
+    position:absolute;left:50%;transform:translateX(-50%);
+    bottom:calc(100% + 8px);z-index:40;
+    background:#0d1424;border:1px solid #33415e;color:var(--text);
+    padding:7px 10px;font-size:11.5px;line-height:1.45;border-radius:8px;
+    width:max-content;max-width:230px;box-shadow:0 10px 26px rgba(0,0,0,.45);
+    font-weight:400;white-space:normal;text-align:left;letter-spacing:0;
+  }
+#view-workflow /* stepper */
+  .stepper{border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:18px 18px 16px;margin-top:4px}
+#view-workflow .st-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#view-workflow .st-head .st-count{color:var(--muted);font-size:12.5px;font-weight:700;letter-spacing:.4px}
+#view-workflow .st-bar{height:6px;background:var(--panel-2);border-radius:999px;overflow:hidden;margin-bottom:16px}
+#view-workflow .st-bar i{display:block;height:100%;width:12.5%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:999px;transition:width .3s ease}
+#view-workflow .stepcard{display:none}
+#view-workflow .stepcard.active{display:block}
+#view-workflow .stepcard .idx{font-size:11px;font-weight:800;letter-spacing:1.6px;color:var(--accent-2);text-transform:uppercase}
+#view-workflow .stepcard h4{font-size:17px;margin:2px 0 6px}
+#view-workflow .stepcard p{margin:0 0 10px;color:#c6cfdf}
+#view-workflow .st-ctrl{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap}
+#view-workflow .st-dots{display:flex;gap:7px;align-items:center}
+#view-workflow .st-dots .dot{width:10px;height:10px;border-radius:50%;background:var(--panel-2);border:1px solid #33415e;cursor:pointer;padding:0}
+#view-workflow .st-dots .dot.done{background:var(--accent);border-color:var(--accent)}
+#view-workflow .st-dots .dot.now{outline:2px solid var(--accent);outline-offset:2px;background:var(--accent)}
+#view-workflow .btn{
+    appearance:none;-webkit-appearance:none;
+    background:var(--panel-2);color:var(--text);
+    border:1px solid #33415e;border-radius:10px;
+    padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+#view-workflow .btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+#view-workflow .btn:disabled{opacity:.4;cursor:default}
+#view-workflow .branch-row{display:grid;gap:10px;margin-top:12px}
+#view-workflow .bcard{border-radius:12px;padding:10px 13px;font-size:13px;border:1px solid var(--border);background:var(--panel-2)}
+#view-workflow .bcard.bad{border-left:4px solid var(--bad)}
+#view-workflow .bcard.good{border-left:4px solid var(--good)}
+#view-workflow .bcard b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px}
+#view-workflow .wf-foot{margin-top:26px;padding-top:14px;border-top:1px dashed var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+@media (max-width:780px){#view-workflow .g2, #view-workflow .g3, #view-workflow .g4{grid-template-columns:1fr}
+#view-workflow #workflow-content{padding:20px 14px 24px}
+
+  }
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>AI Evals Explained | How to evaluate AI Agents?</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=_Er8Hao_gmQ">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Translated from hi by this pipeline.</p>
+</header>
+<h1 id="ai-evals-explained-how-to-evaluate-ai-agents">AI Evals Explained | How to evaluate AI Agents?</h1>
+<p>This article turns Aishwarya Srinivasan&#x27;s beginner-friendly explainer into a practical guide to AI evals: what they are, how they differ from benchmarks and classic machine learning evaluation, which metrics to track for which task, and the evaluation loop that separates teams shipping production AI agents from teams shipping demos. It is written for anyone building AI agents — coding agents, customer-support agents, or RAG pipelines — who has ever wondered whether what they built actually works.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>What Is an AI Eval?</li><li>Evals vs. Benchmarks vs. Classic Machine Learning Evaluation</li><li>The Metrics That Matter</li><li>Start With a Golden Dataset, Not a Metric List</li><li>Four Ways to Grade Agent Outputs</li><li>Evals Are a Loop, Not a Report Card</li><li>Tools for Running and Monitoring Evals</li></ol>
+<ul><li>Key Takeaways</li><li>Source</li></ul>
+<h2 id="1-what-is-an-ai-eval">1. What Is an AI Eval?</h2>
+<p>Nobody really tells you this when you start building AI agents: the hardest part is not building the agent. Building the agent is the fun part. The hard part is knowing whether the thing you just built is actually any good. You wire up an agent, hand it some tools, run it once, and it does something that looks almost magical — so you say &quot;yes, it works.&quot; But does it? Working the one time you tried it is not the same as working in production, and that gap — the little voice in the back of your head asking &quot;but does it actually work?&quot; — has a name. It is called evaluation. Evals, for short.</p>
+<blockquote>An AI eval is just a structured way of measuring how good your AI outputs really are.</blockquote>
+<p>That is the whole definition, and it is simpler than it sounds. Instead of eyeballing a couple of answers and deciding &quot;yeah, that looks fine to me,&quot; you set up a small, repeatable process that hands you an actual score. That score answers the only question that matters here: is my AI agent getting better, or did I just do something to break it? Every time you change a prompt, swap a model, or tweak your retrieval, an eval tells you whether you helped the agent or silently broke something.</p>
+<p>This matters more for agents than for any other AI artifact, because an agent is not one answer — it is a whole chain of decisions. It picks a tool, calls it, reads the result, decides what to do next, and on and on, with many places along the way where things can quietly go sideways. When your agent breaks in production, you need to know where, and you need to know why — and you are not going to figure that out by reading transcripts one at a time at two in the morning. Research this year shows roughly a one-third gap between how models score in the lab and how they perform in real, deployed work. Evals are how you close that gap before your users feel it.</p>
+<p>The teams that actually get agents into production — real coding agents, real customer-support agents — all have one thing in common: they are not guessing, and they are not doing &quot;vibe evals.&quot; They are measuring.</p>
+<h2 id="2-evals-vs-benchmarks-vs-classic-machine-learning-evaluation">2. Evals vs. Benchmarks vs. Classic Machine Learning Evaluation</h2>
+<p>If you have seen the leaderboards, a fair question is: &quot;isn&#x27;t this just benchmarks?&quot; There are boards like SWE-bench for coding, Tau-bench for customer-service agents, Terminal-Bench for command-line work, and composite indexes that mash a bunch of these together into a single score.</p>
+<p>The distinction really matters. Benchmarks do test the model — but they are a generic test, the same test applied to every single model. AI evals test your specific agentic system: your task, your data, your prompts, your users. A model can sit at the top of every leaderboard and still completely fall apart on your use case, because that benchmark never saw your data. So benchmarks are great for picking which models to start with, while evals are how you find out whether that thing actually works for you.</p>
+<p>If you have done machine learning before, you may be thinking: &quot;we have been evaluating models for decades — what is the big deal?&quot; Evaluation is genuinely not new; it has been done for machine learning and even statistical models for years. What is worth understanding is why it used to be easier.</p>
+<p>In traditional machine learning, the output was usually really clean: a category, like spam or not spam; a number, like a predicted house price; a simple yes or no. Because the output was clean, grading was clean. You had a test set with the right answers, you compared the model&#x27;s predictions against those answers, and you could easily compute metrics like accuracy, precision, recall, and F1 score. It was very objective — everybody agreed on what &quot;correct&quot; meant, and you could slap a hard number on it. Think of it like a multiple-choice test: the answer is A, B, C, or D, there is an answer key, and you just count up how many times the model got it right.</p>
+<p>Large language models and AI agents changed that. The output is no longer a tidy category; it is open-ended text, or a whole sequence of actions the agent took. And most of the time there is no single correct answer. Ask for a summary of an article and there could be a hundred good summaries and a hundred bad ones — and two great summaries can look completely different from each other. You cannot check that against an answer key, because there is no answer key.</p>
+<p>That is the shift: we went from grading a multiple-choice test to grading an essay. Grading an essay is just harder. There is no single right answer; you need a rubric, and somebody has to actually use their judgment. That is exactly why AI evals are messier and more qualitative than the ML evals you might be used to. The good news: once the rubric mindset clicks, everything else gets simpler.</p>
+<h2 id="3-the-metrics-that-matter">3. The Metrics That Matter</h2>
+<p>Metrics are one of the places where people get confused, because there are dozens of them and it all feels like alphabet soup. In practice, only a handful of core metrics are worth reaching for again and again:</p>
+<ul><li><strong>Relevance</strong> — did the output actually answer what was asked?</li><li><strong>Faithfulness</strong>, sometimes called <strong>groundedness</strong> — is this actually true and backed by real data, or is the model making it up? This one is your hallucination check.</li><li><strong>Correctness</strong> — did it match the expected answer, when there is one?</li><li><strong>Coherence</strong> — does it actually read well?</li></ul>
+<p>Those four are the top-level metrics. But the right metric for any given evaluation depends entirely on your task.</p>
+<p><strong>Summarization.</strong> You care about faithfulness — did it stay true to the source without inventing stuff? You care about coverage — did it actually capture the main points? And you care about conciseness — did it keep it tight?</p>
+<p><strong>Classification.</strong> This one looks like old-school machine learning again, because the output is a clean label. You are right back to accuracy, precision, recall, and F1 score.</p>
+<p><strong>Translation.</strong> You care about whether the meaning carried over, and whether it really reads naturally in the other language. Metrics like BLEU and COMET show up here.</p>
+<p><strong>Retrieval-augmented generation (RAG).</strong> You measure things like faithfulness and answer relevance, because together they catch the two totally different ways a RAG system breaks: bad retrieval or bad generation.</p>
+<p>Mid-video, Srinivasan shares a practical aside: something she built that changed how she works. Between running her company Gen Academy and making content, she is constantly building demos — every single week, on different topics, with different frameworks and SDKs. And it is not just code: every demo requires a README, a slide deck, a script, and a social post. Doing all of that weekly is genuinely a lot, so she built herself a demo generator.</p>
+<p>She set it up once, and now every demo is a single slash command in her terminal: she types the topic, names the toolkits she wants to use, and out comes a full demo package. It is built using Mistral Vibe, Mistral&#x27;s terminal-native coding agent powered by their flagship Mistral Medium 3.5 model, which runs in the terminal and IDE, understands a full codebase, and helps write, test, refactor, and deploy using natural language. The feature that made the build possible is custom subagents: specialized agents for targeted tasks, each with a specific scope, tools, and permissions, which a main skill delegates to on demand. Custom skills are defined as markdown files with YAML frontmatter that declares the slash command and the workflow behind it. Her <code>generate-demo</code> skill first asks clarifying questions — Vibe has built-in multiple-choice clarifications — and then delegates in order: one subagent does the research, one writes the actual demo code and runs it in her terminal to confirm it works, and one drafts the README and slide outline. Each subagent has its own config file and system prompt, and the writer reads from a &quot;voice file&quot; where she has written out her tone rules, so the output actually sounds like her rather than generic AI copy. What used to take a full afternoon now takes a few minutes. It is a nice worked example of composing specialized agents into one repeatable workflow.</p>
+<p>Zooming out, all of these metrics really fall into three buckets, and it helps to know them by name.</p>
+<p><strong>Classic overlap metrics.</strong> These are the old, reliable ones from the natural language processing world: BLEU for translation, ROUGE for summarization, METEOR, and similar. All they really do is check how much of your output text overlaps with the reference answer. They are fast, they are cheap, and they are dead simple — but they are basically blind to meaning. Two sentences that say the exact same thing in different words can be scored differently.</p>
+<p><strong>Semantic metrics.</strong> Things like BERTScore, BLEURT, and COMET. Instead of just matching words, they actually compare meanings using embeddings, so they handle paraphrasing far better than overlap-based scores.</p>
+<p><strong>Model-based metrics.</strong> Here you literally use an LLM to do the grading for you — your LLM as a judge — plus newer named methods like G-Eval. These are the only ones flexible enough to grade open-ended, messy, creative outputs with no reference answers at all, which, let&#x27;s be real, is what most actual agent tasks look like.</p>
+<p>You can see the pattern: different tasks call for different metrics — and more and more these days, the thing doing the grading is a model.</p>
+<h2 id="4-start-with-a-golden-dataset-not-a-metric-list">4. Start With a Golden Dataset, Not a Metric List</h2>
+<p>Here is the single most important habit in the whole video, the thing to walk away with: do not start by grabbing a metric off a list. Start by building a golden dataset.</p>
+<p>A golden dataset is honestly not complicated. It is just a handful of example inputs, paired with what a great output looks like and what a bad output could look like. You include your common cases, your annoying edge cases, and every failure you have already watched blow up. Think of it as an answer key that you have been writing for your own specific task. Start small — 52 examples is genuinely plenty to get going, and you will obviously grow it over time.</p>
+<p>Here is the part that really clicks for people: once that golden dataset is sitting in front of you, you work backwards from it to figure out your metrics. You look at your examples and ask yourself: what would make this output good, and what would make it bad? The quantified ways of judging those answers are your metrics. The dataset comes first, and the metrics fall out of it — not the other way around.</p>
+<h2 id="5-four-ways-to-grade-agent-outputs">5. Four Ways to Grade Agent Outputs</h2>
+<p>Once you have a dataset and know what to measure, the next question is how to actually do the grading. There are four ways.</p>
+<p>Exactly what it sounds like: a person — ideally somebody who knows the domain — sits down and grades the outputs against your rubric. This is the gold standard; nothing beats it for quality. The catch is that it is slow, it is expensive, and it does not scale — you are not going to have a human grade every single request. So save it for small, careful samples and treat it as a source of truth.</p>
+<p>This is a real signal from your real users in a live production environment. Did they give your answer a thumbs up or a thumbs down? Did they accept it or reject it? Did they edit what you gave them? Did they finish the task, or not? Did they come back the next day with the same question again? This is ground truth that actually matters, because it is real people using your product. The downside: it can be noisy, and you only get it after you have actually shipped — so it cannot be your safety net.</p>
+<p>Sometimes called code-based evals, these are just simple checks you write in code. Did the output match the expected value? Is the JSON valid? Did the agent call the right tool with the right arguments? How long did it take? How much did it cost? They are cheap and instant, and you can run them automatically on every single change. The catch is that they only work when you have clearly checkable answers — which is exactly why they pair so beautifully with classification tasks.</p>
+<p>The fourth approach is the one that completely changed the game. You take a really strong, large model and use it to grade your outputs against your rubric. This is what finally lets essay-style grading scale: an LLM judge can assess the open-ended stuff that plain code never could — is this helpful? Is this grounded in the source? — and it can do that for thousands of outputs.</p>
+<p>There is one rule, and it is a real one: your judge model has biases. It tends to like longer answers, and it tends to like whatever response it happens to see first. So you should only trust your LLM judge after you have checked its grades against a human grader on a sample. Keep it honest, and it becomes your absolute workhorse.</p>
+<h2 id="6-evals-are-a-loop-not-a-report-card">6. Evals Are a Loop, Not a Report Card</h2>
+<p>AI evals are not a one-time report card that you run right before launch and never touch again. They are a loop — something you run over and over again. The easiest way to think about it is automated testing for software: you do not test your code once and then walk away; you run your tests on every change, forever. It is the exact same idea. In software you do CI/CD. In AI agents you do CI/CD plus continuous evaluation and continuous monitoring.</p>
+<p>The cycle is nice and simple:</p>
+<ol><li><strong>Decide what &quot;good&quot; even means.</strong> You have to get really specific about this.</li><li><strong>Build the golden dataset</strong> described above.</li><li><strong>Pick your metrics</strong> by working backwards from the dataset.</li><li><strong>Run a baseline.</strong> Run your current system across the whole dataset and get a number. That number is your starting line — without it, &quot;it feels better&quot; is not really data, it is just vibes.</li><li><strong>Go look at the failures and group them</strong> — this is the step everyone rushes past. Are they all coming from retrieval misses? Are they all formatting screw-ups? Are they the same weird edge cases? That grouping tells you exactly what to fix in your agent.</li><li><strong>Fix it</strong> — usually by tweaking your prompts, your retrieval, or your tool definitions.</li><li><strong>Rerun against the same exact dataset.</strong> Did your numbers go up? And just as important: did you accidentally break something that used to work earlier? Catching something you broke without even realizing it is the entire reason the loop exists.</li><li><strong>Keep going, because this never stops.</strong> Once you are in production you are always watching your live traffic. Here is the fun part: your model provider can quietly update the models underneath you, and your agent&#x27;s behavior can shift overnight without you touching a thing. Real-world failures should flow right back into your golden dataset, and then you run the whole thing again.</li></ol>
+<blockquote>You will never know whether your AI agent actually works by watching it succeed one time. You only know by measuring it — on your data, again and again.</blockquote>
+<p>That skill is what separates people who are just building demo agents from people who are actually shipping them. The teams really winning in this game treat evals like continuous testing: they are always running them and catching problems before users ever see them. The teams whose products keep breaking run evals once at shipping time, and then find out about every single bug from angry users. Do not be that team.</p>
+<h2 id="7-tools-for-running-and-monitoring-evals">7. Tools for Running and Monitoring Evals</h2>
+<p>The good news is that you do not have to build any of this from scratch. For running the evals themselves, there are tools like Promptfoo, which lets you test prompts and run evals right from the command line, and a library like RAGAS, which gives you those RAG metrics straight out of the box. For watching what is happening in production — the tracing and monitoring side — you have tools like LangSmith, Langfuse, Arize, and Braintrust. Pick the ones that fit your stack, wire them into the loop, and start measuring.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>An AI eval is a structured, repeatable way of scoring how good your AI outputs really are — it answers the only question that matters: is my agent getting better, or did I break it?</li><li>Benchmarks are generic tests of the model; evals test your specific system on your task with your data. A model can top every leaderboard and still fail your use case.</li><li>LLMs moved evaluation from grading a multiple-choice test to grading an essay: open-ended outputs have no answer key, so you need a rubric and judgment.</li><li>Four core metrics — relevance, faithfulness (groundedness), correctness, coherence — cover most cases, but the right metric depends on your task: coverage and conciseness for summarization, accuracy/precision/recall/F1 for classification, BLEU and COMET for translation, faithfulness and answer relevance for RAG.</li><li>Metrics fall into three families: cheap word-overlap scores (BLEU, ROUGE, METEOR), meaning-aware semantic scores (BERTScore, BLEURT, COMET), and model-based grading (LLM-as-a-judge, G-Eval), which alone can grade open-ended outputs at scale.</li><li>Start with a golden dataset of good and bad examples for your own task, then work backwards to choose metrics — 52 examples is enough to begin.</li><li>The four graders are humans (gold standard, use on small samples), user feedback (real but noisy and post-ship only), programmatic checks (instant, but need checkable answers), and LLM judges (scalable, but biased toward longer and first-seen answers — validate them against humans).</li><li>Evals are a continuous loop: define good, build the dataset, baseline, group failures, fix, and rerun against the same dataset — and keep watching production, because model updates can shift agent behavior overnight.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=_Er8Hao_gmQ">AI Evals Explained | How to evaluate AI Agents?</a></li><li>Channel: <a href="https://www.youtube.com/@aishwaryasrinivasan">Aishwarya Srinivasan</a></li><li>Fetched at: 2026-09-02</li><li>The captions for this video were machine-transcribed in Hindi (Hinglish) and translated to English by this pipeline; wording was reconstructed conservatively from the transcript.</li></ul>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart TD
+  subgraph Chain[&quot;The agent: a chain of decisions&quot;]
+    direction TB
+    C1[&quot;Pick a tool&quot;] --&gt; C2[&quot;Call the tool&quot;]
+    C2 --&gt; C3[&quot;Read the result&quot;]
+    C3 --&gt; C4[&quot;Decide what to do next&quot;]
+    C4 --&gt; C1
+  end
+  C4 --&gt; Out[&quot;Outputs and action traces&quot;]
+  Out --&gt; Ev[&quot;Eval: a structured, repeatable scoring process&quot;]
+  Ev --&gt; Sc[&quot;Hands you an actual score on your own data&quot;]
+  Sc --&gt; Q{&quot;Is the agent getting better, or did I break it?&quot;}
+  Q --&gt;|&quot;Better&quot;| Ship[&quot;Ship it and keep measuring&quot;]
+  Q --&gt;|&quot;Broke it&quot;| Fix[&quot;Find where it went sideways, fix it, rerun&quot;]
+  Ch[&quot;Every change: a new prompt, a model, or a retrieval tweak&quot;] -.-&gt; C1
+  Gap[&quot;Why it matters: lab scores run about one-third ahead of real deployed work&quot;] -.-&gt; Ev
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  subgraph Chain[&quot;The agent: a chain of decisions&quot;]
+    direction TB
+    C1[&quot;Pick a tool&quot;] --&gt; C2[&quot;Call the tool&quot;]
+    C2 --&gt; C3[&quot;Read the result&quot;]
+    C3 --&gt; C4[&quot;Decide what to do next&quot;]
+    C4 --&gt; C1
+  end
+  C4 --&gt; Out[&quot;Outputs and action traces&quot;]
+  Out --&gt; Ev[&quot;Eval: a structured, repeatable scoring process&quot;]
+  Ev --&gt; Sc[&quot;Hands you an actual score on your own data&quot;]
+  Sc --&gt; Q{&quot;Is the agent getting better, or did I break it?&quot;}
+  Q --&gt;|&quot;Better&quot;| Ship[&quot;Ship it and keep measuring&quot;]
+  Q --&gt;|&quot;Broke it&quot;| Fix[&quot;Find where it went sideways, fix it, rerun&quot;]
+  Ch[&quot;Every change: a new prompt, a model, or a retrieval tweak&quot;] -.-&gt; C1
+  Gap[&quot;Why it matters: lab scores run about one-third ahead of real deployed work&quot;] -.-&gt; Ev
+</code></pre></details>
+<figcaption>1. What an AI Eval Measures: From Agent Decisions to a Score</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+  Q[&quot;Question: is this just benchmarks, or the ML evaluation we already know?&quot;]
+  subgraph Bench[&quot;Benchmarks: a generic test of the model&quot;]
+    direction TB
+    B1[&quot;The same test applied to every model&quot;]
+    B2[&quot;SWE-bench, Tau-bench, Terminal-Bench, composite indexes&quot;]
+    B3[&quot;Great for choosing which model to start with&quot;]
+  end
+  subgraph Classic[&quot;Classic ML evaluation: a multiple-choice test&quot;]
+    direction TB
+    C1[&quot;Output is clean: a category, a number, yes or no&quot;]
+    C2[&quot;An answer key exists, so grading is objective&quot;]
+    C3[&quot;Metrics: accuracy, precision, recall, F1&quot;]
+  end
+  subgraph Ai[&quot;AI evals: an essay, not a multiple-choice test&quot;]
+    direction TB
+    E1[&quot;Output is open-ended text or whole action sequences&quot;]
+    E2[&quot;No single right answer and no answer key&quot;]
+    E3[&quot;You need a rubric and someone to use judgment&quot;]
+    E4[&quot;Evals test your system: your task, your data, your prompts, your users&quot;]
+  end
+  Q --&gt; B1
+  Q --&gt; C1
+  Q --&gt; E1
+  B3 -.-&gt;|&quot;then verify on your task&quot;| E4
+  C2 -.-&gt;|&quot;LLMs changed grading&quot;| E2
+  B1 -.-&gt; Top
+  C3 -.-&gt; Top
+  E4 --&gt; Top
+  Top[&quot;A model can top every leaderboard and still fall apart on your use case&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  Q[&quot;Question: is this just benchmarks, or the ML evaluation we already know?&quot;]
+  subgraph Bench[&quot;Benchmarks: a generic test of the model&quot;]
+    direction TB
+    B1[&quot;The same test applied to every model&quot;]
+    B2[&quot;SWE-bench, Tau-bench, Terminal-Bench, composite indexes&quot;]
+    B3[&quot;Great for choosing which model to start with&quot;]
+  end
+  subgraph Classic[&quot;Classic ML evaluation: a multiple-choice test&quot;]
+    direction TB
+    C1[&quot;Output is clean: a category, a number, yes or no&quot;]
+    C2[&quot;An answer key exists, so grading is objective&quot;]
+    C3[&quot;Metrics: accuracy, precision, recall, F1&quot;]
+  end
+  subgraph Ai[&quot;AI evals: an essay, not a multiple-choice test&quot;]
+    direction TB
+    E1[&quot;Output is open-ended text or whole action sequences&quot;]
+    E2[&quot;No single right answer and no answer key&quot;]
+    E3[&quot;You need a rubric and someone to use judgment&quot;]
+    E4[&quot;Evals test your system: your task, your data, your prompts, your users&quot;]
+  end
+  Q --&gt; B1
+  Q --&gt; C1
+  Q --&gt; E1
+  B3 -.-&gt;|&quot;then verify on your task&quot;| E4
+  C2 -.-&gt;|&quot;LLMs changed grading&quot;| E2
+  B1 -.-&gt; Top
+  C3 -.-&gt; Top
+  E4 --&gt; Top
+  Top[&quot;A model can top every leaderboard and still fall apart on your use case&quot;]
+</code></pre></details>
+<figcaption>2. Benchmarks, Classic ML Evals, and AI Evals: What Each One Tests</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+  Core[&quot;Top-level metrics: relevance, faithfulness, correctness, coherence&quot;]
+  Core --&gt; Ask{&quot;What is your task?&quot;}
+  Ask --&gt;|&quot;Summarization&quot;| S1[&quot;Faithfulness: stay true to the source, invent nothing&quot;]
+  S1 --&gt; S2[&quot;Coverage: capture the main points&quot;]
+  S2 --&gt; S3[&quot;Conciseness: keep it tight&quot;]
+  Ask --&gt;|&quot;Classification&quot;| K1[&quot;Output is a clean label, like old-school ML&quot;]
+  K1 --&gt; K2[&quot;Accuracy, precision, recall, F1&quot;]
+  Ask --&gt;|&quot;Translation&quot;| T1[&quot;Meaning carries over and the text reads naturally&quot;]
+  T1 --&gt; T2[&quot;BLEU, COMET&quot;]
+  Ask --&gt;|&quot;RAG&quot;| R1[&quot;Answer relevance plus faithfulness&quot;]
+  R1 --&gt; R2[&quot;Together they catch bad retrieval and bad generation&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  Core[&quot;Top-level metrics: relevance, faithfulness, correctness, coherence&quot;]
+  Core --&gt; Ask{&quot;What is your task?&quot;}
+  Ask --&gt;|&quot;Summarization&quot;| S1[&quot;Faithfulness: stay true to the source, invent nothing&quot;]
+  S1 --&gt; S2[&quot;Coverage: capture the main points&quot;]
+  S2 --&gt; S3[&quot;Conciseness: keep it tight&quot;]
+  Ask --&gt;|&quot;Classification&quot;| K1[&quot;Output is a clean label, like old-school ML&quot;]
+  K1 --&gt; K2[&quot;Accuracy, precision, recall, F1&quot;]
+  Ask --&gt;|&quot;Translation&quot;| T1[&quot;Meaning carries over and the text reads naturally&quot;]
+  T1 --&gt; T2[&quot;BLEU, COMET&quot;]
+  Ask --&gt;|&quot;RAG&quot;| R1[&quot;Answer relevance plus faithfulness&quot;]
+  R1 --&gt; R2[&quot;Together they catch bad retrieval and bad generation&quot;]
+</code></pre></details>
+<figcaption>3. Choosing Metrics by Task: From the Core Four to Task-Specific</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+  Start[&quot;The metric alphabet soup, sorted into three families&quot;]
+  subgraph Ov[&quot;Family 1: classic overlap metrics&quot;]
+    direction TB
+    O1[&quot;BLEU, ROUGE, METEOR and similar&quot;]
+    O2[&quot;Measure word overlap against a reference answer&quot;]
+    O3[&quot;Fast and cheap, but blind to meaning&quot;]
+  end
+  subgraph Sem[&quot;Family 2: semantic metrics&quot;]
+    direction TB
+    M1[&quot;BERTScore, BLEURT, COMET&quot;]
+    M2[&quot;Compare meaning with embeddings&quot;]
+    M3[&quot;Handle paraphrasing far better&quot;]
+  end
+  subgraph Mb[&quot;Family 3: model-based metrics&quot;]
+    direction TB
+    G1[&quot;LLM as judge and named methods like G-Eval&quot;]
+    G2[&quot;A model grades output against your rubric&quot;]
+    G3[&quot;The only family that scales to open-ended outputs&quot;]
+  end
+  Start --&gt; O1
+  Start --&gt; M1
+  Start --&gt; G1
+  O3 -.-&gt;|&quot;words to meaning&quot;| M2
+  M3 -.-&gt;|&quot;meaning to judgment&quot;| G2
+  G3 --&gt; Tail[&quot;Agent outputs are open-ended and reference-free, so more and more the grader is a model&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  Start[&quot;The metric alphabet soup, sorted into three families&quot;]
+  subgraph Ov[&quot;Family 1: classic overlap metrics&quot;]
+    direction TB
+    O1[&quot;BLEU, ROUGE, METEOR and similar&quot;]
+    O2[&quot;Measure word overlap against a reference answer&quot;]
+    O3[&quot;Fast and cheap, but blind to meaning&quot;]
+  end
+  subgraph Sem[&quot;Family 2: semantic metrics&quot;]
+    direction TB
+    M1[&quot;BERTScore, BLEURT, COMET&quot;]
+    M2[&quot;Compare meaning with embeddings&quot;]
+    M3[&quot;Handle paraphrasing far better&quot;]
+  end
+  subgraph Mb[&quot;Family 3: model-based metrics&quot;]
+    direction TB
+    G1[&quot;LLM as judge and named methods like G-Eval&quot;]
+    G2[&quot;A model grades output against your rubric&quot;]
+    G3[&quot;The only family that scales to open-ended outputs&quot;]
+  end
+  Start --&gt; O1
+  Start --&gt; M1
+  Start --&gt; G1
+  O3 -.-&gt;|&quot;words to meaning&quot;| M2
+  M3 -.-&gt;|&quot;meaning to judgment&quot;| G2
+  G3 --&gt; Tail[&quot;Agent outputs are open-ended and reference-free, so more and more the grader is a model&quot;]
+</code></pre></details>
+<figcaption>4. The Three Families of Grading Metrics</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+  subgraph DS[&quot;Build the golden dataset first&quot;]
+    direction TB
+    G1[&quot;A handful of example inputs for your task&quot;]
+    G2[&quot;Each paired with a great output and a bad output&quot;]
+    G3[&quot;Cover common cases, edge cases, and past failures&quot;]
+  end
+  G3 --&gt; Size[&quot;Start small: about 52 examples is plenty&quot;]
+  Size --&gt; Back[&quot;Work backwards from the examples&quot;]
+  Back --&gt; Met[&quot;Judgments of good and bad, quantified, become your metrics&quot;]
+  Met --&gt; How{&quot;How do you actually grade?&quot;}
+  How --&gt;|&quot;Humans&quot;| H1[&quot;A domain expert scores outputs against the rubric&quot;]
+  H1 --&gt; H2[&quot;Gold standard: slow and expensive, for small careful samples&quot;]
+  How --&gt;|&quot;User feedback&quot;| U1[&quot;Thumbs, edits, task completion, repeat visits&quot;]
+  U1 --&gt; U2[&quot;Real ground truth, but noisy and only after you ship&quot;]
+  How --&gt;|&quot;Programmatic&quot;| P1[&quot;Code checks: valid JSON, right tool and arguments, time, cost&quot;]
+  P1 --&gt; P2[&quot;Cheap and instant, run on every change, need checkable answers&quot;]
+  How --&gt;|&quot;LLM as a judge&quot;| L1[&quot;A strong model grades outputs against the rubric&quot;]
+  L1 --&gt; L2[&quot;Scales essay grading to thousands of outputs&quot;]
+  L2 -.-&gt;|&quot;validate the judge against a human on a sample first&quot;| H1
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  subgraph DS[&quot;Build the golden dataset first&quot;]
+    direction TB
+    G1[&quot;A handful of example inputs for your task&quot;]
+    G2[&quot;Each paired with a great output and a bad output&quot;]
+    G3[&quot;Cover common cases, edge cases, and past failures&quot;]
+  end
+  G3 --&gt; Size[&quot;Start small: about 52 examples is plenty&quot;]
+  Size --&gt; Back[&quot;Work backwards from the examples&quot;]
+  Back --&gt; Met[&quot;Judgments of good and bad, quantified, become your metrics&quot;]
+  Met --&gt; How{&quot;How do you actually grade?&quot;}
+  How --&gt;|&quot;Humans&quot;| H1[&quot;A domain expert scores outputs against the rubric&quot;]
+  H1 --&gt; H2[&quot;Gold standard: slow and expensive, for small careful samples&quot;]
+  How --&gt;|&quot;User feedback&quot;| U1[&quot;Thumbs, edits, task completion, repeat visits&quot;]
+  U1 --&gt; U2[&quot;Real ground truth, but noisy and only after you ship&quot;]
+  How --&gt;|&quot;Programmatic&quot;| P1[&quot;Code checks: valid JSON, right tool and arguments, time, cost&quot;]
+  P1 --&gt; P2[&quot;Cheap and instant, run on every change, need checkable answers&quot;]
+  How --&gt;|&quot;LLM as a judge&quot;| L1[&quot;A strong model grades outputs against the rubric&quot;]
+  L1 --&gt; L2[&quot;Scales essay grading to thousands of outputs&quot;]
+  L2 -.-&gt;|&quot;validate the judge against a human on a sample first&quot;| H1
+</code></pre></details>
+<figcaption>5. Golden Dataset First, Then Four Ways to Grade Outputs</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+  subgraph Loop[&quot;The loop: continuous, like CI/CD for software&quot;]
+    direction TB
+    S1[&quot;1. Decide what good even means&quot;] --&gt; S2[&quot;2. Build the golden dataset&quot;]
+    S2 --&gt; S3[&quot;3. Pick metrics by working backwards from the dataset&quot;]
+    S3 --&gt; S4[&quot;4. Run a baseline across the whole dataset&quot;]
+    S4 --&gt; S5[&quot;5. Group the failures: retrieval, formatting, edge cases&quot;]
+    S5 --&gt; S6[&quot;6. Fix: prompts, retrieval, tool definitions&quot;]
+    S6 --&gt; S7[&quot;7. Rerun against the exact same dataset&quot;]
+    S7 --&gt; D{&quot;Numbers up, nothing regressed?&quot;}
+    D --&gt;|&quot;No, something broke&quot;| S5
+  end
+  D --&gt;|&quot;Yes&quot;| S8[&quot;8. Keep going: ship and watch live traffic&quot;]
+  S8 --&gt; Fail[&quot;Real-world failures flow back into the golden dataset&quot;]
+  Fail -.-&gt; S2
+  Prov[&quot;Providers can quietly swap models, shifting behavior overnight&quot;] -.-&gt; S8
+  Run[&quot;Running evals: Promptfoo, RAGAS&quot;] -.-&gt; S4
+  Trace[&quot;Tracing and monitoring: LangSmith, Langfuse, Arize, Braintrust&quot;] -.-&gt; S8
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+  subgraph Loop[&quot;The loop: continuous, like CI/CD for software&quot;]
+    direction TB
+    S1[&quot;1. Decide what good even means&quot;] --&gt; S2[&quot;2. Build the golden dataset&quot;]
+    S2 --&gt; S3[&quot;3. Pick metrics by working backwards from the dataset&quot;]
+    S3 --&gt; S4[&quot;4. Run a baseline across the whole dataset&quot;]
+    S4 --&gt; S5[&quot;5. Group the failures: retrieval, formatting, edge cases&quot;]
+    S5 --&gt; S6[&quot;6. Fix: prompts, retrieval, tool definitions&quot;]
+    S6 --&gt; S7[&quot;7. Rerun against the exact same dataset&quot;]
+    S7 --&gt; D{&quot;Numbers up, nothing regressed?&quot;}
+    D --&gt;|&quot;No, something broke&quot;| S5
+  end
+  D --&gt;|&quot;Yes&quot;| S8[&quot;8. Keep going: ship and watch live traffic&quot;]
+  S8 --&gt; Fail[&quot;Real-world failures flow back into the golden dataset&quot;]
+  Fail -.-&gt; S2
+  Prov[&quot;Providers can quietly swap models, shifting behavior overnight&quot;] -.-&gt; S8
+  Run[&quot;Running evals: Promptfoo, RAGAS&quot;] -.-&gt; S4
+  Trace[&quot;Tracing and monitoring: LangSmith, Langfuse, Arize, Braintrust&quot;] -.-&gt; S8
+</code></pre></details>
+<figcaption>6. The Evaluation Loop: CI/CD for AI Agents</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+<style>
+  :root{
+    --bg:#0b101c;
+    --panel:#141b2d;
+    --panel-2:#1a2338;
+    --text:#e9edf6;
+    --muted:#94a0b8;
+    --accent:#6ea8fe;
+    --accent-2:#a78bfa;
+    --good:#34d399;
+    --warn:#fbbf24;
+    --bad:#f87171;
+    --border:#273349;
+  }
+  #workflow-content{
+    box-sizing:border-box;
+    background:var(--bg);
+    color:var(--text);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    max-width:1040px;
+    margin:0 auto;
+    padding:26px 22px 30px;
+    border-radius:18px;
+    border:1px solid var(--border);
+  }
+  #workflow-content *{box-sizing:border-box}
+  .wf-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:4px}
+  .wf-head h1{font-size:23px;line-height:1.3;margin:0;letter-spacing:.2px}
+  .wf-head .chan{color:var(--muted);font-size:13px}
+  .wf-sub{color:var(--muted);font-size:13px;margin:6px 0 0}
+  .eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin:0 0 6px}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 20px}
+  .tab-btn{
+    appearance:none;-webkit-appearance:none;
+    background:var(--panel);
+    color:var(--muted);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .tab-btn:hover{color:var(--text);border-color:#3b4a6b}
+  .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#08101f;font-weight:800}
+  .deck{display:none}
+  .deck.active{display:block;animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .deck-head h3{font-size:19px;margin:0 0 3px;color:var(--text)}
+  .deck-cap{color:var(--muted);font-size:12.5px;margin:0 0 18px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .card + .card{margin-top:0}
+  .kicker{display:block;font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .arr{text-align:center;color:#5b6b8c;font-size:17px;line-height:1;padding:7px 0}
+  .arr small{display:block;font-size:11px;color:var(--muted);letter-spacing:.3px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:999px;
+    padding:5px 11px;
+    font-size:12px;
+    font-weight:600;
+    white-space:normal;
+    text-align:left;
+  }
+  .chip.c-accent{border-color:rgba(110,168,254,.55);color:var(--accent)}
+  .chip.c-alt{border-color:rgba(167,139,250,.55);color:var(--accent-2)}
+  .chip.c-good{border-color:rgba(52,211,153,.55);color:var(--good)}
+  .chip.c-warn{border-color:rgba(251,191,36,.55);color:var(--warn)}
+  .chip.c-bad{border-color:rgba(248,113,113,.55);color:var(--bad)}
+  .chip.c-dim{color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .lane-card{border-top:3px solid var(--border)}
+  .lane-card.edge-warn{border-top-color:var(--warn)}
+  .lane-card.edge-accent{border-top-color:var(--accent)}
+  .lane-card.edge-alt{border-top-color:var(--accent-2)}
+  .lane-card.edge-good{border-top-color:var(--good)}
+  .lane-card.edge-bad{border-top-color:var(--bad)}
+  .lane-card h4{font-size:15px;margin:0 0 4px}
+  .lane-card .role{color:var(--muted);font-size:12.5px;margin:0 0 12px;line-height:1.5}
+  .lane-card .metric-list{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px dashed var(--border);display:flex;flex-wrap:wrap;gap:7px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .banner{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent);
+    border-radius:12px;
+    padding:12px 15px;
+    font-size:13.5px;
+    margin-top:16px;
+  }
+  .banner b{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px}
+  .banner.edge-good{border-left-color:var(--good)}
+  .banner.edge-warn{border-left-color:var(--warn)}
+  .banner.edge-bad{border-left-color:var(--bad)}
+  .banner.edge-alt{border-left-color:var(--accent-2)}
+  .note{color:var(--muted);font-size:12.5px}
+  .mid-note{text-align:center;color:var(--muted);font-size:12px;padding:2px 0 4px}
+  .stepflow{display:flex;flex-direction:column}
+  .num{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#08101f;font-size:12px;font-weight:800;margin-right:8px}
+  .num.alt{background:var(--accent-2)}
+  .num.ok{background:var(--good)}
+  .num.warn{background:var(--warn)}
+  .rowline{display:flex;align-items:center}
+  .rev-note{margin-top:10px;font-size:12px;color:var(--accent-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stack-v{display:flex;flex-direction:column;gap:0}
+  .zone-title{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent-2);margin:6px 0 10px}
+  .step-labels{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .transfer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin:4px 0}
+  .transfer .chip{font-size:11.5px}
+  /* tooltips */
+  [data-tip]{position:relative;cursor:help}
+  [data-tip]:hover::after,[data-tip]:focus-visible::after{
+    content:attr(data-tip);
+    position:absolute;left:50%;transform:translateX(-50%);
+    bottom:calc(100% + 8px);z-index:40;
+    background:#0d1424;border:1px solid #33415e;color:var(--text);
+    padding:7px 10px;font-size:11.5px;line-height:1.45;border-radius:8px;
+    width:max-content;max-width:230px;box-shadow:0 10px 26px rgba(0,0,0,.45);
+    font-weight:400;white-space:normal;text-align:left;letter-spacing:0;
+  }
+  /* stepper */
+  .stepper{border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:18px 18px 16px;margin-top:4px}
+  .st-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .st-head .st-count{color:var(--muted);font-size:12.5px;font-weight:700;letter-spacing:.4px}
+  .st-bar{height:6px;background:var(--panel-2);border-radius:999px;overflow:hidden;margin-bottom:16px}
+  .st-bar i{display:block;height:100%;width:12.5%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:999px;transition:width .3s ease}
+  .stepcard{display:none}
+  .stepcard.active{display:block}
+  .stepcard .idx{font-size:11px;font-weight:800;letter-spacing:1.6px;color:var(--accent-2);text-transform:uppercase}
+  .stepcard h4{font-size:17px;margin:2px 0 6px}
+  .stepcard p{margin:0 0 10px;color:#c6cfdf}
+  .st-ctrl{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap}
+  .st-dots{display:flex;gap:7px;align-items:center}
+  .st-dots .dot{width:10px;height:10px;border-radius:50%;background:var(--panel-2);border:1px solid #33415e;cursor:pointer;padding:0}
+  .st-dots .dot.done{background:var(--accent);border-color:var(--accent)}
+  .st-dots .dot.now{outline:2px solid var(--accent);outline-offset:2px;background:var(--accent)}
+  .btn{
+    appearance:none;-webkit-appearance:none;
+    background:var(--panel-2);color:var(--text);
+    border:1px solid #33415e;border-radius:10px;
+    padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .branch-row{display:grid;gap:10px;margin-top:12px}
+  .bcard{border-radius:12px;padding:10px 13px;font-size:13px;border:1px solid var(--border);background:var(--panel-2)}
+  .bcard.bad{border-left:4px solid var(--bad)}
+  .bcard.good{border-left:4px solid var(--good)}
+  .bcard b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px}
+  .wf-foot{margin-top:26px;padding-top:14px;border-top:1px dashed var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+  @media (max-width:780px){
+    .g2,.g3,.g4{grid-template-columns:1fr}
+    #workflow-content{padding:20px 14px 24px}
+  }
+</style>
+
+<header class="wf-head">
+  <div>
+    <p class="eyebrow">Diagrams</p>
+    <h1>AI Evals Explained | How to evaluate AI Agents?</h1>
+    <p class="wf-sub">Companion diagrams to the article — an agent is only as trustworthy as the eval that scores it.</p>
+  </div>
+  <span class="chip c-accent" data-tip="Video channel">Channel: Aishwarya Srinivasan</span>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Diagram tabs">
+  <button type="button" class="tab-btn active" data-tab="0" role="tab" aria-selected="true">1 · What an eval is</button>
+  <button type="button" class="tab-btn" data-tab="1" role="tab" aria-selected="false">2 · Evals vs. benchmarks</button>
+  <button type="button" class="tab-btn" data-tab="2" role="tab" aria-selected="false">3 · Metrics by task</button>
+  <button type="button" class="tab-btn" data-tab="3" role="tab" aria-selected="false">4 · Metric families</button>
+  <button type="button" class="tab-btn" data-tab="4" role="tab" aria-selected="false">5 · Golden dataset &amp; graders</button>
+  <button type="button" class="tab-btn" data-tab="5" role="tab" aria-selected="false">6 · The eval loop</button>
+</nav>
+
+<!-- ============ DIAGRAM 1 ============ -->
+<section class="deck active">
+  <div class="deck-head">
+    <h3>1 · What an AI Eval Measures: From Agent Decisions to a Score</h3>
+    <p class="deck-cap">Illustrates Section 1 of the article, "What Is an AI Eval?"</p>
+  </div>
+  <div class="stepflow">
+    <div class="card" data-tip="Section 1: 'Working one time is not the same as working in production.'">
+      <span class="kicker">Trigger · every change you make</span>
+      <div class="chips">
+        <span class="chip c-warn">New prompt</span>
+        <span class="chip c-warn">Different model</span>
+        <span class="chip c-warn">Retrieval tweak</span>
+      </div>
+    </div>
+    <div class="arr">▼<small>re-runs the agent</small></div>
+    <div class="card" data-tip="An agent is not one answer; it is a whole chain of decisions with many places to go sideways.">
+      <span class="kicker">The agent · a chain of decisions</span>
+      <div class="step-labels">
+        <span class="chip"><span class="num">1</span>Pick a tool</span>
+        <span class="chip"><span class="num">2</span>Call it</span>
+        <span class="chip"><span class="num">3</span>Read the result</span>
+        <span class="chip"><span class="num">4</span>Decide what's next</span>
+        <span class="chip c-alt">↻ and repeat</span>
+      </div>
+    </div>
+    <div class="arr">▼<small>outputs and action traces</small></div>
+    <div class="card" data-tip="The whole definition: a structured way of measuring how good your AI outputs really are.">
+      <span class="kicker">The eval</span>
+      <b>Structured, repeatable scoring process</b>
+      <div style="margin-top:8px" class="note">Instead of eyeballing a couple of answers, you get an actual score on your own data.</div>
+    </div>
+    <div class="arr">▼</div>
+    <div class="card">
+      <span class="kicker">The one question that matters</span>
+      <div class="chips">
+        <span class="chip c-good" data-tip="Score goes up: your change helped.">Is it getting better? → ship and keep measuring</span>
+        <span class="chip c-bad" data-tip="Score goes down: your change silently broke something.">Did I break it? → find where, fix it, re-run the eval</span>
+      </div>
+    </div>
+    <div class="banner edge-warn">
+      <div>
+        <b>Why this matters</b>
+        Lab scores run roughly one-third ahead of real deployed work — evals are how you close that gap before your users feel it. The teams that ship agents measure; they do not vibe-check.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 2 ============ -->
+<section class="deck">
+  <div class="deck-head">
+    <h3>2 · Benchmarks, Classic ML Evals, and AI Evals: What Each One Tests</h3>
+    <p class="deck-cap">Illustrates Section 2 of the article, "Evals vs. Benchmarks vs. Classic Machine Learning Evaluation"</p>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="chips">
+      <span class="chip c-dim">Fair question: "isn't this just benchmarks?"</span>
+      <span class="chip c-dim">"we've evaluated models for decades — what's the big deal?"</span>
+    </div>
+  </div>
+  <div class="grid g3">
+    <div class="card lane-card edge-warn">
+      <h4>Benchmarks</h4>
+      <p class="role">Test the model — the same generic test applied to every model.</p>
+      <div class="chips">
+        <span class="chip">SWE-bench</span>
+        <span class="chip">Tau-bench</span>
+        <span class="chip">Terminal-Bench</span>
+        <span class="chip c-dim">composite indexes</span>
+      </div>
+      <div class="note" style="margin-top:10px">Good for picking which model to start with.</div>
+    </div>
+    <div class="card lane-card edge-accent">
+      <h4>Classic ML evaluation</h4>
+      <p class="role">A multiple-choice test: output is clean, an answer key exists, grading is objective.</p>
+      <div class="note" style="margin-bottom:8px">Clean outputs: a category, a number, yes or no.</div>
+      <div class="chips">
+        <span class="chip">Accuracy</span>
+        <span class="chip">Precision</span>
+        <span class="chip">Recall</span>
+        <span class="chip">F1</span>
+      </div>
+    </div>
+    <div class="card lane-card edge-alt">
+      <h4>AI evals</h4>
+      <p class="role">Grading an essay: no answer key, so you need a rubric and judgment.</p>
+      <div class="note" style="margin-bottom:8px">Tests <b>your system</b> — your task, your data, your prompts, your users — not the model in general.</div>
+      <div class="chips">
+        <span class="chip c-alt">open-ended text</span>
+        <span class="chip c-alt">action sequences</span>
+        <span class="chip c-alt">rubric + judgment</span>
+      </div>
+    </div>
+  </div>
+  <div class="transfer">
+    <span class="chip c-warn" data-tip="Section 2.1">Benchmarks → pick a starting model</span>
+    <span>then</span>
+    <span class="chip c-alt" data-tip="Section 2.1">evals → does it actually work for you?</span>
+    <span>·</span>
+    <span class="chip c-accent" data-tip="Section 2.2">LLM outputs moved grading from multiple-choice to essay</span>
+  </div>
+  <div class="banner edge-bad">
+    <div>
+      <b>Takeaway</b>
+      A model can sit at the top of every leaderboard and still completely fall apart on your use case — because that benchmark never saw your data.
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 3 ============ -->
+<section class="deck">
+  <div class="deck-head">
+    <h3>3 · Choosing Metrics by Task: From the Core Four to Task-Specific</h3>
+    <p class="deck-cap">Illustrates Sections 3.1 and 3.2 of the article, "The Metrics That Matter"</p>
+  </div>
+  <div class="card" data-tip="The handful of top-level metrics worth reaching for again and again.">
+    <span class="kicker">Core top-level metrics</span>
+    <div class="chips">
+      <span class="chip c-accent" data-tip="Did the output actually answer what was asked?">Relevance</span>
+      <span class="chip c-good" data-tip="Is it true and backed by real data? This is your hallucination check — also called groundedness.">Faithfulness</span>
+      <span class="chip c-alt" data-tip="Did it match the expected answer, when there is one?">Correctness</span>
+      <span class="chip c-warn" data-tip="Does it actually read well?">Coherence</span>
+    </div>
+  </div>
+  <div class="arr">▼<small>the right metric depends entirely on your task</small></div>
+  <div class="grid g4">
+    <div class="card lane-card edge-good">
+      <h4>Summarization</h4>
+      <ul class="metric-list">
+        <li><span class="chip c-good">Faithfulness — no inventing</span></li>
+        <li><span class="chip c-good">Coverage — main points</span></li>
+        <li><span class="chip c-good">Conciseness — keep it tight</span></li>
+      </ul>
+    </div>
+    <div class="card lane-card edge-accent">
+      <h4>Classification</h4>
+      <p class="role">Clean label output — back to old-school ML.</p>
+      <ul class="metric-list">
+        <li><span class="chip c-accent">Accuracy</span></li>
+        <li><span class="chip c-accent">Precision</span></li>
+        <li><span class="chip c-accent">Recall</span></li>
+        <li><span class="chip c-accent">F1</span></li>
+      </ul>
+    </div>
+    <div class="card lane-card edge-warn">
+      <h4>Translation</h4>
+      <p class="role">Meaning carries over; reads naturally.</p>
+      <ul class="metric-list">
+        <li><span class="chip c-warn">BLEU</span></li>
+        <li><span class="chip c-warn">COMET</span></li>
+      </ul>
+    </div>
+    <div class="card lane-card edge-alt">
+      <h4>RAG</h4>
+      <p class="role">Answer relevance + faithfulness together catch both ways a RAG system breaks.</p>
+      <ul class="metric-list">
+        <li><span class="chip c-alt">Answer relevance</span></li>
+        <li><span class="chip c-alt">Faithfulness</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="banner edge-warn">
+    <div>
+      <b>Note</b>
+      Faithfulness is your hallucination check — the model can be fluent, coherent, and entirely made up.
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 4 ============ -->
+<section class="deck">
+  <div class="deck-head">
+    <h3>4 · The Three Families of Grading Metrics</h3>
+    <p class="deck-cap">Illustrates Section 3.4 of the article, "Three Families of Metrics"</p>
+  </div>
+  <div class="grid g3">
+    <div class="card lane-card edge-warn">
+      <h4>Family 1 · Classic overlap</h4>
+      <p class="role">Old NLP workhorses: how much does the output text overlap the reference?</p>
+      <div class="chips">
+        <span class="chip">BLEU</span>
+        <span class="chip">ROUGE</span>
+        <span class="chip">METEOR</span>
+      </div>
+      <div class="note" style="margin-top:10px">Fast, cheap, dead simple — but blind to meaning: the same idea in different words scores differently.</div>
+    </div>
+    <div class="card lane-card edge-accent">
+      <h4>Family 2 · Semantic</h4>
+      <p class="role">Compare meaning using embeddings instead of matching words.</p>
+      <div class="chips">
+        <span class="chip c-accent">BERTScore</span>
+        <span class="chip c-accent">BLEURT</span>
+        <span class="chip c-accent">COMET</span>
+      </div>
+      <div class="note" style="margin-top:10px">Handles paraphrasing far better than word overlap.</div>
+    </div>
+    <div class="card lane-card edge-alt">
+      <h4>Family 3 · Model-based</h4>
+      <p class="role">An LLM does the grading for you — your LLM as a judge.</p>
+      <div class="chips">
+        <span class="chip c-alt">LLM as a judge</span>
+        <span class="chip c-alt">G-Eval</span>
+      </div>
+      <div class="note" style="margin-top:10px">The only family flexible enough to grade open-ended, messy outputs with no reference answer at all.</div>
+    </div>
+  </div>
+  <div class="transfer">
+    <span class="chip c-warn">Family 1 · word overlap</span>
+    <span>→</span>
+    <span class="chip c-accent">Family 2 · adds meaning</span>
+    <span>→</span>
+    <span class="chip c-alt">Family 3 · adds judgment</span>
+  </div>
+  <div class="banner edge-alt">
+    <div>
+      <b>Takeaway</b>
+      Most real agent tasks are open-ended and reference-free — so more and more these days, the thing doing the grading is a model.
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 5 ============ -->
+<section class="deck">
+  <div class="deck-head">
+    <h3>5 · Golden Dataset First, Then Four Ways to Grade Outputs</h3>
+    <p class="deck-cap">Illustrates Sections 4 and 5 of the article, "Start With a Golden Dataset" and "Four Ways to Grade Agent Outputs"</p>
+  </div>
+  <p class="zone-title">Phase 1 · Build the golden dataset — before touching any metric list</p>
+  <div class="grid g3">
+    <div class="card">
+      <div class="chips">
+        <span class="chip"><span class="num">1</span>Example inputs for your task</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chips">
+        <span class="chip"><span class="num alt">2</span>Paired with a great output</span>
+        <span class="chip c-bad"><span class="num warn">2b</span>and a bad output</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chips">
+        <span class="chip"><span class="num">3</span>Cover common cases, edge cases, past failures</span>
+      </div>
+    </div>
+  </div>
+  <div class="arr">▼</div>
+  <div class="card" data-tip="Section 4: 'Start small — 52 examples is genuinely plenty to get going.'">
+    <span class="kicker">Golden dataset</span>
+    <div class="chips">
+      <span class="chip c-good">About 52 examples is plenty to start</span>
+      <span class="chip c-alt" data-tip="Work backwards: what would make an output good or bad? The quantified answers are your metrics.">Work backwards → metrics fall out of the dataset</span>
+    </div>
+  </div>
+  <div class="arr">▼<small>now choose a grader</small></div>
+  <p class="zone-title">Phase 2 · Four ways to grade agent outputs</p>
+  <div class="grid g4">
+    <div class="card lane-card edge-good">
+      <h4>Humans</h4>
+      <p class="role">Domain expert grades against the rubric. The gold standard — nothing beats it for quality.</p>
+      <div class="note">Slow, expensive, does not scale → small careful samples, kept as source of truth.</div>
+    </div>
+    <div class="card lane-card edge-warn">
+      <h4>User feedback</h4>
+      <p class="role">Thumbs up or down, edits, accepted or rejected, task finished, repeat visits.</p>
+      <div class="note">Real ground truth — but noisy, and only available after you ship, so it cannot be your safety net.</div>
+    </div>
+    <div class="card lane-card edge-accent">
+      <h4>Programmatic</h4>
+      <p class="role">Simple checks written in code: right value, valid JSON, right tool and arguments, time, cost.</p>
+      <div class="note">Cheap and instant, run on every change — only works with clearly checkable answers.</div>
+    </div>
+    <div class="card lane-card edge-alt">
+      <h4>LLM as a judge</h4>
+      <p class="role">A strong model grades outputs against your rubric — essay grading that scales to thousands.</p>
+      <div class="note">Judge models have biases: they favor longer answers and whatever they see first.</div>
+    </div>
+  </div>
+  <div class="rev-note" data-tip="Section 5.4: only trust the LLM judge after checking its grades against a human on a sample.">↩ validate the LLM judge against human grades on a sample first — then it becomes your workhorse</div>
+  <div class="banner edge-good">
+    <div>
+      <b>Ordering rule</b>
+      Golden dataset first, metrics second, grader third — never the other way around.
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 6 ============ -->
+<section class="deck">
+  <div class="deck-head">
+    <h3>6 · The Evaluation Loop: CI/CD for AI Agents</h3>
+    <p class="deck-cap">Illustrates Sections 6 and 7 of the article, "Evals Are a Loop" and "Tools for Running and Monitoring Evals"</p>
+  </div>
+  <div class="stepper">
+    <div class="st-head">
+      <span class="st-count" id="st-count">Step 1 of 8</span>
+      <div class="st-dots" id="st-dots" role="tablist" aria-label="Loop steps"></div>
+    </div>
+    <div class="st-bar"><i id="st-bar"></i></div>
+
+    <article class="stepcard active">
+      <p class="idx">Step 01</p>
+      <h4>Decide what "good" even means</h4>
+      <p>Get specific about the goal before touching a single metric: what does a great answer look like for your users, on your task?</p>
+      <div class="chips"><span class="chip c-dim">This is the step everyone is tempted to skip</span></div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 02</p>
+      <h4>Build the golden dataset</h4>
+      <p>Collect example inputs paired with great and bad outputs — common cases, annoying edge cases, and every failure you have watched blow up.</p>
+      <div class="chips"><span class="chip c-good">About 52 examples is enough to start</span></div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 03</p>
+      <h4>Pick your metrics — backwards</h4>
+      <p>Work backwards from the dataset: the quantified way to judge your examples <i>is</i> the metric. Do not start from a metric list.</p>
+      <div class="chips">
+        <span class="chip c-accent">Relevance</span>
+        <span class="chip c-good">Faithfulness</span>
+        <span class="chip c-alt">Correctness</span>
+        <span class="chip c-warn">Coherence</span>
+        <span class="chip c-dim">+ task-specific metrics</span>
+      </div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 04</p>
+      <h4>Run a baseline</h4>
+      <p>Run your current system across the whole dataset and get a number. That number is your starting line — without it, "it feels better" is just vibes, not data.</p>
+      <div class="chips"><span class="chip c-alt" data-tip="Section 7">Eval runners: Promptfoo, RAGAS</span></div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 05</p>
+      <h4>Go look at the failures and group them</h4>
+      <p>Are they all retrieval misses? Formatting screw-ups? The same weird edge cases? The grouping tells you exactly what to fix in the agent.</p>
+      <div class="chips"><span class="chip c-warn">Everyone rushes past this step</span></div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 06</p>
+      <h4>Fix it</h4>
+      <p>Usually a small change: tweak your prompts, your retrieval, or your tool definitions.</p>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 07</p>
+      <h4>Rerun against the exact same dataset</h4>
+      <p>Did your numbers go up — and just as important, did you accidentally break something that used to work? Catching that is the entire reason the loop exists.</p>
+      <div class="branch-row">
+        <div class="bcard bad"><b>Numbers down or regression</b>Something broke → return to step 5, group the failures again, fix, rerun.</div>
+        <div class="bcard good"><b>Numbers up, nothing regressed</b>The change is safe → ship and keep watching.</div>
+      </div>
+    </article>
+
+    <article class="stepcard">
+      <p class="idx">Step 08</p>
+      <h4>Keep going — this never stops</h4>
+      <p>In production you always watch live traffic. Your provider can quietly update the models underneath you and shift behavior overnight, so continuous evaluation and monitoring run forever.</p>
+      <div class="branch-row" style="grid-template-columns:1fr 1fr">
+        <div class="bcard good"><b>Feedback loop</b>Real-world failures flow right back into your golden dataset — then run the whole loop again.</div>
+        <div class="bcard"><b>Monitoring tools</b><span class="note">Tracing and monitoring: LangSmith, Langfuse, Arize, Braintrust.</span></div>
+      </div>
+    </article>
+
+    <div class="st-ctrl">
+      <button type="button" class="btn" id="st-prev">← Previous</button>
+      <button type="button" class="btn" id="st-next">Next →</button>
+    </div>
+  </div>
+  <div class="banner edge-warn">
+    <div>
+      <b>The difference between demo teams and shipping teams</b>
+      Winning teams treat evals like continuous testing — they run them always and catch problems before users ever see them. Losing teams run evals once at shipping time and hear about every bug from angry users.
+    </div>
+  </div>
+</section>
+
+<footer class="wf-foot">
+  <span>Companion diagrams · AI Evals Explained | How to evaluate AI Agents?</span>
+  <span>Channel: Aishwarya Srinivasan</span>
+  <span>Tip: hover any highlighted chip for the article detail behind it.</span>
+</footer>
+
+<script>
+(function () {
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
+  var decks = Array.prototype.slice.call(document.querySelectorAll('.deck'));
+  function activate(i) {
+    btns.forEach(function (b, j) {
+      var on = j === i;
+      b.classList.toggle('active', on);
+      if (on) { b.setAttribute('aria-selected', 'true'); } else { b.removeAttribute('aria-selected'); }
+    });
+    decks.forEach(function (d, j) { d.classList.toggle('active', j === i); });
+  }
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () { activate(parseInt(b.getAttribute('data-tab'), 10)); });
+  });
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.stepcard'));
+  var prev = document.getElementById('st-prev');
+  var next = document.getElementById('st-next');
+  var dotsWrap = document.getElementById('st-dots');
+  var bar = document.getElementById('st-bar');
+  var count = document.getElementById('st-count');
+  var dots = [];
+  var cur = 0;
+  cards.forEach(function (c, k) {
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'dot';
+    d.setAttribute('aria-label', 'Go to step ' + (k + 1));
+    d.addEventListener('click', function () { go(k); });
+    dotsWrap.appendChild(d);
+    dots.push(d);
+  });
+  function go(k) {
+    if (k < 0 || k >= cards.length) { return; }
+    cur = k;
+    cards.forEach(function (c, j) { c.classList.toggle('active', j === cur); });
+    dots.forEach(function (d, j) {
+      d.classList.toggle('done', j < cur);
+      d.classList.toggle('now', j === cur);
+    });
+    bar.style.width = (((cur + 1) / cards.length) * 100) + '%';
+    count.textContent = 'Step ' + (cur + 1) + ' of ' + cards.length;
+    prev.disabled = cur === 0;
+    next.disabled = cur === cards.length - 1;
+  }
+  prev.addEventListener('click', function () { go(cur - 1); });
+  next.addEventListener('click', function () { go(cur + 1); });
+  go(0);
+})();
+</script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>
