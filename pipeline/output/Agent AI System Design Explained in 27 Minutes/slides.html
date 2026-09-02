@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent AI System Design — Explained in 27 Minutes</title>
+<style>
+  :root {
+    --bg: #0b101c;
+    --panel: #141b2d;
+    --panel-2: #1a2338;
+    --text: #e9edf6;
+    --muted: #94a0b8;
+    --accent: #6ea8fe;
+    --accent-2: #a78bfa;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --border: #273349;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* progress bar */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    z-index: 30; transition: width .25s ease;
+  }
+
+  /* deck */
+  #deck { height: 100%; width: 100%; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 7vh 9vw;
+    opacity: 0; transform: translateX(40px);
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease;
+    max-height: 100vh; overflow: auto;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  .kicker {
+    font-size: .8rem; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 1.1rem;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 3.4vw, 2.7rem);
+    line-height: 1.15; font-weight: 800;
+    margin-bottom: 1.4rem; letter-spacing: -.02em;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p, li { color: var(--text); }
+  .lead { font-size: clamp(1rem, 1.6vw, 1.25rem); color: var(--muted); line-height: 1.6; max-width: 60ch; }
+  .sub { color: var(--muted); font-size: .95rem; margin-top: .8rem; }
+
+  /* layout helpers */
+  .grid { display: grid; gap: 1.1rem; }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 820px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .slide { padding: 6vh 6vw; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.4rem;
+  }
+  .card h3 { font-size: 1.02rem; margin-bottom: .6rem; color: var(--accent); letter-spacing: -.01em; }
+  .card p, .card li { font-size: .92rem; color: var(--muted); line-height: 1.55; }
+  .card li { margin: .35rem 0 .35rem 1.1rem; }
+  .card .big { font-size: 1.05rem; color: var(--text); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: .45rem .95rem;
+    font-size: .88rem; color: var(--text);
+  }
+  .chip.accent { border-color: var(--accent); color: var(--accent); }
+  .chip.bad { border-color: var(--bad); color: var(--bad); }
+  .chip.good { border-color: var(--good); color: var(--good); }
+  .chip.warn { border-color: var(--warn); color: var(--warn); }
+
+  table {
+    width: 100%; border-collapse: collapse; font-size: .92rem;
+    background: var(--panel); border-radius: 12px; overflow: hidden;
+  }
+  th, td {
+    text-align: left; padding: .72rem .95rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--panel-2); color: var(--accent);
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .1em;
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 600; }
+  td { color: var(--muted); line-height: 1.5; }
+
+  .steps { display: flex; flex-wrap: wrap; gap: .6rem; counter-reset: step; }
+  .step {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; color: var(--text);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b101c; font-weight: 800; font-size: .72rem;
+    border-radius: 6px; padding: .25rem .45rem;
+  }
+
+  .quote {
+    border-left: 3px solid var(--accent-2);
+    padding: .9rem 1.2rem; margin-top: 1.2rem;
+    background: var(--panel); border-radius: 0 12px 12px 0;
+    font-size: 1.02rem; color: var(--text); font-style: italic; line-height: 1.55;
+  }
+
+  .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  @media (max-width: 820px) { .checklist { grid-template-columns: 1fr; } }
+  .check {
+    display: flex; align-items: center; gap: .7rem;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .75rem 1rem; font-size: .95rem;
+  }
+  .check::before {
+    content: "✓"; color: var(--good); font-weight: 800;
+    background: rgba(52,211,153,.12); border-radius: 6px; padding: .15rem .5rem;
+  }
+
+  /* controls */
+  #counter {
+    position: fixed; right: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .85rem; z-index: 30;
+    font-variant-numeric: tabular-nums;
+  }
+  #hint {
+    position: fixed; left: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .78rem; z-index: 30; opacity: .7;
+  }
+  #nav {
+    position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+    display: flex; gap: .5rem; z-index: 30;
+  }
+  #nav button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: .45rem .95rem; cursor: pointer; font-size: .9rem;
+  }
+  #nav button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<main id="deck">
+
+  <!-- 1 · Title -->
+  <section class="slide">
+    <p class="kicker">Agent AI System Design</p>
+    <h1>Not an LLM Wrapped in a<br><span class="grad">Chat Interface</span></h1>
+    <p class="lead">A builder's walkthrough of the system design behind production agentic AI: model routing, tool contracts, memory and state, orchestration, evaluation, approval gates — and the production principles that make an agent reliable, fast, and safe enough to connect to real tools.</p>
+    <p class="sub">Source: "Agent AI System Design Explained in 27 Minutes" — Aishwarya Srinivasan · youtube.com/watch?v=mwN75EiGfCE</p>
+  </section>
+
+  <!-- 2 · Agenda -->
+  <section class="slide">
+    <p class="kicker">Agenda</p>
+    <h1>What We'll Cover</h1>
+    <div class="grid g2">
+      <div class="card"><h3>Foundations &amp; Architecture</h3>
+        <ul>
+          <li>What is an agentic AI system?</li>
+          <li>Single-agent vs multi-agent systems</li>
+          <li>The model layer: routing &amp; structured output</li>
+        </ul>
+      </div>
+      <div class="card"><h3>The Building Blocks</h3>
+        <ul>
+          <li>Tools: the interface to the real world</li>
+          <li>Memory &amp; state</li>
+          <li>Orchestration</li>
+          <li>Evaluation</li>
+          <li>Approval gates &amp; policy control</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Production Principles</h3>
+        <ul>
+          <li>Reliability</li>
+          <li>Cost &amp; latency</li>
+          <li>Context &amp; RAG design</li>
+          <li>Observability, security &amp; privacy</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Wrap-Up</h3>
+        <ul>
+          <li>Putting it all together</li>
+          <li>Key takeaways checklist</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · Single vs Multi-Agent -->
+  <section class="slide">
+    <p class="kicker">Architecture Patterns</p>
+    <h1>Single-Agent vs Multi-Agent</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Single-Agent</h3>
+        <p class="big">One primary agent owns the entire workflow.</p>
+        <p>It may still call multiple tools, retrieve documents, update its memory, and run many reasoning steps — but the control loop stays centralized.</p>
+        <p style="margin-top:.6rem">Example: a customer-support agent that classifies an incoming request, retrieves the account context, calls a billing API, asks for confirmation, then generates the final response.</p>
+      </div>
+      <div class="card">
+        <h3>Multi-Agent</h3>
+        <p class="big">Workflow split across specialized agents — planning, knowledge retrieval, code writing, review, execution.</p>
+        <p>Key idea: <strong style="color:var(--text)">separation of responsibilities</strong> — defined roles, explicit input contracts, explicit output contracts, and routing logic between agents.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:1.1rem">
+      <div class="card">
+        <h3 style="color:var(--good)">Multi-agent earns its complexity when…</h3>
+        <ul>
+          <li>Task has clear specialization</li>
+          <li>Work benefits from parallel work</li>
+          <li>Review loops are needed</li>
+          <li>Long-running workflows</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--warn)">But multi-agent adds…</h3>
+        <ul>
+          <li>More coordination overhead</li>
+          <li>More failure modes &amp; state to track</li>
+          <li>More logs to inspect</li>
+          <li>More places where cost and latency creep up</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub">The choice is a design tradeoff — not a matter of which pattern sounds more advanced.</p>
+  </section>
+
+  <!-- 4 · Model Layer -->
+  <section class="slide">
+    <p class="kicker">Building Block 1 · The Model Layer</p>
+    <h1>Route Models by Step Complexity</h1>
+    <p class="sub" style="margin-bottom:.9rem">The default — one powerful model handling every step — gets expensive and slow very quickly.</p>
+    <table>
+      <tr><th>Step type</th><th>Model tier</th></tr>
+      <tr><td>Intent classification, routing, extraction, schema filling, simple summarization</td><td>Small, cheap, fast model</td></tr>
+      <tr><td>Book vs reschedule vs cancel vs just asking a question</td><td>A small model classifies this fine</td></tr>
+      <tr><td>Date, time, doctor name, appointment type → JSON schema</td><td>May not need an LLM at all</td></tr>
+      <tr><td>Ambiguous constraints, deeper reasoning<br><span style="font-size:.85rem">"I'm going to be traveling next week, I want to avoid mornings" · "make sure this happens after my lab results come in"</span></td><td>Stronger reasoning model</td></tr>
+    </table>
+    <div class="grid g2" style="margin-top:1.1rem">
+      <div class="card"><h3>Structured outputs</h3>
+        <p>Any step whose output feeds another system returns a predictable structure, never free-form prose — via JSON schema, Pydantic models, or function/tool calling.</p>
+      </div>
+      <div class="card"><h3>3-question contract per step</h3>
+        <p>1. Which model runs this step?<br>2. What output contract does it return?<br>3. What happens if it fails or returns invalid output?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · Tools I -->
+  <section class="slide">
+    <p class="kicker">Building Block 2 · Tools</p>
+    <h1>Design Tools Like Strict APIs</h1>
+    <p class="lead" style="margin-bottom:1.2rem">Tools are the interface between the model and the external world: database lookups, CRM, calendar, payment APIs, code interpreters, search, ticketing, Slack/Google actions, any backend function the agent may call.</p>
+    <div class="chip-row">
+      <span class="chip accent">Name</span>
+      <span class="chip accent">Description</span>
+      <span class="chip accent">Input schema</span>
+      <span class="chip accent">Output schema</span>
+      <span class="chip accent">Permission boundaries</span>
+      <span class="chip accent">Timeout behavior</span>
+      <span class="chip accent">Retry behavior</span>
+      <span class="chip accent">Error format</span>
+    </div>
+    <div class="grid g2" style="margin-top:1.4rem">
+      <div class="card">
+        <h3 style="color:var(--bad)">Anti-pattern</h3>
+        <p><code style="color:var(--bad)">update_user</code> accepts one vague string:<br><em>"update this user based on the request"</em> — far too open-ended.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--good)">Safer contract</h3>
+        <p>Explicit structured fields: <code style="color:var(--good)">user_id</code> · <code style="color:var(--good)">field_to_update</code> · <code style="color:var(--good)">new_value</code> · <code style="color:var(--good)">reason</code> · <code style="color:var(--good)">source_request_id</code> · <code style="color:var(--good)">confirmation_required</code></p>
+      </div>
+    </div>
+    <p class="sub">Tool outputs must be machine-readable: a structured error on failure, a structured result on success. The agent should never parse messy prose from your backend.</p>
+  </section>
+
+  <!-- 6 · Tools II -->
+  <section class="slide">
+    <p class="kicker">Building Block 2 · Tools (cont.)</p>
+    <h1>Separate Read Tools, Then Phase In Risk</h1>
+    <div class="steps">
+      <span class="step">Read-only capabilities first</span>
+      <span class="step">Low-risk write tools next</span>
+      <span class="step">High-risk write tools — only with validation + human approval</span>
+    </div>
+    <p class="sub" style="margin-top:.9rem">Fetching available appointment slots is very different from canceling an appointment — understand the risk factor of each tool.</p>
+    <div class="card" style="margin-top:1.3rem">
+      <h3>MCP — Model Context Protocol</h3>
+      <p>An emerging pattern for exposing tools, resources, and context to agents in a standardized way. <strong style="color:var(--text)">Optional.</strong> Even without MCP, the system-design principle is identical: tools need contracts, permissions, boundaries, and logs.</p>
+    </div>
+  </section>
+
+  <!-- 7 · Memory & State I -->
+  <section class="slide">
+    <p class="kicker">Building Block 3 · Memory &amp; State</p>
+    <h1>Memory Is Not One Thing</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>State</h3>
+        <p class="big">The current execution context of the workflow.</p>
+        <ul>
+          <li>Which step are we on?</li>
+          <li>What has already been collected?</li>
+          <li>Which tools were called — what did they return?</li>
+          <li>Has the user confirmed the action?</li>
+          <li>Did the workflow pass or fail?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Memory</h3>
+        <p class="big">Broader, cross-run information.</p>
+        <ul>
+          <li>Conversation history</li>
+          <li>User preferences</li>
+          <li>Past actions</li>
+          <li>Retrieved knowledge &amp; document context</li>
+          <li>Summaries &amp; long-form info useful later</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote">Rescheduling a doctor's appointment: store the appointment ID, proposed new time, confirmation status, and workflow step as structured state — don't pass the full medical history through the LLM when it only needs the appointment ID and the available slots.</div>
+  </section>
+
+  <!-- 8 · Memory & State II -->
+  <section class="slide">
+    <p class="kicker">Building Block 3 · Memory &amp; State (cont.)</p>
+    <h1>Storage by Access Pattern</h1>
+    <p class="sub" style="margin-bottom:.9rem">A common mistake is pulling everything into a vector database — that is not a good default. Choose each store by access pattern.</p>
+    <table>
+      <tr><th>Data</th><th>Store</th></tr>
+      <tr><td>Conversation &amp; workflow state</td><td>Low-latency store: Redis, DynamoDB, Postgres, MongoDB</td></tr>
+      <tr><td>Application state</td><td>Your application database</td></tr>
+      <tr><td>Knowledge retrieval (RAG)</td><td>Pinecone, pgvector, Weaviate, Elasticsearch, OpenSearch, or a managed knowledge base</td></tr>
+      <tr><td>Long-term archives</td><td>Cheaper object storage — e.g., an S3 bucket</td></tr>
+    </table>
+    <div class="grid g2" style="margin-top:1.1rem">
+      <div class="card"><h3>Short-term vs long-term</h3>
+        <p><strong style="color:var(--text)">Short-term:</strong> what you pass into the prompt for the current turn.<br>
+        <strong style="color:var(--text)">Long-term:</strong> retrieved selectively.</p>
+        <p style="margin-top:.5rem">Never stuff everything into the context window — that creates context bloat. Retrieve the <strong style="color:var(--text)">smallest useful context</strong> for the current step.</p>
+      </div>
+      <div class="card"><h3>Memory design = data architecture</h3>
+        <ul>
+          <li>What to store</li>
+          <li>Where to store it</li>
+          <li>How long to keep it</li>
+          <li>How to retrieve it</li>
+          <li>What is safe to send to the model — or not</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · Orchestration I -->
+  <section class="slide">
+    <p class="kicker">Building Block 4 · Orchestration</p>
+    <h1>Define the Control Flow Explicitly</h1>
+    <p class="lead" style="margin-bottom:1.1rem">Orchestration is the control layer — moving from a user request, through intermediate steps and tool calls, to a final output. Implementable in plain application code, LangGraph, Temporal, LlamaIndex workflows, LangChain, custom state machines — often a combination.</p>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Receive message</span>
+      <span class="step">Classify intent</span>
+      <span class="step">Retrieve context</span>
+      <span class="step">Check scope</span>
+      <span class="step">Select tools</span>
+      <span class="step">Validate inputs</span>
+      <span class="step">Execute tools</span>
+      <span class="step">Inspect results</span>
+      <span class="step">Confirm if needed</span>
+      <span class="step">Final response</span>
+      <span class="step">Log trace + async evals</span>
+    </div>
+    <div class="quote">Do not confuse autonomy with lack of structure. Production agents need a very clear control flow.</div>
+  </section>
+
+  <!-- 10 · Orchestration II -->
+  <section class="slide">
+    <p class="kicker">Building Block 4 · Orchestration (cont.)</p>
+    <h1>Pipelines, Graphs &amp; Agent Routing</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="color:var(--good)">Simple flows → deterministic pipeline</h3>
+        <p>Not every workflow needs planning and reflection. If the sequence of steps is mostly known in advance, design it as a pipeline or a state machine — and use agentic reasoning only when the workflow genuinely needs dynamic decision-making.</p>
+      </div>
+      <div class="card">
+        <h3>Complex flows → graph orchestration</h3>
+        <p>Graphs let you represent branching, retries, loops, approval gates, and fallback paths:</p>
+        <ul>
+          <li>Extraction fails → retry with a different prompt or model</li>
+          <li>"No available appointment" → branch to suggest alternatives</li>
+          <li>Cancellation request → branch into a confirmation path</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1.1rem">
+      <h3>Agent-to-agent routing (multi-agent)</h3>
+      <p>Define for every handoff: which agent owns the next step · what information gets passed along · what output format is expected · how conflicts are resolved. <strong style="color:var(--text)">Without that, multi-agent systems become extremely difficult to debug.</strong></p>
+    </div>
+  </section>
+
+  <!-- 11 · Evaluation I -->
+  <section class="slide">
+    <p class="kicker">Building Block 5 · Evaluation</p>
+    <h1>Eval the Trace, Not Just the Final Answer</h1>
+    <p class="lead" style="margin-bottom:1.1rem">In agentic systems, "no exception thrown" no longer means it works. Evaluate every important step of the trajectory: intent classification, retrieval quality, tool selection, tool arguments, policy compliance, confirmation behavior, final answer quality, task success.</p>
+    <div class="chip-row" style="margin-bottom:1.1rem">
+      <span class="chip bad">Valid JSON, semantically wrong</span>
+      <span class="chip bad">Correct tool, wrong arguments</span>
+      <span class="chip bad">Irrelevant context retrieved</span>
+      <span class="chip bad">Answering from stale information</span>
+      <span class="chip bad">Fails to ask for confirmation</span>
+      <span class="chip bad">Refuses a valid request</span>
+      <span class="chip bad">Complies with an unsafe request</span>
+    </div>
+    <div class="quote">A support agent can produce a very polished final answer yet have applied the wrong refund policy. Eval the trace and you see the retrieval pulled the wrong policy document, or the model misclassified the user's plan type.</div>
+  </section>
+
+  <!-- 12 · Evaluation II -->
+  <section class="slide">
+    <p class="kicker">Building Block 5 · Evaluation (cont.)</p>
+    <h1>Test Sets, Production Evals &amp; Metrics</h1>
+    <div class="chip-row" style="margin-bottom:.8rem">
+      <span class="chip">Happy paths</span>
+      <span class="chip">Ambiguous requests</span>
+      <span class="chip">Out-of-scope requests</span>
+      <span class="chip">Tool failures</span>
+      <span class="chip">Malicious inputs</span>
+      <span class="chip">Partial information</span>
+      <span class="chip">Policy edge cases</span>
+      <span class="chip">Escalation cases</span>
+    </div>
+    <p class="sub" style="margin-bottom:1.2rem">This test set becomes your regression suite whenever you change the model, the prompt, the retrieval logic, or your tool schemas.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Production evals</h3>
+        <ul>
+          <li>Sampled async evals — a judge LLM scores a percentage of conversations offline</li>
+          <li>High-signal user feedback goes directly into evals</li>
+          <li>LLM-as-judge is useful, not perfect — combine model grading with deterministic checks and human review</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Produce metrics, not just examples</h3>
+        <div class="chip-row">
+          <span class="chip">Intent accuracy</span>
+          <span class="chip">Tool-call success rate</span>
+          <span class="chip">Invalid-schema rate</span>
+          <span class="chip">Retrieval hit rate</span>
+          <span class="chip">Refusal accuracy</span>
+          <span class="chip">Escalation rate</span>
+          <span class="chip">Task completion rate</span>
+          <span class="chip">User flag rate</span>
+          <span class="chip">Cost per successful task</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · Approval & Policy -->
+  <section class="slide">
+    <p class="kicker">Building Block 6 · Approval &amp; Policy Control</p>
+    <h1>Human in the Loop for High Impact</h1>
+    <p class="lead" style="margin-bottom:1rem">These should never happen just because the model inferred the intent:</p>
+    <div class="chip-row" style="margin-bottom:1.1rem">
+      <span class="chip bad">Send email</span>
+      <span class="chip bad">Delete data</span>
+      <span class="chip bad">Issue refund</span>
+      <span class="chip bad">Cancel appointment</span>
+      <span class="chip bad">Change billing</span>
+      <span class="chip bad">Update CRM record</span>
+      <span class="chip bad">Run code</span>
+      <span class="chip bad">Place order</span>
+      <span class="chip bad">Financial transaction</span>
+    </div>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Model suggests</span>
+      <span class="step">Code validates</span>
+      <span class="step">User approves</span>
+      <span class="step">Tool executes</span>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>Deterministic validation</h3>
+        <ul>
+          <li>Check the user owns the target</li>
+          <li>Check permissions</li>
+          <li>Check the action is allowed under policy</li>
+          <li>Check required fields are present</li>
+          <li>Check the user confirmed the exact action</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Source of truth</h3>
+        <p>Your application code — <strong style="color:var(--text)">not the agent</strong> — is the source of truth for business rules. If one agent plans and another executes, the execution layer must not blindly trust the planning layer.</p>
+        <p style="margin-top:.5rem">Example: "cancel my appointment" → verify ownership, cancellability, policy, and explicit confirmation before the cancellation API is called.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · Reliability -->
+  <section class="slide">
+    <p class="kicker">Production Principle 1 · Reliability</p>
+    <h1>Reliable Even When the Model Isn't</h1>
+    <p class="lead" style="margin-bottom:1.1rem">The system behaves predictably even when the model does not — through decomposition, contracts, retries, validation, fallbacks, and monitoring.</p>
+    <div class="grid g2">
+      <div class="card"><h3>Decompose prompts</h3>
+        <p>A single joint prompt that classifies, retrieves, decides policy, calls tools, and writes the final response is extremely hard to test. Smaller steps are far easier to evaluate and debug.</p>
+      </div>
+      <div class="card"><h3>Validate → retry → fallback</h3>
+        <p>If the next step depends on the model's output, never rely on free-form text. Validate the schema; retry on invalid output; use a fallback path if it still fails.</p>
+      </div>
+      <div class="card"><h3>Model call = unreliable dependency</h3>
+        <p>Timeouts, malformed outputs, rate limits, provider errors, degraded quality — every one needs a handling path.</p>
+      </div>
+      <div class="card"><h3>Deterministic validation ≠ model reasoning</h3>
+        <p>Model extracts a date → code validates it. Model picks a user ID → code verifies permissions. Model proposes a tool call → code validates the arguments.</p>
+      </div>
+    </div>
+    <div class="quote">Reliability is not about making the model perfect — it is about designing the system so model imperfections do not immediately become product failures.</div>
+  </section>
+
+  <!-- 15 · Cost & Latency -->
+  <section class="slide">
+    <p class="kicker">Production Principle 2 · Cost &amp; Latency</p>
+    <h1>Design Cost and Latency Together</h1>
+    <p class="sub" style="margin-bottom:.9rem">One interaction may run many model calls — classification, query rewriting, retrieval, planning, tool selection, tool arguments, result interpretation, final response, evaluation. All-large-models everywhere = extremely slow and extremely expensive.</p>
+    <table>
+      <tr><th>Lever</th><th>Rule</th></tr>
+      <tr><td>Model routing</td><td>Small models for simple classification and extraction; larger models only when ambiguity, reasoning, or synthesis is required</td></tr>
+      <tr><td>Token limits</td><td>Output tokens are both a cost and a latency lever — two-sentence answer, no essay; downstream needs JSON, no prose</td></tr>
+      <tr><td>Caching</td><td>Cache retrieval results, repeated policy lookups, tool metadata, and stable context</td></tr>
+      <tr><td>Batching / async</td><td>For non-blocking work like evaluation and summarization</td></tr>
+      <tr><td>Streaming</td><td>Always stream user-facing responses that may take time</td></tr>
+      <tr><td>Progress states</td><td>Long-running tool calls → show progress, never a blank screen</td></tr>
+      <tr><td>Early scope gates</td><td>Cheap filters, rules, and intent gates before the expensive reasoning step — out-of-scope requests burn tokens and tool calls</td></tr>
+    </table>
+    <p class="sub" style="margin-top:1rem">Cost observability: tokens in · tokens out · cost per step · cost per conversation · cost per successful task.</p>
+  </section>
+
+  <!-- 16 · Context & RAG -->
+  <section class="slide">
+    <p class="kicker">Production Principle 3 · Context &amp; RAG Design</p>
+    <h1>Pass the Right Context, Not Everything</h1>
+    <p class="sub" style="margin-bottom:.9rem">Each context source has different freshness, trust, privacy, and latency characteristics — choose per step, don't dump everything into the prompt.</p>
+    <div class="chip-row" style="margin-bottom:1.2rem">
+      <span class="chip">User message</span>
+      <span class="chip">Conversation state</span>
+      <span class="chip">Application database</span>
+      <span class="chip">Retrieved documents</span>
+      <span class="chip">Tool results</span>
+      <span class="chip">User profile</span>
+      <span class="chip">Long-term memory</span>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>Retrieval quality &gt; vector DB</h3>
+        <ul>
+          <li>Document chunking</li>
+          <li>Metadata filters</li>
+          <li>Hybrid search where useful</li>
+          <li>Reranking</li>
+          <li>Freshness controls</li>
+          <li>Source attribution when trust matters</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Trusted vs untrusted content</h3>
+        <ul>
+          <li>Retrieved docs must not override system instructions</li>
+          <li>Tool outputs are data, not instructions</li>
+          <li>User content isolated from developer/system instructions</li>
+          <li>Long conversations → summarization + checkpoints, stored separately from raw logs</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 · Observability -->
+  <section class="slide">
+    <p class="kicker">Production Layer · Observability</p>
+    <h1>Log the Anatomy of Every Run</h1>
+    <table>
+      <tr><th>Category</th><th>Fields</th></tr>
+      <tr><td>Identity</td><td>Model name · model version · prompt version · step name · workflow ID · conversation ID</td></tr>
+      <tr><td>Tool use</td><td>Tool name · tool arguments — sensitive values masked</td></tr>
+      <tr><td>Performance</td><td>Latency · time to first token · tokens in · tokens out · cost</td></tr>
+      <tr><td>Resilience</td><td>Retries · fallbacks · errors</td></tr>
+      <tr><td>Feedback &amp; evals</td><td>Was feedback used · eval scores</td></tr>
+    </table>
+    <div class="quote">From the logs you must be able to answer where the failure happened: intent classification · retrieval · planning · tool selection · tool execution · policy validation · final response.</div>
+  </section>
+
+  <!-- 18 · Security & Privacy -->
+  <section class="slide">
+    <p class="kicker">Production Layer · Security &amp; Privacy</p>
+    <h1>Attacker-Controlled Input, Minimum Data</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="color:var(--bad)">Security — treat everything touching the model as attacker-controlled unless proven otherwise</h3>
+        <div class="chip-row" style="margin-bottom:.8rem">
+          <span class="chip bad">User messages: direct prompt injection</span>
+          <span class="chip bad">Retrieved documents: indirect prompt injection</span>
+          <span class="chip bad">Tool outputs: poisoned data</span>
+          <span class="chip bad">Model outputs: unsafe commands — SQL, HTML, code</span>
+        </div>
+        <div class="chip-row">
+          <span class="chip good">Separate instructions from data</span>
+          <span class="chip good">Never execute raw model output</span>
+          <span class="chip good">No SQL/shell from generated text</span>
+          <span class="chip good">Least-privilege tool permissions</span>
+          <span class="chip good">Approval gates for risky actions</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Privacy — send the minimum data needed</h3>
+        <ul>
+          <li>Model needs appointment ID + availability → no full patient report</li>
+          <li>Summarizing a ticket → no full customer history</li>
+          <li>Mask PII at the right time; set retention policies for logs, traces, and archives</li>
+          <li>Keep sensitive fields out of the prompt unless required for the task</li>
+          <li>Data boundary = model provider + vector DB + observability + logging systems</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 19 · Key Takeaways -->
+  <section class="slide">
+    <p class="kicker">Key Takeaways</p>
+    <h1>The Complete Checklist</h1>
+    <div class="checklist">
+      <div class="check">Treat the agent as a full production software system, not an LLM in a chat interface</div>
+      <div class="check">Choose single vs multi-agent deliberately — specialization &amp; review loops vs coordination overhead</div>
+      <div class="check">Route models by step complexity — cheap fast models for simple steps, strong models where reasoning changes the outcome</div>
+      <div class="check">Design tools like strict APIs: names, schemas, permissions, timeouts, retries, structured errors</div>
+      <div class="check">Separate memory from state; store by access pattern; pass the smallest useful context</div>
+      <div class="check">Define explicit control flow — deterministic pipelines for known steps, graphs for branching and gates</div>
+      <div class="check">Gate high-impact actions: model suggests · code validates · user approves · tool executes</div>
+      <div class="check">Evaluate the trace, not just the final answer, against a realistic regression test set</div>
+      <div class="check">Decompose prompts; validate, retry, fall back; treat each model call as an unreliable dependency</div>
+      <div class="check">Design cost and latency in: route, limit tokens, cache, batch, stream, gate scope early</div>
+      <div class="check">Log the anatomy of every run — and know exactly where each failure happened</div>
+      <div class="check">Treat everything touching the model as attacker-controlled; send the minimum data</div>
+    </div>
+  </section>
+
+  <!-- 20 · End -->
+  <section class="slide">
+    <p class="kicker">The End</p>
+    <h1>Go Build It <span class="grad">Right</span></h1>
+    <p class="lead">A production-grade agentic AI system needs all of the pieces together. And agentic AI system design is not just prompt engineering — it is backend design, data design, security design, and product design with an LLM in the loop.</p>
+    <p class="sub">Source: "Agent AI System Design Explained in 27 Minutes" — Aishwarya Srinivasan (youtube.com/watch?v=mwN75EiGfCE)<br>
+    Going deeper: a free ~2-hour masterclass recording on Agentic AI System Design · Gen Academy's live, project-based certification program — weekly classes, low-code/no-code or code-heavy tracks, open to anyone becoming an AI professional.</p>
+  </section>
+
+</main>
+
+<div id="counter"></div>
+<div id="hint">← → to navigate · swipe on mobile</div>
+<div id="nav">
+  <button id="prev">← Prev</button>
+  <button id="next">Next →</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+
+  // touch swipe
+  let touchX = null;
+  window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, { passive: true });
+
+  show(0);
+</script>
+</body>
+</html>

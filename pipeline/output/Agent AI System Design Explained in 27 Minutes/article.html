@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent AI System Design Explained in 27 Minutes</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+}
+#view-workflow *{box-sizing:border-box;margin:0;padding:0}
+#view-workflow body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+#view-workflow #workflow-content{max-width:1040px;margin:0 auto;padding:40px 24px 72px}
+#view-workflow a{color:var(--accent);text-decoration:none}
+#view-workflow /* ---------- header ---------- */
+.wf-header{margin-bottom:24px}
+#view-workflow .wf-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px}
+#view-workflow .wf-eyebrow::before{content:"";width:22px;height:2px;background:var(--accent-2);border-radius:2px}
+#view-workflow .wf-header h1{font-size:clamp(22px,3.4vw,34px);line-height:1.2;font-weight:800;letter-spacing:-.01em;max-width:780px}
+#view-workflow .wf-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#view-workflow .chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap}
+#view-workflow .chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+#view-workflow .chip.channel .dot{background:var(--accent-2)}
+#view-workflow .chip.good .dot{background:var(--good)}
+#view-workflow .chip.warn .dot{background:var(--warn)}
+#view-workflow .chip.bad .dot{background:var(--bad)}
+#view-workflow /* ---------- tabs ---------- */
+.wf-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;background:var(--bg);padding:4px 0}
+#view-workflow .wf-tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;transition:all .18s ease}
+#view-workflow .wf-tab:hover{color:var(--text);border-color:var(--accent)}
+#view-workflow .wf-tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+#view-workflow /* ---------- diagram panels ---------- */
+.dgm{display:none;animation:fadeIn .25s ease}
+#view-workflow .dgm.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#view-workflow .dgm-title{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:2px 0 4px}
+#view-workflow .dgm-section{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#view-workflow .dgm-sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:860px}
+#view-workflow .controls{display:flex;gap:8px;align-items:center;margin:10px 0 14px;flex-wrap:wrap}
+#view-workflow .ctl{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease}
+#view-workflow .ctl:hover{border-color:var(--accent);color:var(--accent)}
+#view-workflow .ctl-state{font-size:11.5px;color:var(--muted);font-weight:700;background:var(--panel);border:1px solid var(--border);padding:6px 11px;border-radius:8px;letter-spacing:.03em}
+#view-workflow /* ---------- tooltips ---------- */
+[data-tip]{position:relative;cursor:help}
+#view-workflow [data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);background:#0b101c;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;line-height:1.45;padding:7px 10px;border-radius:8px;width:max-content;max-width:250px;opacity:0;pointer-events:none;transition:opacity .15s ease;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#view-workflow [data-tip]:hover::after{opacity:1}
+#view-workflow /* ---------- numbered step flow (vertical) ---------- */
+.flow{display:flex;flex-direction:column;padding:4px 0}
+#view-workflow .flow-step{display:flex;gap:14px;position:relative;padding:10px 12px;border-radius:12px;border:1px solid transparent;transition:background .2s ease,border-color .2s ease}
+#view-workflow .flow-step::before{content:"";position:absolute;left:27px;top:54px;bottom:-8px;width:2px;background:var(--border)}
+#view-workflow .flow-step:last-child::before{display:none}
+#view-workflow .flow-num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;z-index:1;transition:all .2s ease}
+#view-workflow .flow-body{flex:1;min-width:0;padding:2px 0 0}
+#view-workflow .flow-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#view-workflow .flow-note{font-size:12.5px;color:var(--muted);margin-top:2px;max-width:700px}
+#view-workflow .flow-step.on .flow-num{background:var(--accent);color:#0b101c;box-shadow:0 0 0 6px rgba(110,168,254,.16)}
+#view-workflow .flow-step.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.4)}
+#view-workflow .flow-step.warn .flow-num{border-color:var(--warn);color:var(--warn)}
+#view-workflow .flow-step.warn.on{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.45)}
+#view-workflow .flow-step.warn.on .flow-num{background:var(--warn);color:#0b101c}
+#view-workflow .flow-step.good .flow-num{border-color:var(--good);color:var(--good)}
+#view-workflow .flow-step.good.on{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.45)}
+#view-workflow .flow-step.good.on .flow-num{background:var(--good);color:#0b101c}
+#view-workflow .flow-step.violet .flow-num{border-color:var(--accent-2);color:var(--accent-2)}
+#view-workflow .flow-step.violet.on{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+#view-workflow .flow-step.violet.on .flow-num{background:var(--accent-2);color:#0b101c}
+#view-workflow .branch-line{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:2px 0 2px 46px}
+#view-workflow .branch-line::before, #view-workflow .branch-line::after{content:"";flex:1;height:1px;background:var(--border)}
+#view-workflow /* loop / feedback band */
+.loop-band{display:flex;gap:12px;align-items:flex-start;background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.45);border-radius:12px;padding:12px 16px;margin:8px 0 0;font-size:13px}
+#view-workflow .loop-arrow{flex:0 0 auto;color:var(--accent-2);font-size:16px;font-weight:800;line-height:1.2}
+#view-workflow .loop-band .why{color:var(--muted);font-size:12px}
+#view-workflow /* ---------- split compare (diagram 2) ---------- */
+.compare{display:grid;grid-template-columns:1fr 42px 1fr;gap:4px;margin:16px 0}
+#view-workflow .cmp-col{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+#view-workflow .cmp-col.cold{background:rgba(110,168,254,.05);border-color:rgba(110,168,254,.35)}
+#view-workflow .cmp-col.warm{background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.35)}
+#view-workflow .cmp-head{padding:13px 16px;border-bottom:1px solid var(--border)}
+#view-workflow .cmp-col.cold .cmp-head{background:rgba(110,168,254,.12)}
+#view-workflow .cmp-col.warm .cmp-head{background:rgba(167,139,250,.14)}
+#view-workflow .cmp-tag{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+#view-workflow .cmp-name{font-size:16px;font-weight:800}
+#view-workflow .cmp-body{padding:15px 16px;flex:1}
+#view-workflow .agent-owner{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;font-weight:600}
+#view-workflow .agent-icon{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:rgba(110,168,254,.18);color:var(--accent);border:1px solid rgba(110,168,254,.5)}
+#view-workflow .cmp-col.warm .agent-icon{background:rgba(167,139,250,.18);color:var(--accent-2);border-color:rgba(167,139,250,.5)}
+#view-workflow .handoff{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+#view-workflow .hand{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
+#view-workflow .hand-arrow{color:var(--accent-2);font-weight:800;font-size:12px}
+#view-workflow .cmp-note{font-size:12.5px;color:var(--muted);line-height:1.65}
+#view-workflow .cmp-note strong{color:var(--text)}
+#view-workflow .vs{display:flex;align-items:center;justify-content:center}
+#view-workflow .vs-badge{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:.04em}
+#view-workflow .tradeoff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+#view-workflow .t-card{border-radius:12px;padding:13px 15px;border:1px solid var(--border);background:var(--panel);font-size:12.5px;color:var(--muted);line-height:1.6}
+#view-workflow .t-card b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+#view-workflow .t-card.pro b{color:var(--good)}
+#view-workflow .t-card.con b{color:var(--bad)}
+#view-workflow /* ---------- lanes (diagram 3) ---------- */
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 14px}
+#view-workflow .lane{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;padding:13px 14px}
+#view-workflow .lane.green{border-top-color:var(--good)}
+#view-workflow .lane.violet{border-top-color:var(--accent-2)}
+#view-workflow .lane.amber{border-top-color:var(--warn)}
+#view-workflow .lane-name{font-size:13.5px;font-weight:800;margin-bottom:3px}
+#view-workflow .lane-desc{font-size:12px;color:var(--muted);margin-bottom:9px}
+#view-workflow .lane-tags{display:flex;flex-wrap:wrap;gap:5px}
+#view-workflow .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+#view-workflow .lane.green .tag{border-color:rgba(52,211,153,.4);color:var(--good)}
+#view-workflow .lane.violet .tag{border-color:rgba(167,139,250,.4);color:var(--accent-2)}
+#view-workflow .lane.amber .tag{border-color:rgba(251,191,36,.4);color:var(--warn)}
+#view-workflow /* ---------- storage grid (diagram 4) ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0 6px}
+#view-workflow .duo-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+#view-workflow .duo-card h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+#view-workflow .duo-card.state h4{color:var(--accent)}
+#view-workflow .duo-card.memory h4{color:var(--accent-2)}
+#view-workflow .duo-card ul{list-style:none;font-size:12.5px;color:var(--muted)}
+#view-workflow .duo-card li{padding:4px 0 4px 16px;position:relative}
+#view-workflow .duo-card li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:2px;background:var(--accent)}
+#view-workflow .duo-card.memory li::before{background:var(--accent-2)}
+#view-workflow .v-flow{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0}
+#view-workflow .v-flow .arr{font-size:13px;color:var(--border)}
+#view-workflow .v-label{text-align:center;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+#view-workflow .store-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 16px}
+#view-workflow .store{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:13px 14px;transition:transform .18s ease,border-color .18s ease}
+#view-workflow .store:hover{transform:translateY(-2px);border-color:var(--accent)}
+#view-workflow .store.s1{border-top-color:var(--accent)}
+#view-workflow .store.s2{border-top-color:var(--good)}
+#view-workflow .store.s3{border-top-color:var(--accent-2)}
+#view-workflow .store.s4{border-top-color:var(--warn)}
+#view-workflow .store-use{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+#view-workflow .store-name{font-size:13.5px;font-weight:800;margin-bottom:5px}
+#view-workflow .store-ex{font-size:11.5px;color:var(--muted);margin-bottom:9px;line-height:1.5}
+#view-workflow .mini-tags{display:flex;flex-wrap:wrap;gap:5px}
+#view-workflow .mini{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+#view-workflow .store.s1 .mini{color:var(--accent);border-color:rgba(110,168,254,.35)}
+#view-workflow .store.s2 .mini{color:var(--good);border-color:rgba(52,211,153,.35)}
+#view-workflow .store.s3 .mini{color:var(--accent-2);border-color:rgba(167,139,250,.35)}
+#view-workflow .store.s4 .mini{color:var(--warn);border-color:rgba(251,191,36,.35)}
+#view-workflow .rule-card{display:flex;gap:12px;align-items:flex-start;background:rgba(251,191,36,.06);border:1px dashed rgba(251,191,36,.5);border-radius:12px;padding:13px 16px;font-size:13px}
+#view-workflow .rule-card .flag{flex:0 0 auto;color:var(--warn);font-weight:800}
+#view-workflow .rule-card strong{display:block;margin-bottom:2px}
+#view-workflow /* ---------- decision hints (branch summaries in flows) ---------- */
+.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 8px 46px}
+#view-workflow .dec{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--good);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--muted)}
+#view-workflow .dec.rej{border-left-color:var(--bad)}
+#view-workflow /* ---------- approval machine (diagram 6) ---------- */
+.machine{display:flex;align-items:stretch;gap:4px;margin:14px 0 4px}
+#view-workflow .m-state{flex:1;min-width:0;background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:12px 10px;text-align:center;transition:all .2s ease}
+#view-workflow .m-state .who{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+#view-workflow .m-state .what{font-size:12.5px;font-weight:700;line-height:1.35}
+#view-workflow .m-state.a{border-top-color:var(--accent)}
+#view-workflow .m-state.b{border-top-color:var(--accent-2)}
+#view-workflow .m-state.c{border-top-color:var(--warn)}
+#view-workflow .m-state.d{border-top-color:var(--good)}
+#view-workflow .m-state.e{border-top-color:var(--bad)}
+#view-workflow .m-state.on{transform:translateY(-3px)}
+#view-workflow .m-state.a.on{box-shadow:0 8px 22px rgba(110,168,254,.3)}
+#view-workflow .m-state.b.on{box-shadow:0 8px 22px rgba(167,139,250,.3)}
+#view-workflow .m-state.c.on{box-shadow:0 8px 22px rgba(251,191,36,.3)}
+#view-workflow .m-state.d.on{box-shadow:0 8px 22px rgba(52,211,153,.3)}
+#view-workflow .m-state.e.on{box-shadow:0 8px 22px rgba(248,113,113,.3)}
+#view-workflow .m-arrow{display:flex;align-items:center;justify-content:center;color:var(--border);font-size:16px;font-weight:800}
+#view-workflow .m-fallback{display:flex;gap:10px;align-items:center;margin:10px 0 4px;color:var(--muted);font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+#view-workflow .m-fallback .line{flex:1;height:1px;background:var(--border)}
+#view-workflow .m-fallback .flag{color:var(--bad)}
+#view-workflow /* ---------- footer ---------- */
+.wf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+@media (max-width:760px){#view-workflow .compare{grid-template-columns:1fr;gap:8px}
+#view-workflow .vs{order:-1}
+#view-workflow .duo, #view-workflow .decision-grid{grid-template-columns:1fr}
+#view-workflow .store-grid{grid-template-columns:repeat(2,1fr)}
+#view-workflow .lanes{grid-template-columns:1fr}
+#view-workflow .machine{flex-direction:column;gap:2px}
+#view-workflow .m-arrow{transform:rotate(90deg);height:12px}
+#view-workflow .tradeoff{grid-template-columns:1fr}
+#view-workflow #workflow-content{padding:26px 14px 56px}
+#view-workflow .loop-band, #view-workflow .decision-grid{margin-left:0}
+#view-workflow .branch-line{margin-left:6px}
+
+}
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>Agent AI System Design Explained in 27 Minutes</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=mwN75EiGfCE">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Translated from hi by this pipeline.</p>
+</header>
+<h1 id="agent-ai-system-design-explained-in-27-minutes">Agent AI System Design Explained in 27 Minutes</h1>
+<p>Many people stop at understanding what AI agents are, but the moment you actually build one, the most important thing to understand is the system design behind it — because an agentic AI system is not an LLM wrapped inside a chat interface. This article, based on Aishwarya Srinivasan&#x27;s video, breaks down agentic AI system design from a builder&#x27;s perspective, walking through the core building blocks — model routing, tools, memory, orchestration, evaluation, approvals, and production controls. It is for developers and AI engineers who already know what agents are and want the practical mental model for moving from a demo to a production-grade system real users can rely on.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>What Is an Agentic AI System?</li><li>Single-Agent vs. Multi-Agent Systems</li><li>The Model Layer: Routing and Structured Output</li><li>Tools: The Interface to the Real World</li><li>Memory and State</li><li>Orchestration</li><li>Evaluation</li><li>Approval Gates and Policy Control</li><li>Reliability</li><li>Cost and Latency</li><li>Context and RAG Design</li><li>Observability, Security, and Privacy</li><li>Putting It All Together</li></ol>
+<h2 id="1-what-is-an-agentic-ai-system">1. What Is an Agentic AI System?</h2>
+<p>A basic LLM application is simple: it takes an input, sends it to a model, and returns an output. An agentic AI system goes much further. It is a production software system in which a model can reason over a goal, decompose that goal into steps, decide which step to take next, call external tools, inspect the tool results, update its own state, and continue the workflow until it reaches a stopping condition. Along the way it can retrieve context, maintain state, make decisions across multiple steps, and trigger real actions through APIs.</p>
+<p>That last part is what separates agentic AI design from ordinary prompt engineering: an agent is not just answering — it is acting on the world through tools, which makes it a full software system with all of the reliability, security, and operations concerns that implies.</p>
+<p>Why does system design matter so much here? Because the hard part is not getting a model to answer. The hard part is designing a system that is reliable, cost-aware, fast enough for a good user experience, context-aware, observable, and safe enough to connect to real tools. This video focuses on exactly that system-design level. If you are new to AI agents, the speaker suggests first watching her two earlier videos — one explaining what AI agents are and one comparing single-agent vs. multi-agent systems — before returning to this material.</p>
+<h2 id="2-single-agent-vs-multi-agent-systems">2. Single-Agent vs. Multi-Agent Systems</h2>
+<p>At a high level, agentic AI systems come in two common patterns: single-agent systems and multi-agent systems.</p>
+<p>In a <strong>single-agent system</strong>, one primary agent owns the entire workflow. It may still call multiple tools, retrieve documents, update its memory, and perform many reasoning steps, but the control loop is centralized — one agent is responsible for everything end to end. For example, a customer support agent might classify an incoming request, retrieve the account context, call a billing API, ask the user for confirmation, and then generate a final response. All of that happens inside one agent&#x27;s loop.</p>
+<p>In a <strong>multi-agent system</strong>, the workflow is split across multiple specialized agents. One agent handles planning, another retrieves knowledge, another writes code, another reviews the output, and another handles execution. The key idea is separation of responsibilities: instead of one agent doing everything, you design several agents with defined roles, explicit input contracts, explicit output contracts, and routing logic between them.</p>
+<p>Multi-agent systems earn their complexity when the task has clear specialization, benefits from parallel work, needs review loops, or involves long-running workflows. But they also add real costs: more coordination overhead, more failure modes, more state to track, more logs to inspect, and more places where cost and latency can creep up. The choice between the two patterns is a design tradeoff, not a matter of which sounds more advanced.</p>
+<h2 id="3-the-model-layer-routing-and-structured-output">3. The Model Layer: Routing and Structured Output</h2>
+<p>The first building block is the model layer, which includes the actual LLM (or multimodal models) you use, plus the strategy for <em>when each model gets used</em>. The default of letting one powerful model handle every step is a trap: it gets expensive and slow very quickly.</p>
+<p>A better design is <strong>model routing</strong>. Use cheaper, faster models for low-complexity steps such as intent classification, routing, extraction, schema filling, and simple summarization. Reserve stronger reasoning models only for the steps where deeper reasoning actually changes the outcome.</p>
+<p>The speaker&#x27;s example is an appointment booking agent. You probably do not need a frontier reasoning model to detect whether the user wants to book, reschedule, cancel, or just ask a question — a small model classifies that fine. You may not need an LLM at all to extract the date, time, doctor name, and appointment type into a JSON schema. But you do want a stronger model when the user gives ambiguous constraints, like &quot;I&#x27;m going to be traveling next week, I want to avoid mornings,&quot; or &quot;make sure this happens after my lab results come in.&quot; Those cases need real reasoning.</p>
+<p>The model layer also means thinking about structured outputs. Any step whose output feeds another system should return a predictable structure, not free-form prose. Use JSON schema, Pydantic models, function calling or tool calling — whichever structured-output mechanism your model provider supports.</p>
+<p>Every decision in the model layer should answer three questions: What model is going to be used for this step? What output contract does it return? And what happens if the model fails or returns an invalid output?</p>
+<h2 id="4-tools-the-interface-to-the-real-world">4. Tools: The Interface to the Real World</h2>
+<p>Tools are the interface between the model and the external world. A tool can be a database lookup, a CRM API, a calendar API, a payment API, a code interpreter, an internal search service, a ticketing system, a Slack action, a Google action, or any backend function the agent is allowed to call.</p>
+<p>In production, tools should be designed like APIs with strict contracts. Every tool should have a clear name, a description, an input schema, an output schema, permission boundaries, timeout behavior, retry behavior, and an error format. This matters because the model should never be allowed to send arbitrary instructions into your backend.</p>
+<p>Consider a tool called &quot;update user.&quot; It should not accept one vague natural-language string like &quot;update this user based on the request&quot; — that is far too open-ended. A safer tool contract is explicit structured fields: the user ID, the field to update, the new value, the reason, the source request ID, and whether confirmation is required.</p>
+<p>Tool outputs should also be machine-readable. If a tool fails, it returns a structured error; if it succeeds, it returns a structured result. The agent should never have to parse messy prose coming back from your backend.</p>
+<p>A good design pattern is to separate read tools from write tools, then layer in risk gradually: start with read-only capabilities, add low-risk write tools next, and only then add high-risk write tools — and only with validation and human approval in place. Fetching available appointment slots is very different from canceling an appointment, so you need to understand the risk factor of each tool.</p>
+<p>This is also where MCP — the Model Context Protocol — becomes relevant. It is an emerging pattern for exposing tools, resources, and context to agents in a standardized way. But even if you are not using MCP, the system-design principle is the same: tools need contracts, permissions, boundaries, and logs.</p>
+<h2 id="5-memory-and-state">5. Memory and State</h2>
+<p>Memory and state are where many agentic systems become messy, and the root cause is usually treating memory as one thing. In agentic systems you need to separate memory from state.</p>
+<p><strong>State</strong> is the current execution context of the workflow: what step are we on, what information has already been collected, which tools have we called, what did those tools return, has the user confirmed the action, and did the workflow pass or fail.</p>
+<p><strong>Memory</strong> is broader. It includes conversation history, user preferences, past actions, retrieved knowledge, document context, summaries, and long-form information that may be useful later.</p>
+<p>A common mistake is pulling all of this into a vector database. That is not a good default. You should choose storage based on access patterns:</p>
+<ul><li>Conversation and workflow state belongs in low-latency stores such as Redis, DynamoDB, Postgres, or MongoDB.</li><li>Application state belongs in your application database.</li><li>Knowledge retrieval can use RAG with Pinecone, pgvector, Weaviate, Elasticsearch, OpenSearch, or a managed knowledge base.</li><li>Long-term archives belong in cheaper object storage such as an S3 bucket.</li></ul>
+<p>The speaker&#x27;s example: an agent helping a user reschedule a doctor&#x27;s appointment should store the current appointment ID, the proposed new time, the confirmation status, and the workflow step as structured workflow state. The user&#x27;s medical history should not be casually passed through the LLM if the model only needs the appointment ID and the list of available slots.</p>
+<p>You should also distinguish short-term context from long-term memory. Short-term context is what you pass into the prompt for your current turn. Long-term memory is something you retrieve selectively. The goal is never to stuff everything into the model&#x27;s context window — that creates context bloat. The goal is to retrieve the smallest useful context for the current step so the model can make its decision.</p>
+<p>This is exactly why memory design is really data architecture: you are deciding what to store, where to store it, how long to keep it, how to retrieve it, and what is safe to send to the model — or not.</p>
+<h2 id="6-orchestration">6. Orchestration</h2>
+<p>Once you have the model layer, tools, and memory, you need something to coordinate them: <strong>orchestration</strong>. Orchestration is the control layer of an agentic system. It defines how the system moves from a user request, through intermediate steps and tool calls, to a final output.</p>
+<p>It can be implemented with plain application code, a graph-based framework like LangGraph, a workflow engine like Temporal, LlamaIndex workflows, LangChain, or custom state machines — often a combination of several.</p>
+<p>The orchestration layer should define the control flow explicitly. A typical flow: you receive a user message, classify the intent, retrieve the required context, decide whether the request is in scope, select the tools, validate the tool inputs, execute the tools, inspect the results, ask for confirmation if needed, finally generate the response, then log the trace and send evaluation data asynchronously.</p>
+<p>For simple use cases, a deterministic pipeline is often better than a fully autonomous agent loop. Not every workflow needs planning and reflection. If a sequence of steps is mostly known in advance, design it as a pipeline or a state machine, and use agentic reasoning only when the workflow genuinely needs dynamic decision-making.</p>
+<p>For most complex systems, graph-based orchestration becomes useful because it lets you represent branching, retries, loops, approval gates, and fallback paths. For example: if extraction fails, retry with a different prompt or a different model; if a tool returns &quot;no available appointment,&quot; branch into a path that suggests alternatives; if the user asks for a cancellation, branch into a confirmation path.</p>
+<p>For multi-agent systems, orchestration also includes agent-to-agent routing. You need to define which agent owns the next step, what information gets passed along, what output format is expected, and how conflicts are resolved. Without that, multi-agent systems become extremely difficult to debug. The key point: do not confuse autonomy with a lack of structure.</p>
+<blockquote>Do not confuse autonomy with lack of structure. Production agents need a very clear control flow.</blockquote>
+<h2 id="7-evaluation">7. Evaluation</h2>
+<p>Evaluation is one of the most important — and most ignored — parts of agentic AI system design. In traditional software, if a function runs and no exception is thrown, we assume the system works. In agentic AI systems that assumption breaks very quickly.</p>
+<p>A model can return valid JSON that is semantically wrong. It can call the correct tool with the wrong arguments. It can retrieve irrelevant context. It can answer using stale information. It can fail to ask for confirmation. It can refuse a valid request. And it can comply with an unsafe request. So evals need to be designed into the system from the very beginning.</p>
+<p>For agentic systems you need more than final-answer evaluation — you need <strong>trace-level evaluation</strong>: evaluating each and every important step in the trajectory. That means intent classification, retrieval quality, tool selection, tool arguments, policy compliance, confirmation behavior, final answer quality, and task success.</p>
+<p>Here is why. A support agent could produce a very polished final answer, yet have selected the wrong refund policy. If you only evaluate the final text, you miss the actual failure. If you evaluate the trace, you can see that the retrieval step pulled the wrong policy document, or that the model misclassified the user&#x27;s plan type.</p>
+<p>You should always maintain a test set of realistic scenarios: happy paths, ambiguous requests, out-of-scope requests, tool failures, malicious inputs, partial information, policy edge cases, and escalation cases. These become regression tests whenever you change the model, the prompt, the retrieval logic, or your tool schemas.</p>
+<p>You can also run sampled asynchronous evaluations in production: a judge model — an LLM used as a judge — can score a percentage of conversations offline, and high-signal user feedback can go directly into your evals. But be careful: LLM-as-judge is useful, not perfect. For important workflows, combine model-based grading with deterministic checks and human review.</p>
+<p>Finally, your eval system should eventually produce metrics, not just examples: intent accuracy, tool-call success rate, invalid-schema rate, retrieval hit rate, refusal accuracy, escalation rate, task completion rate, user flag rate, and cost per successful task. Evaluation is genuinely a complex field — and it is the point where agentic systems start to look like real production systems.</p>
+<h2 id="8-approval-gates-and-policy-control">8. Approval Gates and Policy Control</h2>
+<p>Not every action needs human approval, but high-impact actions should have gates. Sending an email, deleting data, issuing a refund, canceling an appointment, changing billing, updating a CRM record, running code, placing an order, or making a financial transaction should not happen just because the model inferred the intent. There should always be a human in the loop.</p>
+<p>The safer design pattern: the model <em>suggests</em> something, code <em>validates</em> it, a user <em>approves</em> it, and then the tool <em>executes</em> it. The validation step should be deterministic wherever possible: check ownership, check permissions, check whether the requested action is allowed, check whether the required fields are present, check that the user has confirmed the exact action — and only then execute.</p>
+<p>For example, if the user says &quot;cancel my appointment,&quot; the model can classify that intent as cancellation and propose the target appointment. But the system must verify that the logged-in user actually owns that appointment, that it is cancellable, that cancellation is allowed under policy, and that the user explicitly confirms before the cancellation API is called.</p>
+<p>This matters just as much in multi-agent systems. If one agent generates a plan and another agent executes it, the execution layer should not blindly trust the planning layer — tool execution still needs validation and authorization. The agent should never be the source of truth for your business rules; your application code should be.</p>
+<h2 id="9-reliability">9. Reliability</h2>
+<p>Reliability means the system behaves predictably even when the model does not. You get it through decomposition, contracts, retries, validation, fallbacks, and monitoring.</p>
+<p>First, decompose large prompts into smaller steps. A single joint prompt that classifies intent, retrieves context, decides policies, calls tools, and writes the final response is going to be extremely hard to test. Smaller steps are far easier to evaluate and debug.</p>
+<p>Second, use structured outputs between steps. If the next step depends on the model&#x27;s output, do not rely on free-form text. Validate the schema; if the output is invalid, retry; if it still fails, use a fallback path.</p>
+<p>Third, wrap every model call like the unreliable upstream dependency it is. Timeouts, malformed outputs, rate limits, provider errors, and degraded quality should all have handling paths.</p>
+<p>Fourth, separate deterministic validation from model reasoning. If the model extracts a date, code should be able to validate that date. If the model selects a user ID, code should be able to verify the permissions. If the model proposes a tool call, code should be able to validate the arguments.</p>
+<p>Reliability is not about making the model perfect. It is about designing the system so that model imperfections do not immediately become product failures.</p>
+<h2 id="10-cost-and-latency">10. Cost and Latency</h2>
+<p>Cost and latency need to be designed together, because agentic systems often involve multiple model calls per user request. A single interaction might include intent classification, query rewriting, retrieval, planning, tool selection, tool argument generation, tool result interpretation, final response generation, and evaluation. If every step uses a large reasoning model, your system will be extremely slow and extremely expensive.</p>
+<p>This is exactly where model routing pays off again: use small models for simple classification and extraction, and larger models only when ambiguity, reasoning, and synthesis are actually required.</p>
+<p>Then limit tokens aggressively. Output tokens are both a cost lever and a latency lever. If the user only needs a two-sentence answer, do not generate a long explanation. If the downstream system only needs JSON, do not ask for prose.</p>
+<p>Use caching where it makes sense — cache retrieval results, repeated policy lookups, tool metadata, and stable context. Use batching and asynchronous execution for non-blocking work like evaluation and summarization. Always use streaming responses for user-facing tasks when the response may take time, and if the workflow requires long-running tool calls, show progress states instead of leaving the user with a blank screen.</p>
+<p>Also enforce scope early. Out-of-scope requests can burn tokens and tool calls, so put cheap filters, rules, and intent gates before the expensive reasoning step even happens. Finally, a production agent should have cost observability: tokens in, tokens out, cost per step, cost per conversation, and cost per successful task.</p>
+<h2 id="11-context-and-rag-design">11. Context and RAG Design</h2>
+<p>Context design is one of the biggest differences between a toy agent and a useful production agent. The goal is not to pass everything into the prompt; the goal is to pass the right context for the current step.</p>
+<p>In practice, context can come from many places: the user message, the conversation state, the application database, retrieved documents, tool results, the user profile, or long-term memory. Each source has different freshness, trust, privacy, and latency characteristics, and the system design should respect that.</p>
+<p>For RAG specifically, retrieval quality matters more than simply having a vector database. You need document chunking, metadata filters, hybrid search where useful, reranking, freshness controls, and source attribution when the user needs to trust the answer.</p>
+<p>You also need to separate trusted instructions from untrusted content. Retrieved documents should not be allowed to override the system instructions. Tool outputs should be treated as data, not as instructions. And user-provided content should be isolated from developer or system instructions.</p>
+<p>For really long conversations, use summarization and checkpoints instead of passing the full history forever. Store the summary separately from the raw conversation logs, and keep track of what the summary is allowed to influence.</p>
+<p>A context-aware system is one that knows what information it needs, where to retrieve it from, whether it is trusted, and whether it is safe to send to the model.</p>
+<h2 id="12-observability-security-and-privacy">12. Observability, Security, and Privacy</h2>
+<p><strong>Observability.</strong> You need to log the anatomy of every agent run: the model name, the model version, the prompt version, the step name, the workflow ID, the conversation ID, the tool name, and the tool arguments — with sensitive values masked. Then latency, time to first token, tokens in, tokens out, and cost. How many retries were there? Were there any fallbacks or errors? Was there any use of feedback, and what were the eval scores? It is a lot, but you need to log all of it and more. You should be able to answer: where did the failure happen — intent classification, retrieval, planning, tool selection, tool execution, policy validation, or the final response?</p>
+<p><strong>Security.</strong> Treat everything that touches the model as attacker-controlled input unless proven otherwise. User messages can contain direct prompt injection. Retrieved documents can contain indirect prompt injection. Tool outputs could contain poisoned data. And model outputs can contain unsafe commands — things like SQL, HTML, or other kinds of code. So isolate untrusted content: separate the instructions from the data, never execute raw model output, never run SQL or shell commands directly from model-generated text, give tools least-privilege permissions, and add approval gates for risky actions.</p>
+<p><strong>Privacy.</strong> Send the minimum data needed to the model. If the model only needs an appointment ID and availability, do not send the full patient report. If it only requires a summarized ticket, do not send the full customer history. Mask PII at the right time, set retention policies for logs, traces, and conversation archives, and keep sensitive fields out of the prompt unless they are required for the task. Remember that your model provider, your vector database, your observability platform, and your logging systems are all part of your data boundary.</p>
+<h2 id="13-putting-it-all-together">13. Putting It All Together</h2>
+<p>A production-grade agentic AI system needs all of these pieces: clear model routing, strict tool contracts, explicit memory and state management, orchestration, trace-level evals, approval gates, cost and latency controls, context design, observability, security, and privacy. All of it, together.</p>
+<p>That is why agentic AI system design is not just prompt engineering. It is backend design, data design, security design, and product design with an LLM in the loop. The speaker&#x27;s sign-off for going deeper: a free, roughly two-hour &quot;Agentic AI System Design&quot; masterclass recording that goes much deeper into the architecture, production patterns, tradeoffs, and real design decisions behind agentic AI systems, plus a live, project-based certification program at her Gen Academy — weekly classes, production-level projects rather than demos, low-code/no-code or code-heavy tracks, and open to anyone who wants to become an AI professional, not only engineers.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>An agentic AI system is a production software system — a model that reasons over a goal, uses tools, retrieves context, maintains state, and triggers real actions through APIs — not an LLM wrapped in a chat interface.</li><li>Choose between single-agent and multi-agent architectures deliberately: separation of responsibilities buys specialization and review loops, but adds coordination overhead, failure modes, state, and cost.</li><li>Route models by step complexity: cheap fast models for classification, extraction, and schema filling; strong reasoning models only where reasoning changes the outcome.</li><li>Design tools like strict APIs — names, schemas, permissions, timeouts, retries, and structured errors — and phase in risk from read-only to low-risk writes to high-risk writes with approval.</li><li>Separate memory from state; store each in the right place (low-latency store, application database, vector store, object archive) and pass the smallest useful context, not the whole context window.</li><li>Orchestration should define an explicit control flow; use deterministic pipelines and state machines where steps are known, and graph-based orchestration for branching, retries, and approval gates.</li><li>Evaluate the trace, not just the final answer — every step from intent classification to tool arguments to policy compliance — against a realistic regression test set.</li><li>Put human approval gates and deterministic validation behind high-impact actions; the model suggests, code validates, the user approves, the tool executes.</li><li>Design reliability, cost, latency, and context together: decompose prompts, validate schemas, cache and stream, enforce scope early, and treat retrieved content as untrusted data.</li><li>Log the full anatomy of every run, treat everything touching the model as attacker-controlled input, and send the minimum data needed to the model.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=mwN75EiGfCE">Agent AI System Design Explained in 27 Minutes</a></li><li>Channel: <a href="https://www.youtube.com/@aishwaryasrinivasan">Aishwarya Srinivasan</a></li><li>Metadata fetched at: 2026-09-02T10:10:12.681076+00:00</li><li>The captions this article was written from were auto-transcribed from Hindi and translated to English by this pipeline.</li></ul>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart TD
+    A[&quot;User goal&quot;] --&gt; B[&quot;Decompose the goal into steps&quot;]
+    B --&gt; C[&quot;Pick the next step&quot;]
+    C --&gt; D{&quot;Does the step need a tool?&quot;}
+    D -- &quot;Yes&quot; --&gt; E[&quot;Call the tool through a strict API&quot;]
+    E --&gt; F[&quot;Inspect the structured result&quot;]
+    D -- &quot;No&quot; --&gt; F
+    F --&gt; G[&quot;Update state and memory&quot;]
+    G --&gt; H{&quot;Stopping condition reached?&quot;}
+    H -- &quot;No&quot; --&gt; C
+    H -- &quot;Yes&quot; --&gt; I[&quot;Answer or act on the world&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    A[&quot;User goal&quot;] --&gt; B[&quot;Decompose the goal into steps&quot;]
+    B --&gt; C[&quot;Pick the next step&quot;]
+    C --&gt; D{&quot;Does the step need a tool?&quot;}
+    D -- &quot;Yes&quot; --&gt; E[&quot;Call the tool through a strict API&quot;]
+    E --&gt; F[&quot;Inspect the structured result&quot;]
+    D -- &quot;No&quot; --&gt; F
+    F --&gt; G[&quot;Update state and memory&quot;]
+    G --&gt; H{&quot;Stopping condition reached?&quot;}
+    H -- &quot;No&quot; --&gt; C
+    H -- &quot;Yes&quot; --&gt; I[&quot;Answer or act on the world&quot;]
+</code></pre></details>
+<figcaption>1. The Agentic Loop: From Goal to Action</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph SA[&quot;Single-agent system&quot;]
+        A1[&quot;One agent owns the whole workflow&quot;]
+        A2[&quot;Classify, retrieve context, call APIs&quot;]
+        A3[&quot;Ask for confirmation, then respond&quot;]
+        A1 --&gt; A2 --&gt; A3
+    end
+    subgraph MA[&quot;Multi-agent system&quot;]
+        B1[&quot;Planner agent&quot;]
+        B2[&quot;Knowledge agent&quot;]
+        B3[&quot;Coding agent&quot;]
+        B4[&quot;Reviewer agent&quot;]
+        B5[&quot;Executor agent&quot;]
+        B1 --&gt; B2 --&gt; B3 --&gt; B4 --&gt; B5
+    end
+    U[&quot;User request&quot;] --&gt; A1
+    U --&gt; B1
+    A3 --&gt; T1[&quot;Tradeoff: one control loop, simpler debugging&quot;]
+    B5 --&gt; T2[&quot;Tradeoff: defined roles and contracts, more coordination&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph SA[&quot;Single-agent system&quot;]
+        A1[&quot;One agent owns the whole workflow&quot;]
+        A2[&quot;Classify, retrieve context, call APIs&quot;]
+        A3[&quot;Ask for confirmation, then respond&quot;]
+        A1 --&gt; A2 --&gt; A3
+    end
+    subgraph MA[&quot;Multi-agent system&quot;]
+        B1[&quot;Planner agent&quot;]
+        B2[&quot;Knowledge agent&quot;]
+        B3[&quot;Coding agent&quot;]
+        B4[&quot;Reviewer agent&quot;]
+        B5[&quot;Executor agent&quot;]
+        B1 --&gt; B2 --&gt; B3 --&gt; B4 --&gt; B5
+    end
+    U[&quot;User request&quot;] --&gt; A1
+    U --&gt; B1
+    A3 --&gt; T1[&quot;Tradeoff: one control loop, simpler debugging&quot;]
+    B5 --&gt; T2[&quot;Tradeoff: defined roles and contracts, more coordination&quot;]
+</code></pre></details>
+<figcaption>2. Single-Agent vs. Multi-Agent: A Design Tradeoff</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    U[&quot;User request arrives&quot;] --&gt; I{&quot;What does this step need?&quot;}
+    I -- &quot;Intent classification&quot; --&gt; C[&quot;Small, fast model&quot;]
+    I -- &quot;Fields into a schema&quot; --&gt; S[&quot;Structured output: JSON schema or Pydantic&quot;]
+    I -- &quot;Ambiguity or deep reasoning&quot; --&gt; R[&quot;Frontier reasoning model&quot;]
+    C --&gt; O[&quot;Validated structured output&quot;]
+    S --&gt; O
+    R --&gt; O
+    O --&gt; F{&quot;Output invalid or model failed?&quot;}
+    F -- &quot;Yes&quot; --&gt; RT[&quot;Retry or take a fallback path&quot;]
+    F -- &quot;No&quot; --&gt; N[&quot;Continue to the next step&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    U[&quot;User request arrives&quot;] --&gt; I{&quot;What does this step need?&quot;}
+    I -- &quot;Intent classification&quot; --&gt; C[&quot;Small, fast model&quot;]
+    I -- &quot;Fields into a schema&quot; --&gt; S[&quot;Structured output: JSON schema or Pydantic&quot;]
+    I -- &quot;Ambiguity or deep reasoning&quot; --&gt; R[&quot;Frontier reasoning model&quot;]
+    C --&gt; O[&quot;Validated structured output&quot;]
+    S --&gt; O
+    R --&gt; O
+    O --&gt; F{&quot;Output invalid or model failed?&quot;}
+    F -- &quot;Yes&quot; --&gt; RT[&quot;Retry or take a fallback path&quot;]
+    F -- &quot;No&quot; --&gt; N[&quot;Continue to the next step&quot;]
+</code></pre></details>
+<figcaption>3. Model Routing: Matching Model Strength to Each Step</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    A[&quot;Data from the agent run&quot;] --&gt; D{&quot;What will this data be used for?&quot;}
+    D -- &quot;Conversation and workflow state&quot; --&gt; L[&quot;Low-latency store: Redis, DynamoDB, Postgres, MongoDB&quot;]
+    D -- &quot;Application state&quot; --&gt; AP[&quot;Your application database&quot;]
+    D -- &quot;Knowledge retrieval&quot; --&gt; V[&quot;Vector or search store: Pinecone, pgvector, Weaviate, Elasticsearch&quot;]
+    D -- &quot;Long-term archives&quot; --&gt; OB[&quot;Cheap object storage: S3&quot;]
+    L --&gt; P[&quot;Pass only the smallest useful context to the model&quot;]
+    AP --&gt; P
+    V --&gt; P
+    OB --&gt; P
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    A[&quot;Data from the agent run&quot;] --&gt; D{&quot;What will this data be used for?&quot;}
+    D -- &quot;Conversation and workflow state&quot; --&gt; L[&quot;Low-latency store: Redis, DynamoDB, Postgres, MongoDB&quot;]
+    D -- &quot;Application state&quot; --&gt; AP[&quot;Your application database&quot;]
+    D -- &quot;Knowledge retrieval&quot; --&gt; V[&quot;Vector or search store: Pinecone, pgvector, Weaviate, Elasticsearch&quot;]
+    D -- &quot;Long-term archives&quot; --&gt; OB[&quot;Cheap object storage: S3&quot;]
+    L --&gt; P[&quot;Pass only the smallest useful context to the model&quot;]
+    AP --&gt; P
+    V --&gt; P
+    OB --&gt; P
+</code></pre></details>
+<figcaption>4. Memory and State: Data Architecture First</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">sequenceDiagram
+    participant U as User
+    participant O as Orchestrator
+    participant M as Model
+    participant T as Tools and APIs
+    participant E as Eval pipeline
+
+    U-&gt;&gt;O: message with a request
+    O-&gt;&gt;M: classify the intent and check scope
+    M--&gt;&gt;O: intent and scope result
+    O-&gt;&gt;M: retrieve the smallest useful context
+    O-&gt;&gt;T: validate inputs and call the tool
+    T--&gt;&gt;O: structured result or structured error
+    alt result needs user confirmation
+        O--&gt;&gt;U: propose the action for approval
+        U--&gt;&gt;O: confirm or decline
+    end
+    O-&gt;&gt;T: execute the high-risk action
+    T--&gt;&gt;O: structured result
+    O-&gt;&gt;U: final response
+    O-&gt;&gt;E: send the trace for evaluation
+</pre>
+<details><summary>Source</summary><pre><code>sequenceDiagram
+    participant U as User
+    participant O as Orchestrator
+    participant M as Model
+    participant T as Tools and APIs
+    participant E as Eval pipeline
+
+    U-&gt;&gt;O: message with a request
+    O-&gt;&gt;M: classify the intent and check scope
+    M--&gt;&gt;O: intent and scope result
+    O-&gt;&gt;M: retrieve the smallest useful context
+    O-&gt;&gt;T: validate inputs and call the tool
+    T--&gt;&gt;O: structured result or structured error
+    alt result needs user confirmation
+        O--&gt;&gt;U: propose the action for approval
+        U--&gt;&gt;O: confirm or decline
+    end
+    O-&gt;&gt;T: execute the high-risk action
+    T--&gt;&gt;O: structured result
+    O-&gt;&gt;U: final response
+    O-&gt;&gt;E: send the trace for evaluation
+</code></pre></details>
+<figcaption>5. The Orchestrated Lifecycle of One Request</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Proposed: model suggests a high-impact action
+    Proposed --&gt; Validated: deterministic code checks ownership and policy
+    Validated --&gt; Awaiting: user confirmation is required
+    Awaiting --&gt; Approved: user approves the exact action
+    Approved --&gt; Executed: the tool executes the action
+    Validated --&gt; Rejected: a check fails
+    Awaiting --&gt; Rejected: user declines
+    Executed --&gt; [*]
+    Rejected --&gt; [*]
+</pre>
+<details><summary>Source</summary><pre><code>stateDiagram-v2
+    [*] --&gt; Proposed: model suggests a high-impact action
+    Proposed --&gt; Validated: deterministic code checks ownership and policy
+    Validated --&gt; Awaiting: user confirmation is required
+    Awaiting --&gt; Approved: user approves the exact action
+    Approved --&gt; Executed: the tool executes the action
+    Validated --&gt; Rejected: a check fails
+    Awaiting --&gt; Rejected: user declines
+    Executed --&gt; [*]
+    Rejected --&gt; [*]
+</code></pre></details>
+<figcaption>6. The Approval Gate: Suggest, Validate, Approve, Execute</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+
+  <header class="wf-header">
+    <div class="wf-eyebrow">System design walkthrough</div>
+    <h1>Agent AI System Design Explained in 27 Minutes</h1>
+    <div class="wf-meta">
+      <span class="chip channel"><span class="dot"></span>Aishwarya Srinivasan</span>
+      <span class="chip"><span class="dot"></span>6 diagrams</span>
+      <span class="chip good"><span class="dot"></span>production lens</span>
+    </div>
+  </header>
+
+  <nav class="wf-tabs" role="tablist" aria-label="Diagrams">
+    <button class="wf-tab active" data-tab="d1" role="tab" aria-selected="true">1 · Agentic Loop</button>
+    <button class="wf-tab" data-tab="d2" role="tab" aria-selected="false">2 · One vs Many</button>
+    <button class="wf-tab" data-tab="d3" role="tab" aria-selected="false">3 · Model Routing</button>
+    <button class="wf-tab" data-tab="d4" role="tab" aria-selected="false">4 · Memory &amp; State</button>
+    <button class="wf-tab" data-tab="d5" role="tab" aria-selected="false">5 · Lifecycle</button>
+    <button class="wf-tab" data-tab="d6" role="tab" aria-selected="false">6 · Approval Gate</button>
+  </nav>
+
+  <!-- ============ DIAGRAM 1 : AGENTIC LOOP ============ -->
+  <section class="dgm active" id="d1" role="tabpanel">
+    <div class="dgm-section">Section 1 · What is an agentic AI system?</div>
+    <h2 class="dgm-title">1. The Agentic Loop: From Message to Action</h2>
+    <p class="dgm-sub">A production agent is not an LLM in a chat box — it reasons over a goal, picks steps, calls tools, inspects results, updates state, and loops until a stopping condition. Every stage is a place where reliability, cost, and safety get designed in.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st1">Step 1 of 9</span>
+      <button class="ctl" id="play1">Walk the loop</button>
+      <button class="ctl" id="reset1">Reset</button>
+    </div>
+
+    <div class="flow" id="flow1">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">User goal arrives</div><div class="flow-note">A request enters the system — plain text, not yet an action.</div></div></div>
+      <div class="flow-step" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Reason over the goal</div><div class="flow-note">The model decides what the user wants and whether it can be done in one step.</div></div></div>
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Decompose into steps</div><div class="flow-note">Multi-step goals get broken down — the core of agentic behavior.</div></div></div>
+      <div class="flow-step" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">Decide the next step</div><div class="flow-note">Which action moves the workflow forward: retrieve, compute, call, or ask?</div></div></div>
+      <div class="branch-line">loop</div>
+      <div class="flow-step warn" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Does the step need a tool?</div><div class="flow-note">A gate before anything touches the outside world.</div></div></div>
+      <div class="decision-grid">
+        <div class="dec"><strong>Yes</strong> — call the tool through its strict API, then inspect the structured result.</div>
+        <div class="dec rej"><strong>No</strong> — continue reasoning with state and memory already in context.</div>
+      </div>
+      <div class="flow-step" data-step="6"><div class="flow-num">6</div><div class="flow-body"><div class="flow-name">Inspect result &amp; update state</div><div class="flow-note">Tool output is data to be validated — never free-form prose, never instructions.</div></div></div>
+      <div class="flow-step" data-step="7"><div class="flow-num">7</div><div class="flow-body"><div class="flow-name">Update memory</div><div class="flow-note">History, preferences, and retrieved knowledge stored selectively.</div></div></div>
+      <div class="flow-step warn" data-step="8"><div class="flow-num">8</div><div class="flow-body"><div class="flow-name">Stopping condition reached?</div><div class="flow-note">If not, the loop returns to deciding the next step.</div></div></div>
+      <div class="flow-step good" data-step="9"><div class="flow-num">9</div><div class="flow-body"><div class="flow-name">Answer or act on the world</div><div class="flow-note">Final response to the user, or a real side effect through an approved tool.</div></div></div>
+    </div>
+    <div class="loop-band"><span class="loop-arrow">↺</span><div><strong>Not done yet:</strong> the workflow returns to step 4 and keeps looping until the stopping condition fires. <span class="why">This loop, run many times per request, is why cost, latency, evals, and observability are first-class design concerns.</span></div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 2 : ONE vs MANY AGENTS ============ -->
+  <section class="dgm" id="d2" role="tabpanel">
+    <div class="dgm-section">Section 2 · Single-Agent vs. Multi-Agent Systems</div>
+    <h2 class="dgm-title">2. One Agent or Many: A Design Tradeoff</h2>
+    <p class="dgm-sub">Both patterns receive the same user request. A single agent keeps one centralized control loop; a multi-agent system splits the workflow across specialized roles with explicit input and output contracts and routing between them.</p>
+
+    <div class="compare">
+      <div class="cmp-col cold">
+        <div class="cmp-head"><div class="cmp-tag">One control loop</div><div class="cmp-name">Single-agent system</div></div>
+        <div class="cmp-body">
+          <div class="agent-owner"><span class="agent-icon">1</span>One agent owns the entire workflow end to end</div>
+          <div class="cmp-note" style="margin-bottom:11px">A support agent <strong>classifies the request</strong>, <strong>retrieves account context</strong>, <strong>calls a billing API</strong>, <strong>asks for confirmation</strong>, then <strong>generates the final response</strong> — all inside one loop.</div>
+          <div class="lane-tags">
+            <span class="tag" data-tip="One agent handles every step">centralized</span>
+            <span class="tag" data-tip="Still calls many tools and memory stores">multi-tool</span>
+            <span class="tag" data-tip="One trace to inspect">single trace</span>
+          </div>
+        </div>
+      </div>
+      <div class="vs"><div class="vs-badge">VS</div></div>
+      <div class="cmp-col warm">
+        <div class="cmp-head"><div class="cmp-tag">Separation of responsibilities</div><div class="cmp-name">Multi-agent system</div></div>
+        <div class="cmp-body">
+          <div class="handoff">
+            <span class="hand" data-tip="Splits the task into subgoals">Planner</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Retrieves knowledge and context">Knowledge</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Writes or edits code">Coder</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Reviews the produced output">Reviewer</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Executes the accepted plan">Executor</span>
+          </div>
+          <div class="cmp-note">Every agent has a <strong>defined role</strong>, an <strong>input contract</strong>, an <strong>output contract</strong>, and <strong>routing logic</strong> between agents — structure first, autonomy second.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tradeoff">
+      <div class="t-card pro"><b>When many agents earn their cost</b>clear specialization, parallel work, review loops, long-running workflows.</div>
+      <div class="t-card con"><b>The real costs</b>more coordination overhead, more failure modes, more state to track, more logs to inspect, more places where cost and latency creep up.</div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGRAM 3 : MODEL ROUTING ============ -->
+  <section class="dgm" id="d3" role="tabpanel">
+    <div class="dgm-section">Section 3 · The Model Layer</div>
+    <h2 class="dgm-title">3. Model Routing: Right Model for the Right Step</h2>
+    <p class="dgm-sub">Letting one frontier model handle every step is a cost and latency trap. Route by complexity: cheap fast models for routine work, strong reasoning models only where reasoning actually changes the outcome.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st3">Step 1 of 5</span>
+      <button class="ctl" id="play3">Walk the route</button>
+      <button class="ctl" id="reset3">Reset</button>
+    </div>
+
+    <div class="flow" id="flow3">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">Step arrives</div><div class="flow-note">Every step must answer three questions: which model handles it, what output contract it returns, and what happens on failure.</div></div></div>
+      <div class="flow-step warn" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Route by complexity</div><div class="flow-note">Three lanes below — most traffic belongs in the first two.</div></div></div>
+    </div>
+    <div class="lanes">
+      <div class="lane green">
+        <div class="lane-name">Cheap &amp; fast lane</div>
+        <div class="lane-desc">Low-complexity steps where a small model is enough.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="book, reschedule, cancel, or just a question">intent classification</span>
+          <span class="tag">routing</span>
+          <span class="tag">simple summarization</span>
+        </div>
+      </div>
+      <div class="lane violet">
+        <div class="lane-name">Structured output lane</div>
+        <div class="lane-desc">Extraction into a schema — may not need an LLM at all.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="date, time, doctor, appointment type">schema filling</span>
+          <span class="tag">JSON schema</span>
+          <span class="tag">Pydantic</span>
+        </div>
+      </div>
+      <div class="lane amber">
+        <div class="lane-name">Strong reasoning lane</div>
+        <div class="lane-desc">Only when ambiguity or deep reasoning changes the answer.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="traveling next week, avoid mornings">ambiguous constraints</span>
+          <span class="tag">planning</span>
+          <span class="tag">synthesis</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow" id="flow3b">
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Cheap path usually wins</div><div class="flow-note">Deciding reschedule vs. cancel does not need a frontier model — and extracting date, time, and doctor may not need an LLM at all.</div></div></div>
+      <div class="flow-step violet" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">Escalate only when reasoning matters</div><div class="flow-note">Ambiguity and tradeoffs go to the stronger model — “traveling next week, avoid mornings” needs real reasoning.</div></div></div>
+      <div class="flow-step good" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Structured output with a failure plan</div><div class="flow-note">Whatever the lane, the output contract is validated — invalid output triggers a retry or fallback path.</div></div></div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGRAM 4 : MEMORY AND STATE ============ -->
+  <section class="dgm" id="d4" role="tabpanel">
+    <div class="dgm-section">Section 5 · Memory and State</div>
+    <h2 class="dgm-title">4. Memory &amp; State: Data Architecture First</h2>
+    <p class="dgm-sub">Agentic systems get messy when memory is treated as one thing. State and memory are different data with different access patterns — and pulling everything into a vector database is a poor default.</p>
+
+    <div class="duo">
+      <div class="duo-card state">
+        <h4>State — current execution context</h4>
+        <ul>
+          <li>Which step the workflow is on</li>
+          <li>What information has been collected</li>
+          <li>Which tools were called, what they returned</li>
+          <li>Whether the user confirmed the action</li>
+          <li>Whether the workflow passed or failed</li>
+        </ul>
+      </div>
+      <div class="duo-card memory">
+        <h4>Memory — reusable knowledge</h4>
+        <ul>
+          <li>Conversation history</li>
+          <li>User preferences and past actions</li>
+          <li>Retrieved knowledge and document context</li>
+          <li>Summaries and long-form archives</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="v-flow"><span class="arr">▼</span></div>
+    <div class="v-label">Choose storage by access pattern</div>
+    <div class="v-flow"><span class="arr">▼</span></div>
+
+    <div class="store-grid">
+      <div class="store s1">
+        <div class="store-use">Low latency</div>
+        <div class="store-name">Workflow state</div>
+        <div class="store-ex">Conversation and workflow state need speed.</div>
+        <div class="mini-tags"><span class="mini">Redis</span><span class="mini">DynamoDB</span><span class="mini">Postgres</span><span class="mini">MongoDB</span></div>
+      </div>
+      <div class="store s2">
+        <div class="store-use">System of record</div>
+        <div class="store-name">Application state</div>
+        <div class="store-ex">Owned by your application, not the agent run.</div>
+        <div class="mini-tags"><span class="mini">App database</span></div>
+      </div>
+      <div class="store s3">
+        <div class="store-use">Knowledge retrieval</div>
+        <div class="store-name">RAG store</div>
+        <div class="store-ex">Search over documents at retrieval time.</div>
+        <div class="mini-tags"><span class="mini">Pinecone</span><span class="mini">pgvector</span><span class="mini">Weaviate</span><span class="mini">Elasticsearch</span></div>
+      </div>
+      <div class="store s4">
+        <div class="store-use">Cheap archives</div>
+        <div class="store-name">Long-term memory</div>
+        <div class="store-ex">Old conversations and logs, kept cheaply.</div>
+        <div class="mini-tags"><span class="mini">S3 object storage</span></div>
+      </div>
+    </div>
+
+    <div class="rule-card"><span class="flag">!</span><div><strong>Short-term context vs. long-term memory</strong>The prompt gets the smallest useful context for the current turn; everything else is retrieved selectively. A reschedule agent needs the appointment ID and free slots — not the full medical history passed through the LLM.</div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 5 : REQUEST LIFECYCLE ============ -->
+  <section class="dgm" id="d5" role="tabpanel">
+    <div class="dgm-section">Section 6 · Orchestration</div>
+    <h2 class="dgm-title">5. One Request, Explicitly Orchestrated</h2>
+    <p class="dgm-sub">Orchestration is the control layer — plain code, a graph framework, or a state machine — that moves a request from message to final output. Branches, retries, loops, and approval gates are all drawn explicitly; autonomy is not a lack of structure.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st5">Step 1 of 11</span>
+      <button class="ctl" id="play5">Walk the flow</button>
+      <button class="ctl" id="reset5">Reset</button>
+    </div>
+
+    <div class="flow" id="flow5">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">User message received</div><div class="flow-note">“Book me a checkup with Dr. Mehta next week.”</div></div></div>
+      <div class="flow-step" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Classify intent</div><div class="flow-note">Book, reschedule, or cancel — small-model territory.</div></div></div>
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Retrieve context</div><div class="flow-note">State plus the smallest useful slice of memory.</div></div></div>
+      <div class="flow-step warn" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">In scope?</div><div class="flow-note">Cheap gates filter out-of-scope requests before expensive reasoning burns tokens and tool calls.</div></div></div>
+      <div class="flow-step" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Select tools</div><div class="flow-note">Which read or write tools apply to this step.</div></div></div>
+      <div class="flow-step" data-step="6"><div class="flow-num">6</div><div class="flow-body"><div class="flow-name">Validate tool inputs</div><div class="flow-note">Schema and permission checks — code, not the model, is the gatekeeper.</div></div></div>
+      <div class="flow-step" data-step="7"><div class="flow-num">7</div><div class="flow-body"><div class="flow-name">Execute tools</div><div class="flow-note">Read tools first; writes only with validation and approval in place.</div></div></div>
+      <div class="flow-step" data-step="8"><div class="flow-num">8</div><div class="flow-body"><div class="flow-name">Inspect results</div><div class="flow-note">Structured results in, structured errors out — retry, branch, or fall back.</div></div></div>
+      <div class="branch-line">confirmation branch</div>
+      <div class="flow-step warn" data-step="9"><div class="flow-num">9</div><div class="flow-body"><div class="flow-name">Confirm high-impact actions</div><div class="flow-note">Canceling an appointment pauses for explicit user confirmation before any write API is called.</div></div></div>
+      <div class="flow-step good" data-step="10"><div class="flow-num">10</div><div class="flow-body"><div class="flow-name">Generate the final response</div><div class="flow-note">Only now is the answer composed for the user.</div></div></div>
+      <div class="flow-step violet" data-step="11"><div class="flow-num">11</div><div class="flow-body"><div class="flow-name">Log the trace, send to evals</div><div class="flow-note">The full trajectory is logged and evaluation data is sent asynchronously — off the user-critical path.</div></div></div>
+    </div>
+    <div class="loop-band" style="border-color:rgba(110,168,254,.45);background:rgba(110,168,254,.06)"><span class="loop-arrow" style="color:var(--accent)">✕</span><div><strong>Branches along the way:</strong> extraction fails → retry with another prompt or model · no availability → suggest alternatives · cancellation → confirmation path. <span class="why">Deterministic pipelines win for known sequences; graph-based orchestration earns its keep once branching, retries, and gates appear.</span></div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 6 : APPROVAL GATE ============ -->
+  <section class="dgm" id="d6" role="tabpanel">
+    <div class="dgm-section">Section 8 · Approval Gates and Policy Control</div>
+    <h2 class="dgm-title">6. The Approval Gate: Suggest, Validate, Approve, Execute</h2>
+    <p class="dgm-sub">Sending an email, deleting data, issuing a refund, canceling an appointment, running code — high-impact actions never happen just because the model inferred intent. Model suggests, code validates, user approves, tool executes.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st6">Stage 1 of 6</span>
+      <button class="ctl" id="play6">Walk the gate</button>
+      <button class="ctl" id="reset6">Reset</button>
+    </div>
+
+    <div class="machine" id="machine6">
+      <div class="m-state a" data-state="1"><div class="who">Model</div><div class="what">Suggests the action</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state b" data-state="2"><div class="who">Code</div><div class="what">Validates deterministically</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state c" data-state="3"><div class="who">User</div><div class="what">Approves the exact action</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state d" data-state="4"><div class="who">Tool</div><div class="what">Executes the action</div></div>
+    </div>
+    <div class="m-fallback"><span class="line"></span><span class="flag">✕</span> validation fails or user declines <span class="line"></span></div>
+    <div class="machine" id="machine6b" style="justify-content:center">
+      <div class="m-state e" data-state="5" style="flex:0 0 260px"><div class="who">Terminal state</div><div class="what">Rejected — nothing executes</div></div>
+    </div>
+    <div class="flow" id="flow6" style="margin-top:16px">
+      <div class="flow-step good" data-step="6"><div class="flow-num">✓</div><div class="flow-body"><div class="flow-name">What code must check before executing</div><div class="flow-note">Ownership of the resource · permissions · allowed by policy · required fields present · user confirmed the exact action. The agent is never the source of truth for business rules — application code is.</div></div></div>
+    </div>
+  </section>
+
+  <footer class="wf-foot">
+    <span>Companion diagrams for the article “Agent AI System Design Explained in 27 Minutes”.</span>
+    <span>Video by Aishwarya Srinivasan · captions translated from Hindi</span>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var tabBtns = document.querySelectorAll('.wf-tab');
+  var panels = document.querySelectorAll('.dgm');
+
+  function show(n){
+    for(var i=0;i<panels.length;i++){
+      panels[i].classList.toggle('active', panels[i].id === 'd' + n);
+    }
+    for(var j=0;j<tabBtns.length;j++){
+      var on = tabBtns[j].getAttribute('data-tab') === 'd' + n;
+      tabBtns[j].classList.toggle('active', on);
+      tabBtns[j].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+  for(var t=0;t<tabBtns.length;t++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        show(parseInt(btn.getAttribute('data-tab').slice(1), 10));
+      });
+    })(tabBtns[t]);
+  }
+  show(1);
+
+  /* Build a step walker over an ordered list of highlightable nodes */
+  function makeWalker(nodes, labelId, kind, names){
+    var idx = 0;
+    var lab = document.getElementById(labelId);
+    function paint(){
+      for(var i=0;i<nodes.length;i++){ nodes[i].classList.remove('on'); }
+      if(nodes[idx]){ nodes[idx].classList.add('on'); }
+      if(lab){
+        var label = kind + ' ' + (idx+1) + ' of ' + nodes.length;
+        if(names){ label += ' · ' + names[idx]; }
+        lab.textContent = label;
+      }
+    }
+    return {
+      next: function(){ idx = (idx + 1) % nodes.length; paint(); },
+      reset: function(){ idx = 0; paint(); },
+      paint: paint
+    };
+  }
+
+  function flowNodes(ids){
+    var out = [];
+    for(var s=0;s<ids.length;s++){
+      var found = document.querySelectorAll(ids[s]);
+      for(var f=0;f<found.length;f++){ out.push(found[f]); }
+    }
+    return out;
+  }
+
+  var w1 = makeWalker(flowNodes(['#flow1 .flow-step']), 'st1', 'Step', null);
+  var w3 = makeWalker(flowNodes(['#flow3 .flow-step','#flow3b .flow-step']), 'st3', 'Step', null);
+  var w5 = makeWalker(flowNodes(['#flow5 .flow-step']), 'st5', 'Step', null);
+
+  var w6 = makeWalker(flowNodes(['#machine6 .m-state','#machine6b .m-state','#flow6 .flow-step']), 'st6', 'Stage',
+    ['Model suggests','Code validates','User approves','Tool executes','Rejected','Checklist']);
+
+  document.getElementById('play1').addEventListener('click', w1.next);
+  document.getElementById('reset1').addEventListener('click', w1.reset);
+  document.getElementById('play3').addEventListener('click', w3.next);
+  document.getElementById('reset3').addEventListener('click', w3.reset);
+  document.getElementById('play5').addEventListener('click', w5.next);
+  document.getElementById('reset5').addEventListener('click', w5.reset);
+  document.getElementById('play6').addEventListener('click', w6.next);
+  document.getElementById('reset6').addEventListener('click', w6.reset);
+
+  w1.paint();
+  w3.paint();
+  w5.paint();
+  w6.paint();
+})();
+</script>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>

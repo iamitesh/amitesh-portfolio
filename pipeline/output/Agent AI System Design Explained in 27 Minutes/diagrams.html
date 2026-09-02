@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent AI System Design — Workflow Diagrams</title>
+<style>
+:root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+#workflow-content{max-width:1040px;margin:0 auto;padding:40px 24px 72px}
+a{color:var(--accent);text-decoration:none}
+
+/* ---------- header ---------- */
+.wf-header{margin-bottom:24px}
+.wf-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px}
+.wf-eyebrow::before{content:"";width:22px;height:2px;background:var(--accent-2);border-radius:2px}
+.wf-header h1{font-size:clamp(22px,3.4vw,34px);line-height:1.2;font-weight:800;letter-spacing:-.01em;max-width:780px}
+.wf-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.chip.channel .dot{background:var(--accent-2)}
+.chip.good .dot{background:var(--good)}
+.chip.warn .dot{background:var(--warn)}
+.chip.bad .dot{background:var(--bad)}
+
+/* ---------- tabs ---------- */
+.wf-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;background:var(--bg);padding:4px 0}
+.wf-tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;transition:all .18s ease}
+.wf-tab:hover{color:var(--text);border-color:var(--accent)}
+.wf-tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+
+/* ---------- diagram panels ---------- */
+.dgm{display:none;animation:fadeIn .25s ease}
+.dgm.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.dgm-title{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:2px 0 4px}
+.dgm-section{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.dgm-sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:860px}
+.controls{display:flex;gap:8px;align-items:center;margin:10px 0 14px;flex-wrap:wrap}
+.ctl{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease}
+.ctl:hover{border-color:var(--accent);color:var(--accent)}
+.ctl-state{font-size:11.5px;color:var(--muted);font-weight:700;background:var(--panel);border:1px solid var(--border);padding:6px 11px;border-radius:8px;letter-spacing:.03em}
+
+/* ---------- tooltips ---------- */
+[data-tip]{position:relative;cursor:help}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);background:#0b101c;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;line-height:1.45;padding:7px 10px;border-radius:8px;width:max-content;max-width:250px;opacity:0;pointer-events:none;transition:opacity .15s ease;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+[data-tip]:hover::after{opacity:1}
+
+/* ---------- numbered step flow (vertical) ---------- */
+.flow{display:flex;flex-direction:column;padding:4px 0}
+.flow-step{display:flex;gap:14px;position:relative;padding:10px 12px;border-radius:12px;border:1px solid transparent;transition:background .2s ease,border-color .2s ease}
+.flow-step::before{content:"";position:absolute;left:27px;top:54px;bottom:-8px;width:2px;background:var(--border)}
+.flow-step:last-child::before{display:none}
+.flow-num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;z-index:1;transition:all .2s ease}
+.flow-body{flex:1;min-width:0;padding:2px 0 0}
+.flow-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-note{font-size:12.5px;color:var(--muted);margin-top:2px;max-width:700px}
+.flow-step.on .flow-num{background:var(--accent);color:#0b101c;box-shadow:0 0 0 6px rgba(110,168,254,.16)}
+.flow-step.on{background:rgba(110,168,254,.07);border-color:rgba(110,168,254,.4)}
+.flow-step.warn .flow-num{border-color:var(--warn);color:var(--warn)}
+.flow-step.warn.on{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.45)}
+.flow-step.warn.on .flow-num{background:var(--warn);color:#0b101c}
+.flow-step.good .flow-num{border-color:var(--good);color:var(--good)}
+.flow-step.good.on{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.45)}
+.flow-step.good.on .flow-num{background:var(--good);color:#0b101c}
+.flow-step.violet .flow-num{border-color:var(--accent-2);color:var(--accent-2)}
+.flow-step.violet.on{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.flow-step.violet.on .flow-num{background:var(--accent-2);color:#0b101c}
+.branch-line{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:2px 0 2px 46px}
+.branch-line::before,.branch-line::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* loop / feedback band */
+.loop-band{display:flex;gap:12px;align-items:flex-start;background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.45);border-radius:12px;padding:12px 16px;margin:8px 0 0;font-size:13px}
+.loop-arrow{flex:0 0 auto;color:var(--accent-2);font-size:16px;font-weight:800;line-height:1.2}
+.loop-band .why{color:var(--muted);font-size:12px}
+
+/* ---------- split compare (diagram 2) ---------- */
+.compare{display:grid;grid-template-columns:1fr 42px 1fr;gap:4px;margin:16px 0}
+.cmp-col{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.cmp-col.cold{background:rgba(110,168,254,.05);border-color:rgba(110,168,254,.35)}
+.cmp-col.warm{background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.35)}
+.cmp-head{padding:13px 16px;border-bottom:1px solid var(--border)}
+.cmp-col.cold .cmp-head{background:rgba(110,168,254,.12)}
+.cmp-col.warm .cmp-head{background:rgba(167,139,250,.14)}
+.cmp-tag{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.cmp-name{font-size:16px;font-weight:800}
+.cmp-body{padding:15px 16px;flex:1}
+.agent-owner{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;font-weight:600}
+.agent-icon{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:rgba(110,168,254,.18);color:var(--accent);border:1px solid rgba(110,168,254,.5)}
+.cmp-col.warm .agent-icon{background:rgba(167,139,250,.18);color:var(--accent-2);border-color:rgba(167,139,250,.5)}
+.handoff{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.hand{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
+.hand-arrow{color:var(--accent-2);font-weight:800;font-size:12px}
+.cmp-note{font-size:12.5px;color:var(--muted);line-height:1.65}
+.cmp-note strong{color:var(--text)}
+.vs{display:flex;align-items:center;justify-content:center}
+.vs-badge{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:.04em}
+.tradeoff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.t-card{border-radius:12px;padding:13px 15px;border:1px solid var(--border);background:var(--panel);font-size:12.5px;color:var(--muted);line-height:1.6}
+.t-card b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.t-card.pro b{color:var(--good)}
+.t-card.con b{color:var(--bad)}
+
+/* ---------- lanes (diagram 3) ---------- */
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 14px}
+.lane{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;padding:13px 14px}
+.lane.green{border-top-color:var(--good)}
+.lane.violet{border-top-color:var(--accent-2)}
+.lane.amber{border-top-color:var(--warn)}
+.lane-name{font-size:13.5px;font-weight:800;margin-bottom:3px}
+.lane-desc{font-size:12px;color:var(--muted);margin-bottom:9px}
+.lane-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+.lane.green .tag{border-color:rgba(52,211,153,.4);color:var(--good)}
+.lane.violet .tag{border-color:rgba(167,139,250,.4);color:var(--accent-2)}
+.lane.amber .tag{border-color:rgba(251,191,36,.4);color:var(--warn)}
+
+/* ---------- storage grid (diagram 4) ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0 6px}
+.duo-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.duo-card h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.duo-card.state h4{color:var(--accent)}
+.duo-card.memory h4{color:var(--accent-2)}
+.duo-card ul{list-style:none;font-size:12.5px;color:var(--muted)}
+.duo-card li{padding:4px 0 4px 16px;position:relative}
+.duo-card li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:2px;background:var(--accent)}
+.duo-card.memory li::before{background:var(--accent-2)}
+.v-flow{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0}
+.v-flow .arr{font-size:13px;color:var(--border)}
+.v-label{text-align:center;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.store-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 16px}
+.store{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:13px 14px;transition:transform .18s ease,border-color .18s ease}
+.store:hover{transform:translateY(-2px);border-color:var(--accent)}
+.store.s1{border-top-color:var(--accent)}
+.store.s2{border-top-color:var(--good)}
+.store.s3{border-top-color:var(--accent-2)}
+.store.s4{border-top-color:var(--warn)}
+.store-use{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.store-name{font-size:13.5px;font-weight:800;margin-bottom:5px}
+.store-ex{font-size:11.5px;color:var(--muted);margin-bottom:9px;line-height:1.5}
+.mini-tags{display:flex;flex-wrap:wrap;gap:5px}
+.mini{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--muted)}
+.store.s1 .mini{color:var(--accent);border-color:rgba(110,168,254,.35)}
+.store.s2 .mini{color:var(--good);border-color:rgba(52,211,153,.35)}
+.store.s3 .mini{color:var(--accent-2);border-color:rgba(167,139,250,.35)}
+.store.s4 .mini{color:var(--warn);border-color:rgba(251,191,36,.35)}
+.rule-card{display:flex;gap:12px;align-items:flex-start;background:rgba(251,191,36,.06);border:1px dashed rgba(251,191,36,.5);border-radius:12px;padding:13px 16px;font-size:13px}
+.rule-card .flag{flex:0 0 auto;color:var(--warn);font-weight:800}
+.rule-card strong{display:block;margin-bottom:2px}
+
+/* ---------- decision hints (branch summaries in flows) ---------- */
+.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 8px 46px}
+.dec{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--good);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--muted)}
+.dec.rej{border-left-color:var(--bad)}
+
+/* ---------- approval machine (diagram 6) ---------- */
+.machine{display:flex;align-items:stretch;gap:4px;margin:14px 0 4px}
+.m-state{flex:1;min-width:0;background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--muted);border-radius:12px;padding:12px 10px;text-align:center;transition:all .2s ease}
+.m-state .who{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.m-state .what{font-size:12.5px;font-weight:700;line-height:1.35}
+.m-state.a{border-top-color:var(--accent)}
+.m-state.b{border-top-color:var(--accent-2)}
+.m-state.c{border-top-color:var(--warn)}
+.m-state.d{border-top-color:var(--good)}
+.m-state.e{border-top-color:var(--bad)}
+.m-state.on{transform:translateY(-3px)}
+.m-state.a.on{box-shadow:0 8px 22px rgba(110,168,254,.3)}
+.m-state.b.on{box-shadow:0 8px 22px rgba(167,139,250,.3)}
+.m-state.c.on{box-shadow:0 8px 22px rgba(251,191,36,.3)}
+.m-state.d.on{box-shadow:0 8px 22px rgba(52,211,153,.3)}
+.m-state.e.on{box-shadow:0 8px 22px rgba(248,113,113,.3)}
+.m-arrow{display:flex;align-items:center;justify-content:center;color:var(--border);font-size:16px;font-weight:800}
+.m-fallback{display:flex;gap:10px;align-items:center;margin:10px 0 4px;color:var(--muted);font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.m-fallback .line{flex:1;height:1px;background:var(--border)}
+.m-fallback .flag{color:var(--bad)}
+
+/* ---------- footer ---------- */
+.wf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+@media (max-width:760px){
+  .compare{grid-template-columns:1fr;gap:8px}
+  .vs{order:-1}
+  .duo,.decision-grid{grid-template-columns:1fr}
+  .store-grid{grid-template-columns:repeat(2,1fr)}
+  .lanes{grid-template-columns:1fr}
+  .machine{flex-direction:column;gap:2px}
+  .m-arrow{transform:rotate(90deg);height:12px}
+  .tradeoff{grid-template-columns:1fr}
+  #workflow-content{padding:26px 14px 56px}
+  .loop-band,.decision-grid{margin-left:0}
+  .branch-line{margin-left:6px}
+}
+</style>
+</head>
+<body>
+<main id="workflow-content">
+
+  <header class="wf-header">
+    <div class="wf-eyebrow">System design walkthrough</div>
+    <h1>Agent AI System Design Explained in 27 Minutes</h1>
+    <div class="wf-meta">
+      <span class="chip channel"><span class="dot"></span>Aishwarya Srinivasan</span>
+      <span class="chip"><span class="dot"></span>6 diagrams</span>
+      <span class="chip good"><span class="dot"></span>production lens</span>
+    </div>
+  </header>
+
+  <nav class="wf-tabs" role="tablist" aria-label="Diagrams">
+    <button class="wf-tab active" data-tab="d1" role="tab" aria-selected="true">1 · Agentic Loop</button>
+    <button class="wf-tab" data-tab="d2" role="tab" aria-selected="false">2 · One vs Many</button>
+    <button class="wf-tab" data-tab="d3" role="tab" aria-selected="false">3 · Model Routing</button>
+    <button class="wf-tab" data-tab="d4" role="tab" aria-selected="false">4 · Memory &amp; State</button>
+    <button class="wf-tab" data-tab="d5" role="tab" aria-selected="false">5 · Lifecycle</button>
+    <button class="wf-tab" data-tab="d6" role="tab" aria-selected="false">6 · Approval Gate</button>
+  </nav>
+
+  <!-- ============ DIAGRAM 1 : AGENTIC LOOP ============ -->
+  <section class="dgm active" id="d1" role="tabpanel">
+    <div class="dgm-section">Section 1 · What is an agentic AI system?</div>
+    <h2 class="dgm-title">1. The Agentic Loop: From Message to Action</h2>
+    <p class="dgm-sub">A production agent is not an LLM in a chat box — it reasons over a goal, picks steps, calls tools, inspects results, updates state, and loops until a stopping condition. Every stage is a place where reliability, cost, and safety get designed in.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st1">Step 1 of 9</span>
+      <button class="ctl" id="play1">Walk the loop</button>
+      <button class="ctl" id="reset1">Reset</button>
+    </div>
+
+    <div class="flow" id="flow1">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">User goal arrives</div><div class="flow-note">A request enters the system — plain text, not yet an action.</div></div></div>
+      <div class="flow-step" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Reason over the goal</div><div class="flow-note">The model decides what the user wants and whether it can be done in one step.</div></div></div>
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Decompose into steps</div><div class="flow-note">Multi-step goals get broken down — the core of agentic behavior.</div></div></div>
+      <div class="flow-step" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">Decide the next step</div><div class="flow-note">Which action moves the workflow forward: retrieve, compute, call, or ask?</div></div></div>
+      <div class="branch-line">loop</div>
+      <div class="flow-step warn" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Does the step need a tool?</div><div class="flow-note">A gate before anything touches the outside world.</div></div></div>
+      <div class="decision-grid">
+        <div class="dec"><strong>Yes</strong> — call the tool through its strict API, then inspect the structured result.</div>
+        <div class="dec rej"><strong>No</strong> — continue reasoning with state and memory already in context.</div>
+      </div>
+      <div class="flow-step" data-step="6"><div class="flow-num">6</div><div class="flow-body"><div class="flow-name">Inspect result &amp; update state</div><div class="flow-note">Tool output is data to be validated — never free-form prose, never instructions.</div></div></div>
+      <div class="flow-step" data-step="7"><div class="flow-num">7</div><div class="flow-body"><div class="flow-name">Update memory</div><div class="flow-note">History, preferences, and retrieved knowledge stored selectively.</div></div></div>
+      <div class="flow-step warn" data-step="8"><div class="flow-num">8</div><div class="flow-body"><div class="flow-name">Stopping condition reached?</div><div class="flow-note">If not, the loop returns to deciding the next step.</div></div></div>
+      <div class="flow-step good" data-step="9"><div class="flow-num">9</div><div class="flow-body"><div class="flow-name">Answer or act on the world</div><div class="flow-note">Final response to the user, or a real side effect through an approved tool.</div></div></div>
+    </div>
+    <div class="loop-band"><span class="loop-arrow">↺</span><div><strong>Not done yet:</strong> the workflow returns to step 4 and keeps looping until the stopping condition fires. <span class="why">This loop, run many times per request, is why cost, latency, evals, and observability are first-class design concerns.</span></div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 2 : ONE vs MANY AGENTS ============ -->
+  <section class="dgm" id="d2" role="tabpanel">
+    <div class="dgm-section">Section 2 · Single-Agent vs. Multi-Agent Systems</div>
+    <h2 class="dgm-title">2. One Agent or Many: A Design Tradeoff</h2>
+    <p class="dgm-sub">Both patterns receive the same user request. A single agent keeps one centralized control loop; a multi-agent system splits the workflow across specialized roles with explicit input and output contracts and routing between them.</p>
+
+    <div class="compare">
+      <div class="cmp-col cold">
+        <div class="cmp-head"><div class="cmp-tag">One control loop</div><div class="cmp-name">Single-agent system</div></div>
+        <div class="cmp-body">
+          <div class="agent-owner"><span class="agent-icon">1</span>One agent owns the entire workflow end to end</div>
+          <div class="cmp-note" style="margin-bottom:11px">A support agent <strong>classifies the request</strong>, <strong>retrieves account context</strong>, <strong>calls a billing API</strong>, <strong>asks for confirmation</strong>, then <strong>generates the final response</strong> — all inside one loop.</div>
+          <div class="lane-tags">
+            <span class="tag" data-tip="One agent handles every step">centralized</span>
+            <span class="tag" data-tip="Still calls many tools and memory stores">multi-tool</span>
+            <span class="tag" data-tip="One trace to inspect">single trace</span>
+          </div>
+        </div>
+      </div>
+      <div class="vs"><div class="vs-badge">VS</div></div>
+      <div class="cmp-col warm">
+        <div class="cmp-head"><div class="cmp-tag">Separation of responsibilities</div><div class="cmp-name">Multi-agent system</div></div>
+        <div class="cmp-body">
+          <div class="handoff">
+            <span class="hand" data-tip="Splits the task into subgoals">Planner</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Retrieves knowledge and context">Knowledge</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Writes or edits code">Coder</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Reviews the produced output">Reviewer</span><span class="hand-arrow">→</span>
+            <span class="hand" data-tip="Executes the accepted plan">Executor</span>
+          </div>
+          <div class="cmp-note">Every agent has a <strong>defined role</strong>, an <strong>input contract</strong>, an <strong>output contract</strong>, and <strong>routing logic</strong> between agents — structure first, autonomy second.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tradeoff">
+      <div class="t-card pro"><b>When many agents earn their cost</b>clear specialization, parallel work, review loops, long-running workflows.</div>
+      <div class="t-card con"><b>The real costs</b>more coordination overhead, more failure modes, more state to track, more logs to inspect, more places where cost and latency creep up.</div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGRAM 3 : MODEL ROUTING ============ -->
+  <section class="dgm" id="d3" role="tabpanel">
+    <div class="dgm-section">Section 3 · The Model Layer</div>
+    <h2 class="dgm-title">3. Model Routing: Right Model for the Right Step</h2>
+    <p class="dgm-sub">Letting one frontier model handle every step is a cost and latency trap. Route by complexity: cheap fast models for routine work, strong reasoning models only where reasoning actually changes the outcome.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st3">Step 1 of 5</span>
+      <button class="ctl" id="play3">Walk the route</button>
+      <button class="ctl" id="reset3">Reset</button>
+    </div>
+
+    <div class="flow" id="flow3">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">Step arrives</div><div class="flow-note">Every step must answer three questions: which model handles it, what output contract it returns, and what happens on failure.</div></div></div>
+      <div class="flow-step warn" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Route by complexity</div><div class="flow-note">Three lanes below — most traffic belongs in the first two.</div></div></div>
+    </div>
+    <div class="lanes">
+      <div class="lane green">
+        <div class="lane-name">Cheap &amp; fast lane</div>
+        <div class="lane-desc">Low-complexity steps where a small model is enough.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="book, reschedule, cancel, or just a question">intent classification</span>
+          <span class="tag">routing</span>
+          <span class="tag">simple summarization</span>
+        </div>
+      </div>
+      <div class="lane violet">
+        <div class="lane-name">Structured output lane</div>
+        <div class="lane-desc">Extraction into a schema — may not need an LLM at all.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="date, time, doctor, appointment type">schema filling</span>
+          <span class="tag">JSON schema</span>
+          <span class="tag">Pydantic</span>
+        </div>
+      </div>
+      <div class="lane amber">
+        <div class="lane-name">Strong reasoning lane</div>
+        <div class="lane-desc">Only when ambiguity or deep reasoning changes the answer.</div>
+        <div class="lane-tags">
+          <span class="tag" data-tip="traveling next week, avoid mornings">ambiguous constraints</span>
+          <span class="tag">planning</span>
+          <span class="tag">synthesis</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow" id="flow3b">
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Cheap path usually wins</div><div class="flow-note">Deciding reschedule vs. cancel does not need a frontier model — and extracting date, time, and doctor may not need an LLM at all.</div></div></div>
+      <div class="flow-step violet" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">Escalate only when reasoning matters</div><div class="flow-note">Ambiguity and tradeoffs go to the stronger model — “traveling next week, avoid mornings” needs real reasoning.</div></div></div>
+      <div class="flow-step good" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Structured output with a failure plan</div><div class="flow-note">Whatever the lane, the output contract is validated — invalid output triggers a retry or fallback path.</div></div></div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGRAM 4 : MEMORY AND STATE ============ -->
+  <section class="dgm" id="d4" role="tabpanel">
+    <div class="dgm-section">Section 5 · Memory and State</div>
+    <h2 class="dgm-title">4. Memory &amp; State: Data Architecture First</h2>
+    <p class="dgm-sub">Agentic systems get messy when memory is treated as one thing. State and memory are different data with different access patterns — and pulling everything into a vector database is a poor default.</p>
+
+    <div class="duo">
+      <div class="duo-card state">
+        <h4>State — current execution context</h4>
+        <ul>
+          <li>Which step the workflow is on</li>
+          <li>What information has been collected</li>
+          <li>Which tools were called, what they returned</li>
+          <li>Whether the user confirmed the action</li>
+          <li>Whether the workflow passed or failed</li>
+        </ul>
+      </div>
+      <div class="duo-card memory">
+        <h4>Memory — reusable knowledge</h4>
+        <ul>
+          <li>Conversation history</li>
+          <li>User preferences and past actions</li>
+          <li>Retrieved knowledge and document context</li>
+          <li>Summaries and long-form archives</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="v-flow"><span class="arr">▼</span></div>
+    <div class="v-label">Choose storage by access pattern</div>
+    <div class="v-flow"><span class="arr">▼</span></div>
+
+    <div class="store-grid">
+      <div class="store s1">
+        <div class="store-use">Low latency</div>
+        <div class="store-name">Workflow state</div>
+        <div class="store-ex">Conversation and workflow state need speed.</div>
+        <div class="mini-tags"><span class="mini">Redis</span><span class="mini">DynamoDB</span><span class="mini">Postgres</span><span class="mini">MongoDB</span></div>
+      </div>
+      <div class="store s2">
+        <div class="store-use">System of record</div>
+        <div class="store-name">Application state</div>
+        <div class="store-ex">Owned by your application, not the agent run.</div>
+        <div class="mini-tags"><span class="mini">App database</span></div>
+      </div>
+      <div class="store s3">
+        <div class="store-use">Knowledge retrieval</div>
+        <div class="store-name">RAG store</div>
+        <div class="store-ex">Search over documents at retrieval time.</div>
+        <div class="mini-tags"><span class="mini">Pinecone</span><span class="mini">pgvector</span><span class="mini">Weaviate</span><span class="mini">Elasticsearch</span></div>
+      </div>
+      <div class="store s4">
+        <div class="store-use">Cheap archives</div>
+        <div class="store-name">Long-term memory</div>
+        <div class="store-ex">Old conversations and logs, kept cheaply.</div>
+        <div class="mini-tags"><span class="mini">S3 object storage</span></div>
+      </div>
+    </div>
+
+    <div class="rule-card"><span class="flag">!</span><div><strong>Short-term context vs. long-term memory</strong>The prompt gets the smallest useful context for the current turn; everything else is retrieved selectively. A reschedule agent needs the appointment ID and free slots — not the full medical history passed through the LLM.</div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 5 : REQUEST LIFECYCLE ============ -->
+  <section class="dgm" id="d5" role="tabpanel">
+    <div class="dgm-section">Section 6 · Orchestration</div>
+    <h2 class="dgm-title">5. One Request, Explicitly Orchestrated</h2>
+    <p class="dgm-sub">Orchestration is the control layer — plain code, a graph framework, or a state machine — that moves a request from message to final output. Branches, retries, loops, and approval gates are all drawn explicitly; autonomy is not a lack of structure.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st5">Step 1 of 11</span>
+      <button class="ctl" id="play5">Walk the flow</button>
+      <button class="ctl" id="reset5">Reset</button>
+    </div>
+
+    <div class="flow" id="flow5">
+      <div class="flow-step" data-step="1"><div class="flow-num">1</div><div class="flow-body"><div class="flow-name">User message received</div><div class="flow-note">“Book me a checkup with Dr. Mehta next week.”</div></div></div>
+      <div class="flow-step" data-step="2"><div class="flow-num">2</div><div class="flow-body"><div class="flow-name">Classify intent</div><div class="flow-note">Book, reschedule, or cancel — small-model territory.</div></div></div>
+      <div class="flow-step" data-step="3"><div class="flow-num">3</div><div class="flow-body"><div class="flow-name">Retrieve context</div><div class="flow-note">State plus the smallest useful slice of memory.</div></div></div>
+      <div class="flow-step warn" data-step="4"><div class="flow-num">4</div><div class="flow-body"><div class="flow-name">In scope?</div><div class="flow-note">Cheap gates filter out-of-scope requests before expensive reasoning burns tokens and tool calls.</div></div></div>
+      <div class="flow-step" data-step="5"><div class="flow-num">5</div><div class="flow-body"><div class="flow-name">Select tools</div><div class="flow-note">Which read or write tools apply to this step.</div></div></div>
+      <div class="flow-step" data-step="6"><div class="flow-num">6</div><div class="flow-body"><div class="flow-name">Validate tool inputs</div><div class="flow-note">Schema and permission checks — code, not the model, is the gatekeeper.</div></div></div>
+      <div class="flow-step" data-step="7"><div class="flow-num">7</div><div class="flow-body"><div class="flow-name">Execute tools</div><div class="flow-note">Read tools first; writes only with validation and approval in place.</div></div></div>
+      <div class="flow-step" data-step="8"><div class="flow-num">8</div><div class="flow-body"><div class="flow-name">Inspect results</div><div class="flow-note">Structured results in, structured errors out — retry, branch, or fall back.</div></div></div>
+      <div class="branch-line">confirmation branch</div>
+      <div class="flow-step warn" data-step="9"><div class="flow-num">9</div><div class="flow-body"><div class="flow-name">Confirm high-impact actions</div><div class="flow-note">Canceling an appointment pauses for explicit user confirmation before any write API is called.</div></div></div>
+      <div class="flow-step good" data-step="10"><div class="flow-num">10</div><div class="flow-body"><div class="flow-name">Generate the final response</div><div class="flow-note">Only now is the answer composed for the user.</div></div></div>
+      <div class="flow-step violet" data-step="11"><div class="flow-num">11</div><div class="flow-body"><div class="flow-name">Log the trace, send to evals</div><div class="flow-note">The full trajectory is logged and evaluation data is sent asynchronously — off the user-critical path.</div></div></div>
+    </div>
+    <div class="loop-band" style="border-color:rgba(110,168,254,.45);background:rgba(110,168,254,.06)"><span class="loop-arrow" style="color:var(--accent)">✕</span><div><strong>Branches along the way:</strong> extraction fails → retry with another prompt or model · no availability → suggest alternatives · cancellation → confirmation path. <span class="why">Deterministic pipelines win for known sequences; graph-based orchestration earns its keep once branching, retries, and gates appear.</span></div></div>
+  </section>
+
+  <!-- ============ DIAGRAM 6 : APPROVAL GATE ============ -->
+  <section class="dgm" id="d6" role="tabpanel">
+    <div class="dgm-section">Section 8 · Approval Gates and Policy Control</div>
+    <h2 class="dgm-title">6. The Approval Gate: Suggest, Validate, Approve, Execute</h2>
+    <p class="dgm-sub">Sending an email, deleting data, issuing a refund, canceling an appointment, running code — high-impact actions never happen just because the model inferred intent. Model suggests, code validates, user approves, tool executes.</p>
+    <div class="controls">
+      <span class="ctl-state" id="st6">Stage 1 of 6</span>
+      <button class="ctl" id="play6">Walk the gate</button>
+      <button class="ctl" id="reset6">Reset</button>
+    </div>
+
+    <div class="machine" id="machine6">
+      <div class="m-state a" data-state="1"><div class="who">Model</div><div class="what">Suggests the action</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state b" data-state="2"><div class="who">Code</div><div class="what">Validates deterministically</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state c" data-state="3"><div class="who">User</div><div class="what">Approves the exact action</div></div>
+      <div class="m-arrow"><span>→</span></div>
+      <div class="m-state d" data-state="4"><div class="who">Tool</div><div class="what">Executes the action</div></div>
+    </div>
+    <div class="m-fallback"><span class="line"></span><span class="flag">✕</span> validation fails or user declines <span class="line"></span></div>
+    <div class="machine" id="machine6b" style="justify-content:center">
+      <div class="m-state e" data-state="5" style="flex:0 0 260px"><div class="who">Terminal state</div><div class="what">Rejected — nothing executes</div></div>
+    </div>
+    <div class="flow" id="flow6" style="margin-top:16px">
+      <div class="flow-step good" data-step="6"><div class="flow-num">✓</div><div class="flow-body"><div class="flow-name">What code must check before executing</div><div class="flow-note">Ownership of the resource · permissions · allowed by policy · required fields present · user confirmed the exact action. The agent is never the source of truth for business rules — application code is.</div></div></div>
+    </div>
+  </section>
+
+  <footer class="wf-foot">
+    <span>Companion diagrams for the article “Agent AI System Design Explained in 27 Minutes”.</span>
+    <span>Video by Aishwarya Srinivasan · captions translated from Hindi</span>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var tabBtns = document.querySelectorAll('.wf-tab');
+  var panels = document.querySelectorAll('.dgm');
+
+  function show(n){
+    for(var i=0;i<panels.length;i++){
+      panels[i].classList.toggle('active', panels[i].id === 'd' + n);
+    }
+    for(var j=0;j<tabBtns.length;j++){
+      var on = tabBtns[j].getAttribute('data-tab') === 'd' + n;
+      tabBtns[j].classList.toggle('active', on);
+      tabBtns[j].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+  for(var t=0;t<tabBtns.length;t++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        show(parseInt(btn.getAttribute('data-tab').slice(1), 10));
+      });
+    })(tabBtns[t]);
+  }
+  show(1);
+
+  /* Build a step walker over an ordered list of highlightable nodes */
+  function makeWalker(nodes, labelId, kind, names){
+    var idx = 0;
+    var lab = document.getElementById(labelId);
+    function paint(){
+      for(var i=0;i<nodes.length;i++){ nodes[i].classList.remove('on'); }
+      if(nodes[idx]){ nodes[idx].classList.add('on'); }
+      if(lab){
+        var label = kind + ' ' + (idx+1) + ' of ' + nodes.length;
+        if(names){ label += ' · ' + names[idx]; }
+        lab.textContent = label;
+      }
+    }
+    return {
+      next: function(){ idx = (idx + 1) % nodes.length; paint(); },
+      reset: function(){ idx = 0; paint(); },
+      paint: paint
+    };
+  }
+
+  function flowNodes(ids){
+    var out = [];
+    for(var s=0;s<ids.length;s++){
+      var found = document.querySelectorAll(ids[s]);
+      for(var f=0;f<found.length;f++){ out.push(found[f]); }
+    }
+    return out;
+  }
+
+  var w1 = makeWalker(flowNodes(['#flow1 .flow-step']), 'st1', 'Step', null);
+  var w3 = makeWalker(flowNodes(['#flow3 .flow-step','#flow3b .flow-step']), 'st3', 'Step', null);
+  var w5 = makeWalker(flowNodes(['#flow5 .flow-step']), 'st5', 'Step', null);
+
+  var w6 = makeWalker(flowNodes(['#machine6 .m-state','#machine6b .m-state','#flow6 .flow-step']), 'st6', 'Stage',
+    ['Model suggests','Code validates','User approves','Tool executes','Rejected','Checklist']);
+
+  document.getElementById('play1').addEventListener('click', w1.next);
+  document.getElementById('reset1').addEventListener('click', w1.reset);
+  document.getElementById('play3').addEventListener('click', w3.next);
+  document.getElementById('reset3').addEventListener('click', w3.reset);
+  document.getElementById('play5').addEventListener('click', w5.next);
+  document.getElementById('reset5').addEventListener('click', w5.reset);
+  document.getElementById('play6').addEventListener('click', w6.next);
+  document.getElementById('reset6').addEventListener('click', w6.reset);
+
+  w1.paint();
+  w3.paint();
+  w5.paint();
+  w6.paint();
+})();
+</script>
+</body>
+</html>
