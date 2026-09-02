@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Complete Explanation</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{--bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349}
+#view-workflow *{box-sizing:border-box}
+#view-workflow html, #view-workflow body{margin:0;padding:0;background:var(--bg);color:var(--text)}
+#view-workflow #workflow-content{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;max-width:1020px;margin:0 auto;padding:34px 20px 70px;color:var(--text)}
+#view-workflow .deck-kicker{font-size:11px;letter-spacing:.24em;color:var(--accent-2);text-transform:uppercase;font-weight:800}
+#view-workflow #workflow-content h1{font-size:clamp(1.7rem,4vw,2.3rem);line-height:1.16;margin:10px 0 4px;letter-spacing:-.01em;color:var(--text)}
+#view-workflow .deck-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+#view-workflow .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700}
+#view-workflow .chip--accent{border-color:rgba(110,168,254,.55);color:var(--accent)}
+#view-workflow .chip--violet{border-color:rgba(167,139,250,.5);color:var(--accent-2)}
+#view-workflow .chip--good{border-color:rgba(52,211,153,.45);color:var(--good)}
+#view-workflow .chip--warn{border-color:rgba(251,191,36,.5);color:var(--warn)}
+#view-workflow .chip--bad{border-color:rgba(248,113,113,.5);color:var(--bad)}
+#view-workflow .deck-desc{color:var(--muted);max-width:780px;margin:12px 0 0;font-size:14px}
+#view-workflow .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
+#view-workflow .tab{border:1px solid var(--border);background:var(--panel-2);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;transition:border-color .15s,color .15s,background .15s}
+#view-workflow .tab:hover{color:var(--text);border-color:var(--accent)}
+#view-workflow .tab.is-active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+#view-workflow .panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px 20px 26px;margin-top:14px}
+#view-workflow .panel.is-active{display:block;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#view-workflow .p-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px dashed var(--border);padding-bottom:14px}
+#view-workflow .p-title{margin:0;font-size:1.16rem;line-height:1.3;letter-spacing:-.01em;color:var(--text)}
+#view-workflow .p-cap{color:var(--muted);font-size:13px;margin:6px 0 0;max-width:740px}
+#view-workflow .p-tag{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);border:1px solid rgba(167,139,250,.4);border-radius:8px;padding:5px 10px;margin-top:2px}
+#view-workflow .flow{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:18px}
+#view-workflow .node{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--border);border-radius:14px;padding:12px 16px;width:min(640px,100%);color:var(--text);font-size:13.5px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+#view-workflow .node .k{display:block;font-size:10.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+#view-workflow .node--port{border-color:rgba(110,168,254,.55)}
+#view-workflow .node--port .k{color:var(--accent)}
+#view-workflow .node--srv{border-color:rgba(167,139,250,.55)}
+#view-workflow .node--srv .k{color:var(--accent-2)}
+#view-workflow .node--good{border-color:rgba(52,211,153,.5)}
+#view-workflow .node--good .k{color:var(--good)}
+#view-workflow .node--warn{border-color:rgba(251,191,36,.5)}
+#view-workflow .node--warn .k{color:var(--warn)}
+#view-workflow .node--bad{border-color:rgba(248,113,113,.55);background:linear-gradient(180deg,#2b1b24,var(--panel))}
+#view-workflow .node--bad .k{color:var(--bad)}
+#view-workflow .node--gate{border-style:dashed;border-color:rgba(251,191,36,.6)}
+#view-workflow .node--mut .k{color:var(--muted)}
+#view-workflow .ac{color:var(--accent);font-weight:700}
+#view-workflow .vi{color:var(--accent-2);font-weight:700}
+#view-workflow .gd{color:var(--good);font-weight:700}
+#view-workflow .wn{color:var(--warn);font-weight:700}
+#view-workflow .bd{color:var(--bad);font-weight:700}
+#view-workflow .mt{color:var(--muted)}
+#view-workflow .conn{display:flex;flex-direction:column;align-items:center;height:34px}
+#view-workflow .conn .ln{width:2px;background:var(--border);flex:1}
+#view-workflow .conn .lb{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;line-height:1.2;background:var(--panel);padding:0 7px;border-radius:6px;margin:2px 0}
+#view-workflow .conn .ar{font-size:13px;color:var(--muted);line-height:1;padding-bottom:2px}
+#view-workflow .card{padding:15px 16px;border-radius:14px;background:var(--panel);border:1px solid var(--border);min-width:0;font-size:13px}
+#view-workflow .card--warn{border-color:rgba(251,191,36,.4)}
+#view-workflow .card--good{border-color:rgba(52,211,153,.4)}
+#view-workflow .card--bad{border-color:rgba(248,113,113,.45)}
+#view-workflow .card--srv{border-color:rgba(167,139,250,.4)}
+#view-workflow .card-h{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--text);display:flex;align-items:center;gap:8px}
+#view-workflow .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+#view-workflow .dot--warn{background:var(--warn)}
+#view-workflow .dot--good{background:var(--good)}
+#view-workflow .dot--accent{background:var(--accent)}
+#view-workflow .dot--bad{background:var(--bad)}
+#view-workflow .wires{display:flex;flex-wrap:wrap;gap:6px}
+#view-workflow .wire{font-size:11.5px;color:var(--warn);background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.32);border-radius:999px;padding:3px 10px;font-weight:700}
+#view-workflow .stat{margin-top:12px;font-size:12px;color:var(--warn);border-top:1px dashed rgba(251,191,36,.3);padding-top:10px;font-weight:800}
+#view-workflow .stat--good{color:var(--good);border-top-color:rgba(52,211,153,.3)}
+#view-workflow .split{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:8px;align-items:stretch;width:100%;margin-top:16px}
+#view-workflow .between{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);text-align:center}
+#view-workflow .between .big{font-size:24px;color:var(--accent);line-height:1}
+#view-workflow .between .small{font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800}
+#view-workflow .hub{display:flex;align-items:stretch;gap:8px;margin-top:6px}
+#view-workflow .hub-col{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1;min-width:0}
+#view-workflow .hub-mid{display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;color:var(--accent);font-size:13px;font-weight:700}
+#view-workflow .hub-box{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1.2;min-width:0}
+#view-workflow .applet{font-size:11.5px;border-radius:10px;padding:6px 8px;text-align:center;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);line-height:1.3}
+#view-workflow .applet--main{background:linear-gradient(180deg,rgba(110,168,254,.25),rgba(110,168,254,.06));border-color:rgba(110,168,254,.6);color:var(--accent);font-weight:800}
+#view-workflow .applet--ok{border-color:rgba(52,211,153,.4);color:var(--gd,var(--good))}
+#view-workflow .banner{margin-top:18px;border-radius:12px;padding:12px 14px;font-size:13px;background:rgba(110,168,254,.07);border:1px dashed rgba(110,168,254,.4);color:var(--text)}
+#view-workflow .banner--warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.32);color:var(--warn)}
+#view-workflow .banner--good{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.32);color:var(--good)}
+#view-workflow .fn{margin:16px 0 0;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:12px}
+#view-workflow .fn b{color:var(--text)}
+#view-workflow .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;margin-top:20px}
+#view-workflow .sub{border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--text)}
+#view-workflow .sub .k{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+#view-workflow .sub .k.k-ac{color:var(--accent)}
+#view-workflow .sub .k.k-vi{color:var(--accent-2)}
+#view-workflow .sub .k.k-gd{color:var(--good)}
+#view-workflow .sub .k.k-wn{color:var(--warn)}
+#view-workflow .sub .k.k-bd{color:var(--bad)}
+#view-workflow .msg-node{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:999px;padding:7px 18px 7px 7px;width:min(700px,100%);font-size:13px;color:var(--text);text-align:left}
+#view-workflow .num{flex:0 0 auto;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#0b101c;font-weight:900;font-size:12.5px}
+#view-workflow .num--v{background:var(--accent-2)}
+#view-workflow .num--g{background:var(--good)}
+#view-workflow .num--w{background:var(--warn)}
+#view-workflow .actor{flex:0 0 auto;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:1px solid;white-space:nowrap}
+#view-workflow .actor--user{color:var(--accent);border-color:rgba(110,168,254,.55);background:rgba(110,168,254,.09)}
+#view-workflow .actor--model{color:var(--accent-2);border-color:rgba(167,139,250,.55);background:rgba(167,139,250,.09)}
+#view-workflow .actor--harness{color:var(--good);border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.07)}
+#view-workflow .actor--client{color:var(--accent);border-color:rgba(110,168,254,.45);background:rgba(110,168,254,.06)}
+#view-workflow .actor--srv{color:var(--warn);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08)}
+#view-workflow .loop-tag{border:1px dashed rgba(167,139,250,.55);color:var(--accent-2);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:800;letter-spacing:.05em;margin-top:2px;text-align:center;width:min(700px,100%)}
+#view-workflow .legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 2px}
+#view-workflow .role-note{color:var(--muted);font-size:12.5px;max-width:720px;margin:14px auto 0;text-align:center}
+#view-workflow .cmp{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;width:100%;margin-top:18px}
+#view-workflow .col{display:flex;flex-direction:column;gap:10px;min-width:0}
+#view-workflow .fork{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(720px,100%);margin:0 auto}
+#view-workflow .fork .sub{padding:13px 15px}
+#view-workflow .gate-note{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+#view-workflow .deck-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+#view-workflow .navbtn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;transition:border-color .15s}
+#view-workflow .navbtn:hover{border-color:var(--accent)}
+#view-workflow .navbtn--play{background:var(--accent);border-color:var(--accent);color:#0b101c}
+#view-workflow .navbtn--play:hover{border-color:var(--accent)}
+#view-workflow #pos{color:var(--muted);font-size:12.5px;font-weight:800;letter-spacing:.1em;min-width:52px;text-align:center}
+#view-workflow .hint{color:var(--muted);font-size:12px;text-align:center;margin:10px 0 0}
+#view-workflow .step{transition:box-shadow .25s ease,border-color .25s ease,transform .25s ease}
+#view-workflow .step--on{box-shadow:0 0 0 2px var(--accent),0 14px 30px -14px rgba(110,168,254,.5);transform:translateY(-1px)}
+#view-workflow .step--on.node--bad, #view-workflow .step--on.card--bad{box-shadow:0 0 0 2px var(--bad),0 14px 30px -14px rgba(248,113,113,.4)}
+#view-workflow .step--on.node--warn, #view-workflow .step--on.card--warn{box-shadow:0 0 0 2px var(--warn),0 14px 30px -14px rgba(251,191,36,.35)}
+#view-workflow [data-tip]{position:relative;cursor:help;border-bottom:1px dotted var(--muted)}
+#view-workflow [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:9px;font-size:11.5px;font-weight:600;white-space:nowrap;z-index:9;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+@media (max-width:760px){#view-workflow .split{grid-template-columns:1fr}
+#view-workflow .between{flex-direction:row}
+#view-workflow .cmp, #view-workflow .fork{grid-template-columns:1fr}
+#view-workflow .row3{grid-template-columns:1fr}
+#view-workflow .hub{flex-direction:column}
+#view-workflow .hub-mid{flex-direction:row;justify-content:center}
+#view-workflow .msg-node{flex-wrap:wrap;border-radius:16px;padding:9px 12px}
+#view-workflow #workflow-content{padding:24px 14px 56px}
+
+}
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>MCP Complete Explanation</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=_fzpnqt39jQ">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Translated from hi by this pipeline.</p>
+</header>
+<h1 id="mcp-complete-explanation">MCP Complete Explanation</h1>
+<p>The Model Context Protocol (MCP) has quietly become the standard way AI connects to everything — your files, your databases, your tools — yet most people who use it every single day still cannot explain what it actually is. This article breaks down exactly that: what MCP is, how it works under the hood, where it sits inside an AI agent, and how it compares to function calling, APIs, and plugins. By the end you will also know where to find MCP servers, how to plug one in safely, and how to build your own — and if you are building anything with AI in 2026, this is baseline knowledge now.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>Why MCP Exists: The Drawer of Chargers Problem</li><li>What MCP Is: The USB-C for AI</li><li>The Three Pieces: Host, Client, and Server</li><li>Where MCP Sits Inside an AI Agent</li><li>MCP vs. Function Calling, APIs, and Plugins</li><li>Finding MCP Servers</li><li>Local and Remote Servers: How You Actually Use One</li><li>The Security Reality No Tutorial Mentions</li><li>Building Your First MCP Server</li></ol>
+<h2 id="1-why-mcp-exists-the-drawer-of-chargers-problem">1. Why MCP Exists: The Drawer of Chargers Problem</h2>
+<p>MCP only makes sense once you feel the pain that it actually solves. Imagine you are building an AI application whose model needs to talk to your database, your CRM, your file system, and maybe even Slack. Every one of those connections is a custom integration: you write it, you test it, you maintain it. Now just scale that up — ten applications and a hundred tools — and you are looking at potentially a thousand different integrations, each one bespoke and brittle.</p>
+<p>This is the drawer of chargers we all had before USB-C: one cable per device, none of them interchangeable. The moment you lived through that drawer, you understood the pattern was broken. The AI ecosystem has hit the same wall — many models, many tools, many data sources, all wired together by hand with point-to-point connectors that only work for the exact pair they were built for. That is the problem MCP exists to solve.</p>
+<h2 id="2-what-mcp-is-the-usb-c-for-ai">2. What MCP Is: The USB-C for AI</h2>
+<p>MCP is the USB-C for AI. It is an open standard, originally released by Anthropic in November 2024, that gives AI models and the tools and data around them one common language for connecting. You build a connector once, and any MCP-compatible AI application can use it — whether it is Claude, ChatGPT, Cursor, or your own custom agent — with no rewrites and no special casing per platform.</p>
+<p>And it is not a one-company thing anymore. In December 2025, Anthropic donated MCP to the Linux Foundation, making it a vendor-neutral, community-governed standard. That is why the download numbers exploded: the industry essentially agreed on the shape of the plug. The protocol went from roughly 100,000 downloads a month to 97 million a month in about eighteen months, and it has become the default way an AI application connects to the outside world. That is the &quot;what&quot; — now for the genuinely interesting part.</p>
+<h2 id="3-the-three-pieces-host-client-and-server">3. The Three Pieces: Host, Client, and Server</h2>
+<p>There are exactly three pieces to how MCP works, and once you hold them in your head, every MCP diagram you have ever squinted at suddenly makes sense: the host, the client, and the server. The USB-C analogy maps onto them almost perfectly.</p>
+<p><strong>The host is the AI application itself</strong> — Claude Desktop, Cursor, VS Code, ChatGPT, and so on. Think of the host as your phone.</p>
+<p><strong>The MCP client lives inside the host.</strong> It is the USB-C port on that phone: it speaks the protocol and manages the connection, and you really never need to see it. From your point of view it is invisible plumbing; from the protocol&#x27;s point of view it is the endpoint doing the talking.</p>
+<p><strong>The MCP server is the accessory you plug in</strong> — a small program that wraps some tools and data sources (your database, your calendar, GitHub, whatever you choose) and exposes them in the standard MCP format. And do not let the word &quot;server&quot; intimidate you. An MCP server can literally be a hundred lines of Python code running on your laptop.</p>
+<p>A server actually gives the model three kinds of things: tools, resources, and prompts. The clearest way to see the difference is to imagine onboarding a new employee:</p>
+<ul><li>You give the new hire software access so they can take actions — that is <strong>tools</strong>.</li><li>You give them the company wiki so they can read what they need — that is <strong>resources</strong>.</li><li>You give them your standard operating procedures for common workflows — those are <strong>prompts</strong>.</li></ul>
+<p>Translated to AI terms: tools are what the model can <em>do</em>, resources are what it can <em>read</em>, and prompts are reusable templates for doing tasks well. A filesystem server, for example, exposes read and write operations as tools and lets the model open files as resources.</p>
+<p>Here is the genuinely elegant part. When a client connects to a server, it just asks, &quot;What do you have?&quot; The server responds by advertising its tools, resources, and prompts, complete with descriptions and typed inputs. Everything is discovered at runtime — nothing is hardcoded into the client or the model. That single discovery step is what makes MCP feel like magic compared with wiring integrations by hand: add a server, and the application instantly knows what the server offers and how to call it.</p>
+<h2 id="4-where-mcp-sits-inside-an-ai-agent">4. Where MCP Sits Inside an AI Agent</h2>
+<p>Knowing the parts, the natural next question is where MCP sits inside an actual AI agent — because MCP alone is not an agent. This is the part most explainers completely skip.</p>
+<p>When people say &quot;AI agent,&quot; what is really running is a harness: a loop around the model. The model does the reasoning; the harness handles everything else. It manages memory, tracks state, decides when to go around the loop again, and — critically — executes actions in the real world.</p>
+<p>Think of the agent as a smart new employee. The model is the brain. The harness is the workstation and the workflow. And MCP is the company badge: the standardized access layer that gets the agent into every system it is allowed to touch, without needing a bespoke key for each door.</p>
+<p>Here is the loop in motion. The model decides it needs something external — say, pulling rows from a database. The harness routes that intent through an MCP client to the right server. The server does the actual work, and the result flows back into the model&#x27;s context so it can keep reasoning. Model decides, harness executes, MCP connects — that is the whole dance.</p>
+<p>This is exactly why MCP took off together with agents. An agent is only as useful as the systems it can touch, and MCP made touching systems standardized instead of bespoke. Before MCP, every tool integration meant teaching the agent a new, one-off interface; with MCP, any agent that speaks the protocol can use any server.</p>
+<h2 id="5-mcp-vs-function-calling-apis-and-plugins">5. MCP vs. Function Calling, APIs, and Plugins</h2>
+<p>The most common confusion around MCP is what it replaces. The answer: nothing you already use — it sits underneath the layers you already have and standardizes the connection between them.</p>
+<p>Function calling is a <em>capability of the model</em>: the model looks at a task, decides a tool is needed, and produces a structured request with the right arguments. MCP is the <em>protocol</em> that carries that request to the tool and brings the result back. They are not competitors; they are complementary layers.</p>
+<p>A framing that makes this stick: function calling answers questions like &quot;should I make a call, and what should I say?&quot; MCP answers &quot;how does that call actually reach the other end?&quot; Function calling is you deciding to call somebody and dialing the number; MCP is the telephone network that lets any phone reach any other phone. You need both. When you build with MCP you are not replacing function calling — you are giving it somewhere standardized to land.</p>
+<p>What about plain APIs? Your APIs don&#x27;t go anywhere. An API is a point-to-point connection to one service; MCP is a standard layer <em>on top of</em> your API that lets an AI model discover and call it in a consistent way. The API still does all the work — MCP just gives every model the same way to find it and talk to it. If someone tells you MCP replaces your APIs, they have completely misunderstood the stack.</p>
+<p>The plugins comparison is best explained with a little history. Back in 2023, ChatGPT plugins were the hot thing — and they had exactly the problem you would expect. A plugin was proprietary: you built it for one platform, and if you wanted the same capability anywhere else, you had to build it again. Plugins were the old proprietary charger: one cable per brand.</p>
+<p>MCP flips that model. Instead of every AI platform running its own plugin store, there is one open protocol, and every platform implements the same port. Build your server once and it works on Claude, on ChatGPT, on Cursor, on VS Code, and on whatever agent framework you are running. That is why the plugin era quietly ended — and why even the platforms that built plugin stores moved to MCP. To be fair, plugins are not all invalid today; some tools still use them. But MCP has become the more standard way of doing it.</p>
+<h2 id="6-finding-mcp-servers">6. Finding MCP Servers</h2>
+<p>Concepts done, comparisons done — now the practical part. There are thousands of MCP servers out there right now, over 10,000 public ones at last count, so discovery is genuinely the easy part. Three places to look:</p>
+<ul><li><strong>The official MCP registry.</strong> This is the canonical directory, where verified publishers increasingly list their servers.</li><li><strong>The Model Context Protocol servers repository on GitHub.</strong> It contains the reference servers — including <code>filesystem</code>, <code>fetch</code>, and <code>memory</code> — and is one of the most-starred repositories in the whole space.</li><li><strong>Community directories like Pulse MCP.</strong> These are great for browsing by category, whether you want a Notion server, a Postgres server, or a GitHub server.</li></ul>
+<p>The rule of thumb: before you ever build your own MCP server, search first. The integration you need probably already exists.</p>
+<h2 id="7-local-and-remote-servers-how-you-actually-use-one">7. Local and Remote Servers: How You Actually Use One</h2>
+<p>Before using a server, you need to understand one fork in the road: MCP servers come in two flavors — local and remote.</p>
+<p>A <strong>local server</strong> runs on your machine and talks to the client over something called stdio — standard input and output between processes. It is what you want for local files and experimentation. A <strong>remote server</strong> is hosted somewhere else; you connect to it over HTTP and typically authenticate with OAuth, the same way you sign in to any app with your Google account. Remote is how most companies expose their products.</p>
+<p>Actually using a server turns out to be anticlimactic. In Claude Desktop, Cursor, or VS Code, all you do is add a small configuration entry: either the command that launches a local server, or the URL of a remote one. Restart the app, and the client handles the handshake and discovers the tools automatically. After that you simply talk to your AI normally, and it uses the tools when it needs them.</p>
+<p>The recommended starting point is to go local with something low-stakes, like a filesystem server, and watch how the model calls its tools — build your intuition there before scaling up to many servers.</p>
+<h2 id="8-the-security-reality-no-tutorial-mentions">8. The Security Reality No Tutorial Mentions</h2>
+<p>Before you go connect twenty servers to everything you own, stop. This is the part almost no MCP tutorial talks about, and it deserves to be taken seriously.</p>
+<p>The uncomfortable truth: an MCP server is code that gets a direct line into your AI&#x27;s context — and often into your real accounts and data. Installing a random MCP server is like plugging a USB stick you found in a parking lot into your laptop. Yes, it can be that scary — and there are numbers to back it up. Independent assessments found that only 13% of publicly available MCP servers meet high trust thresholds for documentation, maintenance, and reliability. And early 2026 produced real incidents, not hypothetical ones: dozens of CVEs; tool-poisoning attacks in which malicious instructions were hidden inside tool descriptions; and a hosted platform with a path-traversal flaw that exposed thousands of applications. This actually happened.</p>
+<ul><li><strong>Prefer official servers from verified publishers — or read the code before you run it.</strong> Server code is usually small enough that you actually can.</li><li><strong>Least privilege, always.</strong> If a server only needs to read data, give it read-only credentials.</li><li><strong>Keep a human in the loop for everything sensitive or irreversible</strong> — things like writes, deletes, or sending messages.</li></ul>
+<p>At team scale the production pattern is simple: put your MCP servers behind a central gateway or an internal registry so you control exactly which servers your agents can reach. Default everything to scoped read-only credentials, and put sensitive operations behind human approval. That setup handles thousands of tool calls a day without ever handing your agent the keys to everything. Security and scale are not opposites — the guardrails are what let you scale.</p>
+<h2 id="9-building-your-first-mcp-server">9. Building Your First MCP Server</h2>
+<p>Once you know what MCP is, how it works, and how to use it safely, it is time for the fun part: building one. Your first working MCP server is genuinely a fifteen-minute project, and Python is the shortest path.</p>
+<p>The official Python SDK includes FastMCP, and the developer experience is beautiful: you write a normal Python function with type hints and a docstring, put a decorator on it, and the SDK turns it into a fully described MCP tool automatically — no protocol plumbing by hand. For TypeScript developers, the official TypeScript SDK is just as solid.</p>
+<p>Then you test with the MCP Inspector, a local web interface where you can trigger your tools manually before any model touches them. Once everything looks good, add the server to your Claude Desktop or Cursor configuration file and watch your AI call your code.</p>
+<p>Here is a concrete project worth building: pick one API or data source you use every day — maybe Notion, a weather API, or a read-only view of your own database — and wrap it in one well-tested tool over stdio. Validate it in the Inspector, connect it to your client, and only graduate it to HTTP with OAuth once more than one person needs it. Most people overbuild their first server; don&#x27;t do that.</p>
+<p>If you walk away from this whole topic remembering one thing, let it be this:</p>
+<blockquote>MCP is not the intelligence part — it is the plumbing part.</blockquote>
+<p>But right now, the teams winning with AI are exactly the ones doing that plumbing: giving their models a standardized way to actually touch real-world data. A full list of the tools, repositories, and resources mentioned in the video (plus a companion guide) is in the video description; and for a deeper, end-to-end path into agentic AI, the creator and her co-founder Arvind run a six-week live certification taught by the two of them, with partner companies including NVIDIA, OpenAI, LangChain, Pinecone, Fireworks AI, and ElevenLabs.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>MCP (Model Context Protocol) is an open standard for connecting AI models to tools and data — the &quot;USB-C for AI&quot; — created by Anthropic (November 2024) and donated to the Linux Foundation in December 2025, making it a vendor-neutral, community-governed standard.</li><li>Adoption exploded from about 100,000 downloads a month to 97 million a month in roughly eighteen months, and MCP has become the standard way AI applications connect to external systems.</li><li>Three pieces make it work: the host (the AI application), the client (the protocol-speaking port inside the host), and the server (the program that wraps tools, resources, and prompts in the standard format). Servers advertise what they offer, and everything is discovered at runtime — nothing is hardcoded.</li><li>MCP alone is not an agent. An agent is a harness loop around a model: the model decides, the harness executes, and MCP connects it to the real world.</li><li>MCP complements rather than replaces function calling (a model capability) and APIs (point-to-point service connections); it won the standard&#x27;s race against proprietary, per-platform plugins.</li><li>Over 10,000 public MCP servers exist; find them via the official MCP registry, the Model Context Protocol servers GitHub repository, and community directories like Pulse MCP. Search before you build.</li><li>Servers come in two flavors: local (over stdio) and remote (over HTTP, typically OAuth). Using one means adding a small config entry and restarting — the client handles handshake and discovery.</li><li>Security is the part most tutorials skip: only about 13% of public servers meet high trust thresholds, and real attacks (tool poisoning, path traversal) have occurred. Prefer verified or code-reviewed servers, use least-privilege credentials, and keep humans in the loop for sensitive actions; at team scale, route servers through a central gateway or internal registry.</li><li>Building a first server is a 15-minute project with FastMCP: a typed, documented Python function plus a decorator becomes a full MCP tool, testable in the MCP Inspector before any model touches it.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=_fzpnqt39jQ">MCP Complete Explanation</a></li><li>Channel: <a href="https://www.youtube.com/@aishwaryasrinivasan">Aishwarya Srinivasan</a></li><li>Fetched: 2026-09-02T12:54:27+00:00</li><li>Note: the video&#x27;s captions are auto-transcribed from audio in Hindi (<code>source_lang: hi</code>); this article was translated from those captions by this pipeline, so minor transcription errors may remain.</li></ul>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart TD
+    subgraph before[&quot;Before MCP - the drawer of chargers&quot;]
+        A1[&quot;App 1&quot;] --&gt; DB1[&quot;Database&quot;]
+        A1 --&gt; CRM1[&quot;CRM&quot;]
+        A2[&quot;App 2&quot;] --&gt; DB1
+        A2 --&gt; SLK1[&quot;Slack&quot;]
+        A3[&quot;App 3&quot;] --&gt; CRM1
+        A3 --&gt; FS1[&quot;Files&quot;]
+    end
+
+    subgraph after[&quot;After MCP - one standard cable&quot;]
+        C1[&quot;Any AI app&quot;] --&gt; M1[&quot;MCP protocol&quot;]
+        M1 --&gt; S1[&quot;Server: database&quot;]
+        M1 --&gt; S2[&quot;Server: CRM&quot;]
+        M1 --&gt; S3[&quot;Server: Slack&quot;]
+        M1 --&gt; S4[&quot;Server: files&quot;]
+    end
+
+    before --&gt;|&quot;a thousand bespoke wires become one plug&quot;| after
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph before[&quot;Before MCP - the drawer of chargers&quot;]
+        A1[&quot;App 1&quot;] --&gt; DB1[&quot;Database&quot;]
+        A1 --&gt; CRM1[&quot;CRM&quot;]
+        A2[&quot;App 2&quot;] --&gt; DB1
+        A2 --&gt; SLK1[&quot;Slack&quot;]
+        A3[&quot;App 3&quot;] --&gt; CRM1
+        A3 --&gt; FS1[&quot;Files&quot;]
+    end
+
+    subgraph after[&quot;After MCP - one standard cable&quot;]
+        C1[&quot;Any AI app&quot;] --&gt; M1[&quot;MCP protocol&quot;]
+        M1 --&gt; S1[&quot;Server: database&quot;]
+        M1 --&gt; S2[&quot;Server: CRM&quot;]
+        M1 --&gt; S3[&quot;Server: Slack&quot;]
+        M1 --&gt; S4[&quot;Server: files&quot;]
+    end
+
+    before --&gt;|&quot;a thousand bespoke wires become one plug&quot;| after
+</code></pre></details>
+<figcaption>1. From Point-to-Point Chaos to One Standard Plug</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph host[&quot;Host - the AI app, like your phone&quot;]
+        APP[&quot;Claude Desktop / Cursor / ChatGPT&quot;] --&gt; PORT[&quot;MCP client - the USB-C port inside the host&quot;]
+    end
+
+    subgraph srv[&quot;MCP server - the accessory you plug in&quot;]
+        TOOLS[&quot;Tools - actions the model can take&quot;]
+        RES[&quot;Resources - data the model can read&quot;]
+        PROMPTS[&quot;Prompts - reusable templates for common tasks&quot;]
+    end
+
+    PORT --&gt;|&quot;speaks MCP over stdio or HTTP&quot;| srv
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph host[&quot;Host - the AI app, like your phone&quot;]
+        APP[&quot;Claude Desktop / Cursor / ChatGPT&quot;] --&gt; PORT[&quot;MCP client - the USB-C port inside the host&quot;]
+    end
+
+    subgraph srv[&quot;MCP server - the accessory you plug in&quot;]
+        TOOLS[&quot;Tools - actions the model can take&quot;]
+        RES[&quot;Resources - data the model can read&quot;]
+        PROMPTS[&quot;Prompts - reusable templates for common tasks&quot;]
+    end
+
+    PORT --&gt;|&quot;speaks MCP over stdio or HTTP&quot;| srv
+</code></pre></details>
+<figcaption>2. Host, Client, Server: The Three Pieces</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">sequenceDiagram
+    participant U as User
+    participant M as Model - the brain
+    participant H as Harness - the workstation
+    participant C as MCP client
+    participant S as MCP server
+
+    Note over M,S: model decides, harness executes, MCP connects
+
+    loop until the task is complete
+        U-&gt;&gt;M: ask a question
+        M-&gt;&gt;H: decide a tool is needed - pull rows from a database
+        H-&gt;&gt;C: route the intent through the client
+        C-&gt;&gt;S: call the database tool
+        S--&gt;&gt;C: return the rows
+        C--&gt;&gt;H: hand the result back
+        H--&gt;&gt;M: append the result to context
+        M-&gt;&gt;M: keep reasoning
+    end
+</pre>
+<details><summary>Source</summary><pre><code>sequenceDiagram
+    participant U as User
+    participant M as Model - the brain
+    participant H as Harness - the workstation
+    participant C as MCP client
+    participant S as MCP server
+
+    Note over M,S: model decides, harness executes, MCP connects
+
+    loop until the task is complete
+        U-&gt;&gt;M: ask a question
+        M-&gt;&gt;H: decide a tool is needed - pull rows from a database
+        H-&gt;&gt;C: route the intent through the client
+        C-&gt;&gt;S: call the database tool
+        S--&gt;&gt;C: return the rows
+        C--&gt;&gt;H: hand the result back
+        H--&gt;&gt;M: append the result to context
+        M-&gt;&gt;M: keep reasoning
+    end
+</code></pre></details>
+<figcaption>3. Where MCP Sits: The Agent Loop</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph stack[&quot;The stack that MCP complements&quot;]
+        FC[&quot;AI model - function calling decides a tool is needed and shapes the request&quot;]
+        TR[&quot;MCP - the protocol that carries the request and brings the result back&quot;]
+        API[&quot;Your API - does the actual work on one service&quot;]
+        FC --&gt; TR --&gt; API
+    end
+
+    subgraph plugins[&quot;Why plugins lost&quot;]
+        P1[&quot;2023: a ChatGPT plugin works on one platform&quot;]
+        P2[&quot;Want it elsewhere? Build it again&quot;]
+        P3[&quot;One MCP server runs on Claude, ChatGPT, Cursor and VS Code&quot;]
+        P1 --&gt; P2
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph stack[&quot;The stack that MCP complements&quot;]
+        FC[&quot;AI model - function calling decides a tool is needed and shapes the request&quot;]
+        TR[&quot;MCP - the protocol that carries the request and brings the result back&quot;]
+        API[&quot;Your API - does the actual work on one service&quot;]
+        FC --&gt; TR --&gt; API
+    end
+
+    subgraph plugins[&quot;Why plugins lost&quot;]
+        P1[&quot;2023: a ChatGPT plugin works on one platform&quot;]
+        P2[&quot;Want it elsewhere? Build it again&quot;]
+        P3[&quot;One MCP server runs on Claude, ChatGPT, Cursor and VS Code&quot;]
+        P1 --&gt; P2
+    end
+</code></pre></details>
+<figcaption>4. MCP Below Function Calling, Above Your APIs</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    start[&quot;Found a server to use&quot;] --&gt; gate{&quot;Verified publisher, or code you have read?&quot;}
+    gate --&gt;|&quot;no&quot;| stop[&quot;Do not run it - the USB stick from a parking lot&quot;]
+    gate --&gt;|&quot;yes&quot;| fork{&quot;Local or remote?&quot;}
+    fork --&gt;|&quot;local&quot;| loc[&quot;On your machine, over stdio&quot;]
+    loc --&gt; cfg1[&quot;Add the launch command to the app config&quot;]
+    fork --&gt;|&quot;remote&quot;| rem[&quot;Hosted elsewhere, over HTTP&quot;]
+    rem --&gt; cfg2[&quot;Add the server URL to the app config&quot;]
+    cfg1 --&gt; restart[&quot;Restart the app&quot;]
+    cfg2 --&gt; restart
+    restart --&gt; disc[&quot;Client handshake; tools are discovered automatically&quot;]
+    disc --&gt; use[&quot;Talk to your AI - it calls the tools when needed&quot;]
+    tip[&quot;Start local and low-stakes, e.g. a filesystem server&quot;] -.-&gt; loc
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    start[&quot;Found a server to use&quot;] --&gt; gate{&quot;Verified publisher, or code you have read?&quot;}
+    gate --&gt;|&quot;no&quot;| stop[&quot;Do not run it - the USB stick from a parking lot&quot;]
+    gate --&gt;|&quot;yes&quot;| fork{&quot;Local or remote?&quot;}
+    fork --&gt;|&quot;local&quot;| loc[&quot;On your machine, over stdio&quot;]
+    loc --&gt; cfg1[&quot;Add the launch command to the app config&quot;]
+    fork --&gt;|&quot;remote&quot;| rem[&quot;Hosted elsewhere, over HTTP&quot;]
+    rem --&gt; cfg2[&quot;Add the server URL to the app config&quot;]
+    cfg1 --&gt; restart[&quot;Restart the app&quot;]
+    cfg2 --&gt; restart
+    restart --&gt; disc[&quot;Client handshake; tools are discovered automatically&quot;]
+    disc --&gt; use[&quot;Talk to your AI - it calls the tools when needed&quot;]
+    tip[&quot;Start local and low-stakes, e.g. a filesystem server&quot;] -.-&gt; loc
+</code></pre></details>
+<figcaption>5. Local vs Remote — and the Gate Before You Plug In</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    pick[&quot;Pick one API or data source you use daily&quot;] --&gt; fn[&quot;Write a typed Python function with a docstring&quot;]
+    fn --&gt; deco[&quot;Add the FastMCP decorator - the SDK generates the tool&quot;]
+    deco --&gt; test[&quot;Trigger it in the MCP Inspector first&quot;]
+    test --&gt; reg[&quot;Register the server in your app config&quot;]
+    reg --&gt; live[&quot;Your AI calls your code over stdio&quot;]
+    live -.-&gt;|&quot;scale later&quot;| grad[&quot;Move to HTTP with OAuth when more than one person needs it&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    pick[&quot;Pick one API or data source you use daily&quot;] --&gt; fn[&quot;Write a typed Python function with a docstring&quot;]
+    fn --&gt; deco[&quot;Add the FastMCP decorator - the SDK generates the tool&quot;]
+    deco --&gt; test[&quot;Trigger it in the MCP Inspector first&quot;]
+    test --&gt; reg[&quot;Register the server in your app config&quot;]
+    reg --&gt; live[&quot;Your AI calls your code over stdio&quot;]
+    live -.-&gt;|&quot;scale later&quot;| grad[&quot;Move to HTTP with OAuth when more than one person needs it&quot;]
+</code></pre></details>
+<figcaption>6. The Fifteen-Minute Server: From Function to Live Tool</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+<style>
+:root{--bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
+#workflow-content{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;max-width:1020px;margin:0 auto;padding:34px 20px 70px;color:var(--text)}
+.deck-kicker{font-size:11px;letter-spacing:.24em;color:var(--accent-2);text-transform:uppercase;font-weight:800}
+#workflow-content h1{font-size:clamp(1.7rem,4vw,2.3rem);line-height:1.16;margin:10px 0 4px;letter-spacing:-.01em;color:var(--text)}
+.deck-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700}
+.chip--accent{border-color:rgba(110,168,254,.55);color:var(--accent)}
+.chip--violet{border-color:rgba(167,139,250,.5);color:var(--accent-2)}
+.chip--good{border-color:rgba(52,211,153,.45);color:var(--good)}
+.chip--warn{border-color:rgba(251,191,36,.5);color:var(--warn)}
+.chip--bad{border-color:rgba(248,113,113,.5);color:var(--bad)}
+.deck-desc{color:var(--muted);max-width:780px;margin:12px 0 0;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
+.tab{border:1px solid var(--border);background:var(--panel-2);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;transition:border-color .15s,color .15s,background .15s}
+.tab:hover{color:var(--text);border-color:var(--accent)}
+.tab.is-active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+.panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px 20px 26px;margin-top:14px}
+.panel.is-active{display:block;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.p-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px dashed var(--border);padding-bottom:14px}
+.p-title{margin:0;font-size:1.16rem;line-height:1.3;letter-spacing:-.01em;color:var(--text)}
+.p-cap{color:var(--muted);font-size:13px;margin:6px 0 0;max-width:740px}
+.p-tag{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);border:1px solid rgba(167,139,250,.4);border-radius:8px;padding:5px 10px;margin-top:2px}
+.flow{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:18px}
+.node{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--border);border-radius:14px;padding:12px 16px;width:min(640px,100%);color:var(--text);font-size:13.5px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.node .k{display:block;font-size:10.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.node--port{border-color:rgba(110,168,254,.55)}
+.node--port .k{color:var(--accent)}
+.node--srv{border-color:rgba(167,139,250,.55)}
+.node--srv .k{color:var(--accent-2)}
+.node--good{border-color:rgba(52,211,153,.5)}
+.node--good .k{color:var(--good)}
+.node--warn{border-color:rgba(251,191,36,.5)}
+.node--warn .k{color:var(--warn)}
+.node--bad{border-color:rgba(248,113,113,.55);background:linear-gradient(180deg,#2b1b24,var(--panel))}
+.node--bad .k{color:var(--bad)}
+.node--gate{border-style:dashed;border-color:rgba(251,191,36,.6)}
+.node--mut .k{color:var(--muted)}
+.ac{color:var(--accent);font-weight:700}
+.vi{color:var(--accent-2);font-weight:700}
+.gd{color:var(--good);font-weight:700}
+.wn{color:var(--warn);font-weight:700}
+.bd{color:var(--bad);font-weight:700}
+.mt{color:var(--muted)}
+.conn{display:flex;flex-direction:column;align-items:center;height:34px}
+.conn .ln{width:2px;background:var(--border);flex:1}
+.conn .lb{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;line-height:1.2;background:var(--panel);padding:0 7px;border-radius:6px;margin:2px 0}
+.conn .ar{font-size:13px;color:var(--muted);line-height:1;padding-bottom:2px}
+.card{padding:15px 16px;border-radius:14px;background:var(--panel);border:1px solid var(--border);min-width:0;font-size:13px}
+.card--warn{border-color:rgba(251,191,36,.4)}
+.card--good{border-color:rgba(52,211,153,.4)}
+.card--bad{border-color:rgba(248,113,113,.45)}
+.card--srv{border-color:rgba(167,139,250,.4)}
+.card-h{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--text);display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.dot--warn{background:var(--warn)}
+.dot--good{background:var(--good)}
+.dot--accent{background:var(--accent)}
+.dot--bad{background:var(--bad)}
+.wires{display:flex;flex-wrap:wrap;gap:6px}
+.wire{font-size:11.5px;color:var(--warn);background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.32);border-radius:999px;padding:3px 10px;font-weight:700}
+.stat{margin-top:12px;font-size:12px;color:var(--warn);border-top:1px dashed rgba(251,191,36,.3);padding-top:10px;font-weight:800}
+.stat--good{color:var(--good);border-top-color:rgba(52,211,153,.3)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:8px;align-items:stretch;width:100%;margin-top:16px}
+.between{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);text-align:center}
+.between .big{font-size:24px;color:var(--accent);line-height:1}
+.between .small{font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800}
+.hub{display:flex;align-items:stretch;gap:8px;margin-top:6px}
+.hub-col{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1;min-width:0}
+.hub-mid{display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;color:var(--accent);font-size:13px;font-weight:700}
+.hub-box{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1.2;min-width:0}
+.applet{font-size:11.5px;border-radius:10px;padding:6px 8px;text-align:center;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);line-height:1.3}
+.applet--main{background:linear-gradient(180deg,rgba(110,168,254,.25),rgba(110,168,254,.06));border-color:rgba(110,168,254,.6);color:var(--accent);font-weight:800}
+.applet--ok{border-color:rgba(52,211,153,.4);color:var(--gd,var(--good))}
+.banner{margin-top:18px;border-radius:12px;padding:12px 14px;font-size:13px;background:rgba(110,168,254,.07);border:1px dashed rgba(110,168,254,.4);color:var(--text)}
+.banner--warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.32);color:var(--warn)}
+.banner--good{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.32);color:var(--good)}
+.fn{margin:16px 0 0;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:12px}
+.fn b{color:var(--text)}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;margin-top:20px}
+.sub{border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--text)}
+.sub .k{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.sub .k.k-ac{color:var(--accent)}
+.sub .k.k-vi{color:var(--accent-2)}
+.sub .k.k-gd{color:var(--good)}
+.sub .k.k-wn{color:var(--warn)}
+.sub .k.k-bd{color:var(--bad)}
+.msg-node{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:999px;padding:7px 18px 7px 7px;width:min(700px,100%);font-size:13px;color:var(--text);text-align:left}
+.num{flex:0 0 auto;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#0b101c;font-weight:900;font-size:12.5px}
+.num--v{background:var(--accent-2)}
+.num--g{background:var(--good)}
+.num--w{background:var(--warn)}
+.actor{flex:0 0 auto;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:1px solid;white-space:nowrap}
+.actor--user{color:var(--accent);border-color:rgba(110,168,254,.55);background:rgba(110,168,254,.09)}
+.actor--model{color:var(--accent-2);border-color:rgba(167,139,250,.55);background:rgba(167,139,250,.09)}
+.actor--harness{color:var(--good);border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.07)}
+.actor--client{color:var(--accent);border-color:rgba(110,168,254,.45);background:rgba(110,168,254,.06)}
+.actor--srv{color:var(--warn);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08)}
+.loop-tag{border:1px dashed rgba(167,139,250,.55);color:var(--accent-2);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:800;letter-spacing:.05em;margin-top:2px;text-align:center;width:min(700px,100%)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 2px}
+.role-note{color:var(--muted);font-size:12.5px;max-width:720px;margin:14px auto 0;text-align:center}
+.cmp{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;width:100%;margin-top:18px}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(720px,100%);margin:0 auto}
+.fork .sub{padding:13px 15px}
+.gate-note{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.deck-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.navbtn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;transition:border-color .15s}
+.navbtn:hover{border-color:var(--accent)}
+.navbtn--play{background:var(--accent);border-color:var(--accent);color:#0b101c}
+.navbtn--play:hover{border-color:var(--accent)}
+#pos{color:var(--muted);font-size:12.5px;font-weight:800;letter-spacing:.1em;min-width:52px;text-align:center}
+.hint{color:var(--muted);font-size:12px;text-align:center;margin:10px 0 0}
+.step{transition:box-shadow .25s ease,border-color .25s ease,transform .25s ease}
+.step--on{box-shadow:0 0 0 2px var(--accent),0 14px 30px -14px rgba(110,168,254,.5);transform:translateY(-1px)}
+.step--on.node--bad,.step--on.card--bad{box-shadow:0 0 0 2px var(--bad),0 14px 30px -14px rgba(248,113,113,.4)}
+.step--on.node--warn,.step--on.card--warn{box-shadow:0 0 0 2px var(--warn),0 14px 30px -14px rgba(251,191,36,.35)}
+[data-tip]{position:relative;cursor:help;border-bottom:1px dotted var(--muted)}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:9px;font-size:11.5px;font-weight:600;white-space:nowrap;z-index:9;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+@media (max-width:760px){
+  .split{grid-template-columns:1fr}
+  .between{flex-direction:row}
+  .cmp,.fork{grid-template-columns:1fr}
+  .row3{grid-template-columns:1fr}
+  .hub{flex-direction:column}
+  .hub-mid{flex-direction:row;justify-content:center}
+  .msg-node{flex-wrap:wrap;border-radius:16px;padding:9px 12px}
+  #workflow-content{padding:24px 14px 56px}
+}
+</style>
+
+<header class="deck-head">
+  <div class="deck-kicker">Diagram deck</div>
+  <h1>MCP Complete Explanation</h1>
+  <div class="deck-meta">
+    <span class="chip chip--violet">Aishwarya Srinivasan</span>
+    <span class="chip">Six diagrams, in article order</span>
+  </div>
+  <p class="deck-desc">How the Model Context Protocol connects AI to tools and data: the problem it solves, the three pieces, the agent loop, the stack it complements, the safe way to use a server, and how to build your first one.</p>
+</header>
+
+<nav class="tabs" aria-label="Diagram tabs">
+  <button class="tab is-active" data-i="0" type="button">1 · Problem</button>
+  <button class="tab" data-i="1" type="button">2 · Pieces</button>
+  <button class="tab" data-i="2" type="button">3 · Agent loop</button>
+  <button class="tab" data-i="3" type="button">4 · Stack</button>
+  <button class="tab" data-i="4" type="button">5 · Use + gate</button>
+  <button class="tab" data-i="5" type="button">6 · Build</button>
+</nav>
+
+<section class="panel is-active" id="d1">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">1 · From point-to-point chaos to one standard plug</h2>
+      <p class="p-cap">Illustrates Sections 1–2 — why MCP exists (the drawer of chargers problem) and the USB-C fix it introduces.</p>
+    </div>
+    <span class="p-tag">Sections 1–2</span>
+  </div>
+
+  <div class="split">
+    <div class="card card--warn step">
+      <h3 class="card-h"><span class="dot dot--warn"></span>Before MCP — the drawer of chargers</h3>
+      <div class="wires">
+        <span class="wire">App 1 → Database</span><span class="wire">App 1 → CRM</span>
+        <span class="wire">App 2 → Database</span><span class="wire">App 2 → Slack</span>
+        <span class="wire">App 3 → CRM</span><span class="wire">App 3 → Files</span>
+      </div>
+      <div class="stat">10 apps × 100 tools ≈ 1,000 bespoke, brittle point-to-point integrations</div>
+    </div>
+    <div class="between">
+      <span class="big">→</span>
+      <span class="small">becomes</span>
+    </div>
+    <div class="card card--good step">
+      <h3 class="card-h"><span class="dot dot--good"></span>After MCP — one standard cable</h3>
+      <div class="hub">
+        <div class="hub-col">
+          <span class="applet">Any AI app</span>
+          <span class="applet">Claude</span>
+          <span class="applet">ChatGPT</span>
+          <span class="applet">Cursor</span>
+        </div>
+        <div class="hub-mid"><span>→</span><span>→</span><span>→</span><span>→</span></div>
+        <div class="hub-box">
+          <span class="applet applet--main" data-tip="One common language for connecting — the open MCP standard">MCP protocol<br/>one common language</span>
+        </div>
+        <div class="hub-mid"><span>→</span><span>→</span><span>→</span><span>→</span></div>
+        <div class="hub-col">
+          <span class="applet applet--ok">Server: database</span>
+          <span class="applet applet--ok">Server: CRM</span>
+          <span class="applet applet--ok">Server: Slack</span>
+          <span class="applet applet--ok">Server: files</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner step">Write the connector once — any MCP-compatible app (Claude, ChatGPT, Cursor, or your own agent) can use it: no rewrites, no special casing per platform.</div>
+  <p class="fn">Timeline: Anthropic released MCP in <b>November 2024</b> and donated it to the Linux Foundation in <b>December 2025</b>. Downloads went from roughly 100,000 a month to 97 million a month in about eighteen months.</p>
+</section>
+
+<section class="panel" id="d2">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">2 · Host, client, server — the three pieces</h2>
+      <p class="p-cap">Illustrates Section 3 — how the three pieces map onto the phone, its USB-C port, and the accessory, plus the three things a server exposes.</p>
+    </div>
+    <span class="p-tag">Section 3</span>
+  </div>
+
+  <div class="flow">
+    <div class="node step">
+      <span class="k">Host — the AI app · like your phone</span>
+      Claude Desktop, Cursor, VS Code, ChatGPT — the application you actually talk to.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--port step">
+      <span class="k">MCP client — the USB-C port inside the host</span>
+      Speaks the protocol and manages each connection. Invisible plumbing to you; the endpoint doing the talking to the protocol.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">stdio or HTTP</span><span class="ar">↓</span></div>
+    <div class="node node--srv step">
+      <span class="k">MCP server — the accessory you plug in</span>
+      A small program that wraps tools and data sources and exposes them in the standard MCP format. It can literally be about a hundred lines of Python on your laptop.
+    </div>
+  </div>
+
+  <div class="row3">
+    <div class="sub step" data-tip="New-employee analogy: you give the hire software access so they can take actions.">
+      <span class="k k-ac">Tools</span>
+      What the model can <span class="ac">do</span> — like giving a new hire software access so they can take actions.
+    </div>
+    <div class="sub step" data-tip="New-employee analogy: you hand the hire the company wiki so they can read what they need.">
+      <span class="k k-vi">Resources</span>
+      What the model can <span class="vi">read</span> — like the company wiki for a new hire.
+    </div>
+    <div class="sub step" data-tip="New-employee analogy: the standard operating procedures for common workflows.">
+      <span class="k k-gd">Prompts</span>
+      Reusable <span class="gd">templates</span> for doing common tasks well — like your standard operating procedures.
+    </div>
+  </div>
+
+  <div class="banner step">When a client connects, it simply asks “What do you have?” and the server advertises its tools, resources, and prompts with descriptions and typed inputs — everything is discovered at runtime, nothing is hardcoded.</div>
+  <p class="fn">Example from the article: a filesystem server exposes read and write operations as <b>tools</b> and lets the model open files as <b>resources</b>.</p>
+</section>
+
+<section class="panel" id="d3">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">3 · Where MCP sits: the agent loop</h2>
+      <p class="p-cap">Illustrates Section 4 — an agent is a harness loop around the model; MCP is the company badge that gets the agent into every system it is allowed to touch.</p>
+    </div>
+    <span class="p-tag">Section 4</span>
+  </div>
+
+  <div class="legend">
+    <span class="chip chip--violet">Model — the brain</span>
+    <span class="chip chip--good">Harness — the workstation + workflow</span>
+    <span class="chip chip--accent">MCP — the company badge</span>
+  </div>
+
+  <div class="flow" style="margin-top:14px">
+    <div class="msg-node step"><span class="num">1</span><span class="actor actor--user">User</span><span class="msg">asks a question in plain language</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">2</span><span class="actor actor--model">Model · the brain</span><span class="msg">decides it needs something external — pull rows from a database</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">3</span><span class="actor actor--harness">Harness · the workstation</span><span class="msg">routes the intent through the MCP client to the right server</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">4</span><span class="actor actor--client">MCP client</span><span class="msg">calls the matching tool on the server</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--w">5</span><span class="actor actor--srv">MCP server</span><span class="msg">does the actual work and returns the rows</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">6</span><span class="actor actor--harness">Harness</span><span class="msg">the result flows back into the model’s context</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">7</span><span class="actor actor--model">Model · the brain</span><span class="msg">keeps reasoning with the new information</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="loop-tag step">↺ repeat until the task is complete — model decides, harness executes, MCP connects</div>
+  </div>
+
+  <p class="role-note">This is why MCP took off together with agents: before MCP every tool meant teaching the agent a one-off interface; with MCP, any agent that speaks the protocol can use any server.</p>
+</section>
+
+<section class="panel" id="d4">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">4 · MCP below function calling, above your APIs</h2>
+      <p class="p-cap">Illustrates Section 5 — MCP replaces nothing you already use; it sits underneath the layers you have and standardizes the connection, which is why the plugin era ended.</p>
+    </div>
+    <span class="p-tag">Section 5</span>
+  </div>
+
+  <div class="cmp">
+    <div class="card step">
+      <h3 class="card-h"><span class="dot dot--accent"></span>The stack MCP complements — nothing gets replaced</h3>
+      <div class="flow" style="margin-top:8px">
+        <div class="sub step" style="width:100%">
+          <span class="k k-ac">Function calling — a capability of the model</span>
+          The model looks at the task, decides a tool is needed, and produces a structured request with the right arguments. “Should I call, and what should I say?”
+        </div>
+        <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+        <div class="sub step" style="width:100%;border-color:rgba(110,168,254,.5)">
+          <span class="k k-ac">MCP — the protocol and transport</span>
+          Carries that request to the tool and brings the result back. “How does the call actually reach the other end?” Function calling is dialing; MCP is the telephone network.
+        </div>
+        <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+        <div class="sub step" style="width:100%">
+          <span class="k">Your API — does the actual work</span>
+          A point-to-point connection to one service. Your APIs do not go anywhere on their own — MCP sits <span class="ac">on top of</span> them so every model can discover and call them the same way.
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card card--bad step">
+        <h3 class="card-h"><span class="dot dot--bad"></span>Why plugins lost (2023)</h3>
+        A plugin was proprietary: built for one platform, and getting the same capability anywhere else meant building it again. The old proprietary charger — one cable per brand.
+      </div>
+      <div class="card card--good step">
+        <h3 class="card-h"><span class="dot dot--good"></span>How MCP flips it</h3>
+        One open protocol, and every platform implements the same port. Build the server once — it runs on Claude, ChatGPT, Cursor, VS Code, and whatever agent framework you use.
+      </div>
+    </div>
+  </div>
+
+  <div class="banner step">If someone tells you MCP replaces your APIs, they have misunderstood the stack: function calling is a model capability, MCP is the transport, and the API still does all the work.</div>
+</section>
+
+<section class="panel" id="d5">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">5 · Local vs remote — and the gate before you plug in</h2>
+      <p class="p-cap">Illustrates Sections 7–8 — the two flavors of server, the security gate most tutorials skip, and how a server actually gets used.</p>
+    </div>
+    <span class="p-tag">Sections 7–8</span>
+  </div>
+
+  <div class="flow">
+    <div class="node step">
+      <span class="k">Start</span>
+      You found a server to use — search first, because 10,000+ public servers exist and the integration you need probably already does.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--gate step">
+      <span class="k">Security gate</span>
+      Is it a verified publisher — or have you read the code yourself? Server code is usually small enough that you actually can.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">no</span><span class="ar">↓</span></div>
+    <div class="node node--bad step">
+      <span class="k">Stop — do not run it</span>
+      An MCP server is code with a direct line into your AI’s context and often your real accounts. Like plugging a USB stick found in a parking lot into your laptop.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">yes</span><span class="ar">↓</span></div>
+    <div class="fork step" style="width:100%">
+      <div class="sub step">
+        <span class="k k-ac">Local server — stdio</span>
+        Runs on your machine and talks to the client over <span class="ac">stdio</span> (standard input/output between processes). Best for local files and experimentation.
+        <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Config: add the launch command that starts the server.</div>
+      </div>
+      <div class="sub step">
+        <span class="k k-vi">Remote server — HTTP</span>
+        Hosted elsewhere; you connect over <span class="vi">HTTP</span> and typically authenticate with OAuth — the same way you sign in to any app with your Google account.
+        <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Config: add the server URL.</div>
+      </div>
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">either path</span><span class="ar">↓</span></div>
+    <div class="node step">
+      <span class="k">Restart the app</span>
+      Claude Desktop, Cursor, or VS Code picks up the new configuration entry.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--port step">
+      <span class="k">Handshake + discovery</span>
+      The client handles the handshake and discovers the server’s tools automatically — no hardcoding.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--good step">
+      <span class="k">Use it</span>
+      Talk to your AI normally — it calls the tools whenever it needs them.
+    </div>
+  </div>
+
+  <div class="banner banner--warn step" data-tip="Only 13% of public MCP servers meet high trust thresholds; real tool-poisoning and path-traversal incidents happened in early 2026.">Practitioner’s checklist — least privilege always (read-only credentials if it only reads), keep a human in the loop for writes, deletes, and messages; at team scale route servers through a central gateway or internal registry.</div>
+  <p class="fn">Recommended starting point: go <b>local</b> with something low-stakes like a filesystem server, watch how the model calls its tools, and build intuition there before scaling up.</p>
+</section>
+
+<section class="panel" id="d6">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">6 · The fifteen-minute server: from function to live tool</h2>
+      <p class="p-cap">Illustrates Section 9 — FastMCP turns a typed, documented function into a tool, the MCP Inspector validates it, and your client starts calling your code.</p>
+    </div>
+    <span class="p-tag">Section 9</span>
+  </div>
+
+  <div class="flow">
+    <div class="msg-node step"><span class="num">1</span><span class="actor actor--user">Pick</span><span class="msg">one API or data source you use daily — Notion, a weather API, a read-only view of your own database</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">2</span><span class="actor actor--harness">Write</span><span class="msg">a normal Python function with type hints and a docstring</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">3</span><span class="actor actor--model">Decorate</span><span class="msg">add the <span class="vi">FastMCP</span> decorator — the SDK generates a fully described MCP tool, no protocol plumbing by hand</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--w">4</span><span class="actor actor--srv">Verify</span><span class="msg">trigger the tool manually in the <span class="wn">MCP Inspector</span> before any model touches it</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num">5</span><span class="actor actor--client">Register</span><span class="msg">add the server to your Claude Desktop or Cursor configuration file</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">6</span><span class="actor actor--harness">Live</span><span class="msg">your AI calls your code over <span class="gd">stdio</span> — a real first server in about 15 minutes</span></div>
+    <div class="conn"><span class="ln"></span><span class="lb">scale later</span><span class="ar">↓</span></div>
+    <div class="node node--mut step">
+      <span class="k">Graduate only when needed</span>
+      Move to HTTP with OAuth once more than one person needs the server. Most people overbuild their first server — don’t.
+    </div>
+  </div>
+
+  <div class="banner banner--good step">TypeScript developers: the official TypeScript SDK is just as solid as the Python one. Either way, you are giving function calling a standardized place to land.</div>
+  <p class="fn">Remember the one-liner from the article: <b>MCP is not the intelligence part — it is the plumbing part.</b> The teams winning with AI are the ones doing that plumbing well.</p>
+</section>
+
+<div class="deck-nav">
+  <button class="navbtn" id="prevBtn" type="button">← Previous</button>
+  <span id="pos">1 / 6</span>
+  <button class="navbtn" id="nextBtn" type="button">Next →</button>
+  <button class="navbtn navbtn--play" id="playBtn" type="button">Play walkthrough</button>
+</div>
+<p class="hint">Use the tabs or Previous / Next to flip between diagrams; Play walkthrough highlights each stage in order.</p>
+
+<script>
+(function () {
+  "use strict";
+  var panels = ["d1", "d2", "d3", "d4", "d5", "d6"];
+  var idx = 0;
+  var timer = null;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  var playBtn = document.getElementById("playBtn");
+  var posEl = document.getElementById("pos");
+
+  function clearSteps(panel) {
+    var on = panel.querySelectorAll(".step--on");
+    for (var j = 0; j < on.length; j++) on[j].classList.remove("step--on");
+  }
+  function stopWalk() {
+    if (timer) { clearInterval(timer); timer = null; }
+    playBtn.textContent = "Play walkthrough";
+  }
+  function show(i) {
+    stopWalk();
+    idx = (i + panels.length) % panels.length;
+    for (var k = 0; k < panels.length; k++) {
+      var p = document.getElementById(panels[k]);
+      var act = k === idx;
+      p.classList.toggle("is-active", act);
+      tabs[k].classList.toggle("is-active", act);
+      if (!act) clearSteps(p);
+    }
+    posEl.textContent = (idx + 1) + " / " + panels.length;
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () { show(parseInt(t.getAttribute("data-i"), 10)); });
+  });
+  document.getElementById("prevBtn").addEventListener("click", function () { show(idx - 1); });
+  document.getElementById("nextBtn").addEventListener("click", function () { show(idx + 1); });
+  playBtn.addEventListener("click", function () {
+    var panel = document.getElementById(panels[idx]);
+    if (timer) { stopWalk(); clearSteps(panel); return; }
+    var steps = panel.querySelectorAll(".step");
+    if (!steps.length) return;
+    clearSteps(panel);
+    var i = 0;
+    playBtn.textContent = "Stop walkthrough";
+    timer = setInterval(function () {
+      if (i >= steps.length) { stopWalk(); return; }
+      clearSteps(panel);
+      steps[i].classList.add("step--on");
+      try { steps[i].scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+      i += 1;
+    }, 850);
+  });
+})();
+</script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>

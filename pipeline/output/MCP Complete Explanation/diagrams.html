@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>MCP Complete Explanation — Diagrams</title>
+</head>
+<body>
+<main id="workflow-content">
+<style>
+:root{--bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
+#workflow-content{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;max-width:1020px;margin:0 auto;padding:34px 20px 70px;color:var(--text)}
+.deck-kicker{font-size:11px;letter-spacing:.24em;color:var(--accent-2);text-transform:uppercase;font-weight:800}
+#workflow-content h1{font-size:clamp(1.7rem,4vw,2.3rem);line-height:1.16;margin:10px 0 4px;letter-spacing:-.01em;color:var(--text)}
+.deck-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700}
+.chip--accent{border-color:rgba(110,168,254,.55);color:var(--accent)}
+.chip--violet{border-color:rgba(167,139,250,.5);color:var(--accent-2)}
+.chip--good{border-color:rgba(52,211,153,.45);color:var(--good)}
+.chip--warn{border-color:rgba(251,191,36,.5);color:var(--warn)}
+.chip--bad{border-color:rgba(248,113,113,.5);color:var(--bad)}
+.deck-desc{color:var(--muted);max-width:780px;margin:12px 0 0;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
+.tab{border:1px solid var(--border);background:var(--panel-2);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;transition:border-color .15s,color .15s,background .15s}
+.tab:hover{color:var(--text);border-color:var(--accent)}
+.tab.is-active{background:var(--accent);border-color:var(--accent);color:#0b101c}
+.panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px 20px 26px;margin-top:14px}
+.panel.is-active{display:block;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.p-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px dashed var(--border);padding-bottom:14px}
+.p-title{margin:0;font-size:1.16rem;line-height:1.3;letter-spacing:-.01em;color:var(--text)}
+.p-cap{color:var(--muted);font-size:13px;margin:6px 0 0;max-width:740px}
+.p-tag{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);border:1px solid rgba(167,139,250,.4);border-radius:8px;padding:5px 10px;margin-top:2px}
+.flow{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:18px}
+.node{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--border);border-radius:14px;padding:12px 16px;width:min(640px,100%);color:var(--text);font-size:13.5px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.node .k{display:block;font-size:10.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.node--port{border-color:rgba(110,168,254,.55)}
+.node--port .k{color:var(--accent)}
+.node--srv{border-color:rgba(167,139,250,.55)}
+.node--srv .k{color:var(--accent-2)}
+.node--good{border-color:rgba(52,211,153,.5)}
+.node--good .k{color:var(--good)}
+.node--warn{border-color:rgba(251,191,36,.5)}
+.node--warn .k{color:var(--warn)}
+.node--bad{border-color:rgba(248,113,113,.55);background:linear-gradient(180deg,#2b1b24,var(--panel))}
+.node--bad .k{color:var(--bad)}
+.node--gate{border-style:dashed;border-color:rgba(251,191,36,.6)}
+.node--mut .k{color:var(--muted)}
+.ac{color:var(--accent);font-weight:700}
+.vi{color:var(--accent-2);font-weight:700}
+.gd{color:var(--good);font-weight:700}
+.wn{color:var(--warn);font-weight:700}
+.bd{color:var(--bad);font-weight:700}
+.mt{color:var(--muted)}
+.conn{display:flex;flex-direction:column;align-items:center;height:34px}
+.conn .ln{width:2px;background:var(--border);flex:1}
+.conn .lb{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;line-height:1.2;background:var(--panel);padding:0 7px;border-radius:6px;margin:2px 0}
+.conn .ar{font-size:13px;color:var(--muted);line-height:1;padding-bottom:2px}
+.card{padding:15px 16px;border-radius:14px;background:var(--panel);border:1px solid var(--border);min-width:0;font-size:13px}
+.card--warn{border-color:rgba(251,191,36,.4)}
+.card--good{border-color:rgba(52,211,153,.4)}
+.card--bad{border-color:rgba(248,113,113,.45)}
+.card--srv{border-color:rgba(167,139,250,.4)}
+.card-h{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--text);display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.dot--warn{background:var(--warn)}
+.dot--good{background:var(--good)}
+.dot--accent{background:var(--accent)}
+.dot--bad{background:var(--bad)}
+.wires{display:flex;flex-wrap:wrap;gap:6px}
+.wire{font-size:11.5px;color:var(--warn);background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.32);border-radius:999px;padding:3px 10px;font-weight:700}
+.stat{margin-top:12px;font-size:12px;color:var(--warn);border-top:1px dashed rgba(251,191,36,.3);padding-top:10px;font-weight:800}
+.stat--good{color:var(--good);border-top-color:rgba(52,211,153,.3)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:8px;align-items:stretch;width:100%;margin-top:16px}
+.between{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);text-align:center}
+.between .big{font-size:24px;color:var(--accent);line-height:1}
+.between .small{font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800}
+.hub{display:flex;align-items:stretch;gap:8px;margin-top:6px}
+.hub-col{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1;min-width:0}
+.hub-mid{display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;color:var(--accent);font-size:13px;font-weight:700}
+.hub-box{display:flex;flex-direction:column;gap:6px;justify-content:center;flex:1.2;min-width:0}
+.applet{font-size:11.5px;border-radius:10px;padding:6px 8px;text-align:center;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);line-height:1.3}
+.applet--main{background:linear-gradient(180deg,rgba(110,168,254,.25),rgba(110,168,254,.06));border-color:rgba(110,168,254,.6);color:var(--accent);font-weight:800}
+.applet--ok{border-color:rgba(52,211,153,.4);color:var(--gd,var(--good))}
+.banner{margin-top:18px;border-radius:12px;padding:12px 14px;font-size:13px;background:rgba(110,168,254,.07);border:1px dashed rgba(110,168,254,.4);color:var(--text)}
+.banner--warn{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.32);color:var(--warn)}
+.banner--good{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.32);color:var(--good)}
+.fn{margin:16px 0 0;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:12px}
+.fn b{color:var(--text)}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;margin-top:20px}
+.sub{border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--text)}
+.sub .k{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.sub .k.k-ac{color:var(--accent)}
+.sub .k.k-vi{color:var(--accent-2)}
+.sub .k.k-gd{color:var(--good)}
+.sub .k.k-wn{color:var(--warn)}
+.sub .k.k-bd{color:var(--bad)}
+.msg-node{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:999px;padding:7px 18px 7px 7px;width:min(700px,100%);font-size:13px;color:var(--text);text-align:left}
+.num{flex:0 0 auto;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#0b101c;font-weight:900;font-size:12.5px}
+.num--v{background:var(--accent-2)}
+.num--g{background:var(--good)}
+.num--w{background:var(--warn)}
+.actor{flex:0 0 auto;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:1px solid;white-space:nowrap}
+.actor--user{color:var(--accent);border-color:rgba(110,168,254,.55);background:rgba(110,168,254,.09)}
+.actor--model{color:var(--accent-2);border-color:rgba(167,139,250,.55);background:rgba(167,139,250,.09)}
+.actor--harness{color:var(--good);border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.07)}
+.actor--client{color:var(--accent);border-color:rgba(110,168,254,.45);background:rgba(110,168,254,.06)}
+.actor--srv{color:var(--warn);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08)}
+.loop-tag{border:1px dashed rgba(167,139,250,.55);color:var(--accent-2);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:800;letter-spacing:.05em;margin-top:2px;text-align:center;width:min(700px,100%)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 2px}
+.role-note{color:var(--muted);font-size:12.5px;max-width:720px;margin:14px auto 0;text-align:center}
+.cmp{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;width:100%;margin-top:18px}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(720px,100%);margin:0 auto}
+.fork .sub{padding:13px 15px}
+.gate-note{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.deck-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.navbtn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;transition:border-color .15s}
+.navbtn:hover{border-color:var(--accent)}
+.navbtn--play{background:var(--accent);border-color:var(--accent);color:#0b101c}
+.navbtn--play:hover{border-color:var(--accent)}
+#pos{color:var(--muted);font-size:12.5px;font-weight:800;letter-spacing:.1em;min-width:52px;text-align:center}
+.hint{color:var(--muted);font-size:12px;text-align:center;margin:10px 0 0}
+.step{transition:box-shadow .25s ease,border-color .25s ease,transform .25s ease}
+.step--on{box-shadow:0 0 0 2px var(--accent),0 14px 30px -14px rgba(110,168,254,.5);transform:translateY(-1px)}
+.step--on.node--bad,.step--on.card--bad{box-shadow:0 0 0 2px var(--bad),0 14px 30px -14px rgba(248,113,113,.4)}
+.step--on.node--warn,.step--on.card--warn{box-shadow:0 0 0 2px var(--warn),0 14px 30px -14px rgba(251,191,36,.35)}
+[data-tip]{position:relative;cursor:help;border-bottom:1px dotted var(--muted)}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:9px;font-size:11.5px;font-weight:600;white-space:nowrap;z-index:9;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+@media (max-width:760px){
+  .split{grid-template-columns:1fr}
+  .between{flex-direction:row}
+  .cmp,.fork{grid-template-columns:1fr}
+  .row3{grid-template-columns:1fr}
+  .hub{flex-direction:column}
+  .hub-mid{flex-direction:row;justify-content:center}
+  .msg-node{flex-wrap:wrap;border-radius:16px;padding:9px 12px}
+  #workflow-content{padding:24px 14px 56px}
+}
+</style>
+
+<header class="deck-head">
+  <div class="deck-kicker">Diagram deck</div>
+  <h1>MCP Complete Explanation</h1>
+  <div class="deck-meta">
+    <span class="chip chip--violet">Aishwarya Srinivasan</span>
+    <span class="chip">Six diagrams, in article order</span>
+  </div>
+  <p class="deck-desc">How the Model Context Protocol connects AI to tools and data: the problem it solves, the three pieces, the agent loop, the stack it complements, the safe way to use a server, and how to build your first one.</p>
+</header>
+
+<nav class="tabs" aria-label="Diagram tabs">
+  <button class="tab is-active" data-i="0" type="button">1 · Problem</button>
+  <button class="tab" data-i="1" type="button">2 · Pieces</button>
+  <button class="tab" data-i="2" type="button">3 · Agent loop</button>
+  <button class="tab" data-i="3" type="button">4 · Stack</button>
+  <button class="tab" data-i="4" type="button">5 · Use + gate</button>
+  <button class="tab" data-i="5" type="button">6 · Build</button>
+</nav>
+
+<section class="panel is-active" id="d1">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">1 · From point-to-point chaos to one standard plug</h2>
+      <p class="p-cap">Illustrates Sections 1–2 — why MCP exists (the drawer of chargers problem) and the USB-C fix it introduces.</p>
+    </div>
+    <span class="p-tag">Sections 1–2</span>
+  </div>
+
+  <div class="split">
+    <div class="card card--warn step">
+      <h3 class="card-h"><span class="dot dot--warn"></span>Before MCP — the drawer of chargers</h3>
+      <div class="wires">
+        <span class="wire">App 1 → Database</span><span class="wire">App 1 → CRM</span>
+        <span class="wire">App 2 → Database</span><span class="wire">App 2 → Slack</span>
+        <span class="wire">App 3 → CRM</span><span class="wire">App 3 → Files</span>
+      </div>
+      <div class="stat">10 apps × 100 tools ≈ 1,000 bespoke, brittle point-to-point integrations</div>
+    </div>
+    <div class="between">
+      <span class="big">→</span>
+      <span class="small">becomes</span>
+    </div>
+    <div class="card card--good step">
+      <h3 class="card-h"><span class="dot dot--good"></span>After MCP — one standard cable</h3>
+      <div class="hub">
+        <div class="hub-col">
+          <span class="applet">Any AI app</span>
+          <span class="applet">Claude</span>
+          <span class="applet">ChatGPT</span>
+          <span class="applet">Cursor</span>
+        </div>
+        <div class="hub-mid"><span>→</span><span>→</span><span>→</span><span>→</span></div>
+        <div class="hub-box">
+          <span class="applet applet--main" data-tip="One common language for connecting — the open MCP standard">MCP protocol<br/>one common language</span>
+        </div>
+        <div class="hub-mid"><span>→</span><span>→</span><span>→</span><span>→</span></div>
+        <div class="hub-col">
+          <span class="applet applet--ok">Server: database</span>
+          <span class="applet applet--ok">Server: CRM</span>
+          <span class="applet applet--ok">Server: Slack</span>
+          <span class="applet applet--ok">Server: files</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner step">Write the connector once — any MCP-compatible app (Claude, ChatGPT, Cursor, or your own agent) can use it: no rewrites, no special casing per platform.</div>
+  <p class="fn">Timeline: Anthropic released MCP in <b>November 2024</b> and donated it to the Linux Foundation in <b>December 2025</b>. Downloads went from roughly 100,000 a month to 97 million a month in about eighteen months.</p>
+</section>
+
+<section class="panel" id="d2">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">2 · Host, client, server — the three pieces</h2>
+      <p class="p-cap">Illustrates Section 3 — how the three pieces map onto the phone, its USB-C port, and the accessory, plus the three things a server exposes.</p>
+    </div>
+    <span class="p-tag">Section 3</span>
+  </div>
+
+  <div class="flow">
+    <div class="node step">
+      <span class="k">Host — the AI app · like your phone</span>
+      Claude Desktop, Cursor, VS Code, ChatGPT — the application you actually talk to.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--port step">
+      <span class="k">MCP client — the USB-C port inside the host</span>
+      Speaks the protocol and manages each connection. Invisible plumbing to you; the endpoint doing the talking to the protocol.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">stdio or HTTP</span><span class="ar">↓</span></div>
+    <div class="node node--srv step">
+      <span class="k">MCP server — the accessory you plug in</span>
+      A small program that wraps tools and data sources and exposes them in the standard MCP format. It can literally be about a hundred lines of Python on your laptop.
+    </div>
+  </div>
+
+  <div class="row3">
+    <div class="sub step" data-tip="New-employee analogy: you give the hire software access so they can take actions.">
+      <span class="k k-ac">Tools</span>
+      What the model can <span class="ac">do</span> — like giving a new hire software access so they can take actions.
+    </div>
+    <div class="sub step" data-tip="New-employee analogy: you hand the hire the company wiki so they can read what they need.">
+      <span class="k k-vi">Resources</span>
+      What the model can <span class="vi">read</span> — like the company wiki for a new hire.
+    </div>
+    <div class="sub step" data-tip="New-employee analogy: the standard operating procedures for common workflows.">
+      <span class="k k-gd">Prompts</span>
+      Reusable <span class="gd">templates</span> for doing common tasks well — like your standard operating procedures.
+    </div>
+  </div>
+
+  <div class="banner step">When a client connects, it simply asks “What do you have?” and the server advertises its tools, resources, and prompts with descriptions and typed inputs — everything is discovered at runtime, nothing is hardcoded.</div>
+  <p class="fn">Example from the article: a filesystem server exposes read and write operations as <b>tools</b> and lets the model open files as <b>resources</b>.</p>
+</section>
+
+<section class="panel" id="d3">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">3 · Where MCP sits: the agent loop</h2>
+      <p class="p-cap">Illustrates Section 4 — an agent is a harness loop around the model; MCP is the company badge that gets the agent into every system it is allowed to touch.</p>
+    </div>
+    <span class="p-tag">Section 4</span>
+  </div>
+
+  <div class="legend">
+    <span class="chip chip--violet">Model — the brain</span>
+    <span class="chip chip--good">Harness — the workstation + workflow</span>
+    <span class="chip chip--accent">MCP — the company badge</span>
+  </div>
+
+  <div class="flow" style="margin-top:14px">
+    <div class="msg-node step"><span class="num">1</span><span class="actor actor--user">User</span><span class="msg">asks a question in plain language</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">2</span><span class="actor actor--model">Model · the brain</span><span class="msg">decides it needs something external — pull rows from a database</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">3</span><span class="actor actor--harness">Harness · the workstation</span><span class="msg">routes the intent through the MCP client to the right server</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">4</span><span class="actor actor--client">MCP client</span><span class="msg">calls the matching tool on the server</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--w">5</span><span class="actor actor--srv">MCP server</span><span class="msg">does the actual work and returns the rows</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">6</span><span class="actor actor--harness">Harness</span><span class="msg">the result flows back into the model’s context</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">7</span><span class="actor actor--model">Model · the brain</span><span class="msg">keeps reasoning with the new information</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="loop-tag step">↺ repeat until the task is complete — model decides, harness executes, MCP connects</div>
+  </div>
+
+  <p class="role-note">This is why MCP took off together with agents: before MCP every tool meant teaching the agent a one-off interface; with MCP, any agent that speaks the protocol can use any server.</p>
+</section>
+
+<section class="panel" id="d4">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">4 · MCP below function calling, above your APIs</h2>
+      <p class="p-cap">Illustrates Section 5 — MCP replaces nothing you already use; it sits underneath the layers you have and standardizes the connection, which is why the plugin era ended.</p>
+    </div>
+    <span class="p-tag">Section 5</span>
+  </div>
+
+  <div class="cmp">
+    <div class="card step">
+      <h3 class="card-h"><span class="dot dot--accent"></span>The stack MCP complements — nothing gets replaced</h3>
+      <div class="flow" style="margin-top:8px">
+        <div class="sub step" style="width:100%">
+          <span class="k k-ac">Function calling — a capability of the model</span>
+          The model looks at the task, decides a tool is needed, and produces a structured request with the right arguments. “Should I call, and what should I say?”
+        </div>
+        <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+        <div class="sub step" style="width:100%;border-color:rgba(110,168,254,.5)">
+          <span class="k k-ac">MCP — the protocol and transport</span>
+          Carries that request to the tool and brings the result back. “How does the call actually reach the other end?” Function calling is dialing; MCP is the telephone network.
+        </div>
+        <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+        <div class="sub step" style="width:100%">
+          <span class="k">Your API — does the actual work</span>
+          A point-to-point connection to one service. Your APIs do not go anywhere on their own — MCP sits <span class="ac">on top of</span> them so every model can discover and call them the same way.
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card card--bad step">
+        <h3 class="card-h"><span class="dot dot--bad"></span>Why plugins lost (2023)</h3>
+        A plugin was proprietary: built for one platform, and getting the same capability anywhere else meant building it again. The old proprietary charger — one cable per brand.
+      </div>
+      <div class="card card--good step">
+        <h3 class="card-h"><span class="dot dot--good"></span>How MCP flips it</h3>
+        One open protocol, and every platform implements the same port. Build the server once — it runs on Claude, ChatGPT, Cursor, VS Code, and whatever agent framework you use.
+      </div>
+    </div>
+  </div>
+
+  <div class="banner step">If someone tells you MCP replaces your APIs, they have misunderstood the stack: function calling is a model capability, MCP is the transport, and the API still does all the work.</div>
+</section>
+
+<section class="panel" id="d5">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">5 · Local vs remote — and the gate before you plug in</h2>
+      <p class="p-cap">Illustrates Sections 7–8 — the two flavors of server, the security gate most tutorials skip, and how a server actually gets used.</p>
+    </div>
+    <span class="p-tag">Sections 7–8</span>
+  </div>
+
+  <div class="flow">
+    <div class="node step">
+      <span class="k">Start</span>
+      You found a server to use — search first, because 10,000+ public servers exist and the integration you need probably already does.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--gate step">
+      <span class="k">Security gate</span>
+      Is it a verified publisher — or have you read the code yourself? Server code is usually small enough that you actually can.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">no</span><span class="ar">↓</span></div>
+    <div class="node node--bad step">
+      <span class="k">Stop — do not run it</span>
+      An MCP server is code with a direct line into your AI’s context and often your real accounts. Like plugging a USB stick found in a parking lot into your laptop.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">yes</span><span class="ar">↓</span></div>
+    <div class="fork step" style="width:100%">
+      <div class="sub step">
+        <span class="k k-ac">Local server — stdio</span>
+        Runs on your machine and talks to the client over <span class="ac">stdio</span> (standard input/output between processes). Best for local files and experimentation.
+        <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Config: add the launch command that starts the server.</div>
+      </div>
+      <div class="sub step">
+        <span class="k k-vi">Remote server — HTTP</span>
+        Hosted elsewhere; you connect over <span class="vi">HTTP</span> and typically authenticate with OAuth — the same way you sign in to any app with your Google account.
+        <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Config: add the server URL.</div>
+      </div>
+    </div>
+    <div class="conn"><span class="ln"></span><span class="lb">either path</span><span class="ar">↓</span></div>
+    <div class="node step">
+      <span class="k">Restart the app</span>
+      Claude Desktop, Cursor, or VS Code picks up the new configuration entry.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--port step">
+      <span class="k">Handshake + discovery</span>
+      The client handles the handshake and discovers the server’s tools automatically — no hardcoding.
+    </div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="node node--good step">
+      <span class="k">Use it</span>
+      Talk to your AI normally — it calls the tools whenever it needs them.
+    </div>
+  </div>
+
+  <div class="banner banner--warn step" data-tip="Only 13% of public MCP servers meet high trust thresholds; real tool-poisoning and path-traversal incidents happened in early 2026.">Practitioner’s checklist — least privilege always (read-only credentials if it only reads), keep a human in the loop for writes, deletes, and messages; at team scale route servers through a central gateway or internal registry.</div>
+  <p class="fn">Recommended starting point: go <b>local</b> with something low-stakes like a filesystem server, watch how the model calls its tools, and build intuition there before scaling up.</p>
+</section>
+
+<section class="panel" id="d6">
+  <div class="p-head">
+    <div>
+      <h2 class="p-title">6 · The fifteen-minute server: from function to live tool</h2>
+      <p class="p-cap">Illustrates Section 9 — FastMCP turns a typed, documented function into a tool, the MCP Inspector validates it, and your client starts calling your code.</p>
+    </div>
+    <span class="p-tag">Section 9</span>
+  </div>
+
+  <div class="flow">
+    <div class="msg-node step"><span class="num">1</span><span class="actor actor--user">Pick</span><span class="msg">one API or data source you use daily — Notion, a weather API, a read-only view of your own database</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">2</span><span class="actor actor--harness">Write</span><span class="msg">a normal Python function with type hints and a docstring</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--v">3</span><span class="actor actor--model">Decorate</span><span class="msg">add the <span class="vi">FastMCP</span> decorator — the SDK generates a fully described MCP tool, no protocol plumbing by hand</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--w">4</span><span class="actor actor--srv">Verify</span><span class="msg">trigger the tool manually in the <span class="wn">MCP Inspector</span> before any model touches it</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num">5</span><span class="actor actor--client">Register</span><span class="msg">add the server to your Claude Desktop or Cursor configuration file</span></div>
+    <div class="conn"><span class="ln"></span><span class="ar">↓</span></div>
+    <div class="msg-node step"><span class="num num--g">6</span><span class="actor actor--harness">Live</span><span class="msg">your AI calls your code over <span class="gd">stdio</span> — a real first server in about 15 minutes</span></div>
+    <div class="conn"><span class="ln"></span><span class="lb">scale later</span><span class="ar">↓</span></div>
+    <div class="node node--mut step">
+      <span class="k">Graduate only when needed</span>
+      Move to HTTP with OAuth once more than one person needs the server. Most people overbuild their first server — don’t.
+    </div>
+  </div>
+
+  <div class="banner banner--good step">TypeScript developers: the official TypeScript SDK is just as solid as the Python one. Either way, you are giving function calling a standardized place to land.</div>
+  <p class="fn">Remember the one-liner from the article: <b>MCP is not the intelligence part — it is the plumbing part.</b> The teams winning with AI are the ones doing that plumbing well.</p>
+</section>
+
+<div class="deck-nav">
+  <button class="navbtn" id="prevBtn" type="button">← Previous</button>
+  <span id="pos">1 / 6</span>
+  <button class="navbtn" id="nextBtn" type="button">Next →</button>
+  <button class="navbtn navbtn--play" id="playBtn" type="button">Play walkthrough</button>
+</div>
+<p class="hint">Use the tabs or Previous / Next to flip between diagrams; Play walkthrough highlights each stage in order.</p>
+
+<script>
+(function () {
+  "use strict";
+  var panels = ["d1", "d2", "d3", "d4", "d5", "d6"];
+  var idx = 0;
+  var timer = null;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  var playBtn = document.getElementById("playBtn");
+  var posEl = document.getElementById("pos");
+
+  function clearSteps(panel) {
+    var on = panel.querySelectorAll(".step--on");
+    for (var j = 0; j < on.length; j++) on[j].classList.remove("step--on");
+  }
+  function stopWalk() {
+    if (timer) { clearInterval(timer); timer = null; }
+    playBtn.textContent = "Play walkthrough";
+  }
+  function show(i) {
+    stopWalk();
+    idx = (i + panels.length) % panels.length;
+    for (var k = 0; k < panels.length; k++) {
+      var p = document.getElementById(panels[k]);
+      var act = k === idx;
+      p.classList.toggle("is-active", act);
+      tabs[k].classList.toggle("is-active", act);
+      if (!act) clearSteps(p);
+    }
+    posEl.textContent = (idx + 1) + " / " + panels.length;
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () { show(parseInt(t.getAttribute("data-i"), 10)); });
+  });
+  document.getElementById("prevBtn").addEventListener("click", function () { show(idx - 1); });
+  document.getElementById("nextBtn").addEventListener("click", function () { show(idx + 1); });
+  playBtn.addEventListener("click", function () {
+    var panel = document.getElementById(panels[idx]);
+    if (timer) { stopWalk(); clearSteps(panel); return; }
+    var steps = panel.querySelectorAll(".step");
+    if (!steps.length) return;
+    clearSteps(panel);
+    var i = 0;
+    playBtn.textContent = "Stop walkthrough";
+    timer = setInterval(function () {
+      if (i >= steps.length) { stopWalk(); return; }
+      clearSteps(panel);
+      steps[i].classList.add("step--on");
+      try { steps[i].scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+      i += 1;
+    }, 850);
+  });
+})();
+</script>
+</main>
+</body>
+</html>
