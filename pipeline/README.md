@@ -4,6 +4,9 @@ Give the pipeline a list of YouTube URLs and, for each video, it produces a
 cleaned transcript, a polished article, diagrams (mermaid + interactive HTML
 with an in-article toggle), and an HTML slide deck.
 
+**Using the pipeline? Start with [USER_GUIDE.md](USER_GUIDE.md)** — this file
+is the operator reference.
+
 ## Prerequisites
 
 - Claude Code (the pipeline is orchestrated by the `/pipeline` slash command)
