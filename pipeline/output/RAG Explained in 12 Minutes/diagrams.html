@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RAG Explained in 12 Minutes — Diagrams</title>
+</head>
+<body>
+<main id="workflow-content">
+<style>
+:root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+}
+html,body{margin:0;background:var(--bg)}
+#workflow-content *{box-sizing:border-box}
+#workflow-content{max-width:1000px;margin:0 auto;padding:30px 22px 70px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;font-size:15px}
+.doc-head{border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:6px}
+.kicker{margin:0 0 4px;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.doc-head h1{margin:0 0 6px;font-size:30px;letter-spacing:-.01em;line-height:1.2}
+.doc-sub{margin:0;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:12.5px;padding:5px 12px;border-radius:999px}
+.chip b{color:var(--text);font-weight:600}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px}
+.tab{border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:10px;padding:8px 13px;font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s,background .15s}
+.tab:hover{color:var(--text);border-color:var(--accent)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c;font-weight:700}
+.panel{display:none}
+.panel.active{display:block;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.panel-head h2{margin:0 0 2px;font-size:21px}
+.lede{margin:0 0 18px;color:var(--muted);font-size:13.5px;border-left:3px solid var(--border);padding-left:10px}
+.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.node{flex:1 1 180px;min-width:170px;max-width:260px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 15px;text-align:center}
+.node.key{border-color:var(--accent)}
+.node.alt{border-color:var(--accent-2)}
+.node.good{border-color:var(--good)}
+.node.warn{border-color:var(--warn)}
+.node.bad{border-color:var(--bad)}
+.nt{display:block;font-weight:600;font-size:14px;color:var(--text)}
+.ns{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.dn{color:var(--muted);text-align:center;font-size:15px;padding:1px 0;line-height:1}
+.tagwrap{text-align:center}
+.tag{display:inline-block;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 11px;border-radius:999px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+.lane{border:1px solid var(--border);border-radius:14px;background:var(--panel-2);padding:14px 14px 16px}
+.lane h5{margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.lane.lose h5{color:var(--bad)}
+.lane.win h5{color:var(--good)}
+.vstep{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-top:8px}
+.vstep .vnum{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0b101c;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.vstep.good{border-color:var(--good)}
+.vstep.bad{border-color:var(--bad)}
+.vstep.alt{border-color:var(--accent-2)}
+.verdict{margin-top:18px;border:1px dashed var(--good);background:var(--panel);border-radius:12px;padding:10px 15px;font-size:13.5px;text-align:center}
+.verdict.darkv{border-color:var(--bad);color:var(--muted)}
+.col{max-width:660px;margin:0 auto}
+.flowwrap{display:flex;flex-direction:column;gap:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.half{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.half.alt{border-color:var(--accent-2)}
+.half small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.era{border:1px solid var(--border);border-left:3px solid var(--accent-2);border-radius:13px;background:var(--panel);padding:12px 14px;margin-top:10px}
+.era h4{margin:0 0 10px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.chipgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pchip{position:relative;display:flex;gap:10px;align-items:flex-start;background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px 13px;cursor:default}
+.pchip .pnum{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0b101c;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.pchip strong{display:block;font-size:13.5px;color:var(--text)}
+.pchip small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.pchip:hover{border-color:var(--accent)}
+.pchip[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--accent);color:var(--text);padding:6px 11px;border-radius:8px;font-size:12px;white-space:nowrap;max-width:280px;z-index:5;pointer-events:none}
+.loopbox{border:1.5px dashed var(--accent-2);border-radius:14px;padding:13px 14px;margin:4px 0}
+.msgrow{display:flex;align-items:center;gap:10px;padding:7px 11px;border:1px solid transparent;border-radius:10px;margin:4px 0;font-size:13.5px}
+.actor{flex:none;min-width:128px;font-size:12px;font-weight:700;letter-spacing:.02em}
+.a-u{color:var(--text)}
+.a-o{color:var(--accent-2)}
+.a-r{color:var(--good)}
+.a-t{color:var(--warn)}
+.arrow{flex:none;color:var(--muted)}
+.arrow.back{transform:scaleX(-1)}
+.mtxt{color:var(--text)}
+.reply .mtxt{color:var(--muted)}
+.selfnote{text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--border);border-radius:10px;padding:6px 10px;margin:5px 0}
+.optrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 2px}
+.opt{font-size:12px;color:var(--muted);border:1px solid var(--border);background:var(--panel);border-radius:999px;padding:4px 11px}
+.stepwrap{text-align:center;margin-top:18px}
+.btn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .15s}
+.btn:hover{border-color:var(--accent)}
+.lit{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);transition:box-shadow .15s,border-color .15s}
+.docfoot{margin-top:34px;color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);padding-top:14px}
+@media (max-width:720px){
+  .duo{grid-template-columns:1fr}
+  .pair{grid-template-columns:1fr}
+  .chipgrid{grid-template-columns:1fr}
+  .msgrow{flex-wrap:wrap}
+  .actor{min-width:0}
+}
+</style>
+
+<header class="doc-head">
+  <p class="kicker">Companion diagrams for the article</p>
+  <h1>RAG Explained in 12 Minutes</h1>
+  <p class="doc-sub">Retrieval-Augmented Generation: what it is, how the architecture works, and ten patterns shaping 2026.</p>
+  <div class="chips">
+    <span class="chip"><b>Channel:</b> Aishwarya Srinivasan</span>
+    <span class="chip"><b>Diagrams:</b> 6</span>
+    <span class="chip"><b>Article sections:</b> 1 through 5</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Diagram selector">
+  <button class="tab active" data-panel="dg1" role="tab">1. RAG at a Glance</button>
+  <button class="tab" data-panel="dg2" role="tab">2. Context vs. RAG</button>
+  <button class="tab" data-panel="dg3" role="tab">3. Indexing Pipeline</button>
+  <button class="tab" data-panel="dg4" role="tab">4. Query Time</button>
+  <button class="tab" data-panel="dg5" role="tab">5. Ten Patterns</button>
+  <button class="tab" data-panel="dg6" role="tab">6. Agentic RAG</button>
+</nav>
+
+<section class="panel active" id="dg1">
+  <div class="panel-head">
+    <h2>1. RAG at a Glance: Closed Book vs. Open Book</h2>
+  </div>
+  <p class="lede">Illustrates Section 1, "What Is RAG?": the LLM alone is a closed-book student, while RAG adds a retrieval system so generation is grounded in your sources.</p>
+  <div class="duo">
+    <div class="lane lose">
+      <h5>LLM alone — closed-book exam</h5>
+      <div class="vstep step"><span class="vnum">1</span><div><span class="nt">User question</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep step"><span class="vnum">2</span><div><span class="nt">Model answers from memory</span><span class="ns">Only what was memorized during training</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep bad step"><span class="vnum">3</span><div><span class="nt">Gaps and risks</span><span class="ns">Knowledge cutoff, no access to your data, hallucination risk</span></div></div>
+    </div>
+    <div class="lane win">
+      <h5>RAG — open-book exam</h5>
+      <div class="vstep step"><span class="vnum">1</span><div><span class="nt">User question</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep step"><span class="vnum">2</span><div><span class="nt">Retrieval system</span><span class="ns">Looks up documents, databases, and the knowledge base</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep step"><span class="vnum">3</span><div><span class="nt">Prompt with relevant chunks</span><span class="ns">The found material is added to the question</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep good step"><span class="vnum">4</span><div><span class="nt">Grounded answer</span><span class="ns">Generation system (the LLM) answers from the retrieved context</span></div></div>
+    </div>
+  </div>
+  <div class="verdict">RAG is a partnership: a retrieval system that finds the right information and a generation system that uses it — the foundation of enterprise AI.</div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg1">Step through diagram</button></div>
+</section>
+
+<section class="panel" id="dg2">
+  <div class="panel-head">
+    <h2>2. Context Stuffing vs. Retrieved Context: Cost, Latency, Accuracy</h2>
+  </div>
+  <p class="lede">Maps the second misconception from Section 2, "Two Misconceptions That Persist": huge context windows do not remove the need for RAG.</p>
+  <div class="row" style="margin-bottom:4px">
+    <div class="node key" style="flex:0 1 240px"><span class="nt">User query</span><span class="ns">One question, two paths</span></div>
+  </div>
+  <div class="duo">
+    <div class="lane lose">
+      <h5>Option A — context stuffing</h5>
+      <div class="vstep bad step"><span class="vnum">1</span><div><span class="nt">Million-token prompt</span><span class="ns">The whole corpus rides along on every query</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep step"><span class="vnum">2</span><div><span class="nt">Cost</span><span class="ns">Astronomically expensive at scale</span></div></div>
+      <div class="vstep step"><span class="vnum">3</span><div><span class="nt">Latency</span><span class="ns">Slow calls</span></div></div>
+      <div class="vstep step"><span class="vnum">4</span><div><span class="nt">Performance</span><span class="ns">Accuracy drops — signal buried in noise</span></div></div>
+    </div>
+    <div class="lane win">
+      <h5>Option B — RAG retrieval</h5>
+      <div class="vstep good step"><span class="vnum">1</span><div><span class="nt">Right information only</span><span class="ns">RAG surfaces precisely the relevant chunks</span></div></div>
+      <div class="dn">&#8595;</div>
+      <div class="vstep step"><span class="vnum">2</span><div><span class="nt">Cost</span><span class="ns">Only relevant tokens are processed</span></div></div>
+      <div class="vstep step"><span class="vnum">3</span><div><span class="nt">Latency</span><span class="ns">Fast</span></div></div>
+      <div class="vstep step"><span class="vnum">4</span><div><span class="nt">Performance</span><span class="ns">Higher accuracy — less noise for the model</span></div></div>
+    </div>
+  </div>
+  <div class="verdict">Well-built RAG consistently beats brute-force context stuffing on accuracy, cost, and speed.</div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg2">Step through diagram</button></div>
+</section>
+
+<section class="panel" id="dg3">
+  <div class="panel-head">
+    <h2>3. The Indexing Pipeline: Chunking, Embedding, Storing</h2>
+  </div>
+  <p class="lede">Follows the offline half of Section 3, "Inside the Architecture: How RAG Works" — the chunking strategies, embedding models, and vector database of Sections 3.1 through 3.3.</p>
+  <div class="flowwrap">
+    <div class="row">
+      <div class="node key step"><span class="nt">Source documents</span><span class="ns">PDFs, Markdown, code, internal databases</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="tagwrap"><span class="tag">Chunking strategy — how the document is broken up</span></div>
+    <div class="row">
+      <div class="node step"><span class="nt">Fixed-size</span><span class="ns">Uniform 500-token cuts — sentences break at boundaries</span></div>
+      <div class="node step"><span class="nt">Semantic</span><span class="ns">Split where the topic shifts; embedding model detects boundaries</span></div>
+      <div class="node step"><span class="nt">Document-aware</span><span class="ns">Respect sections and headers of PDFs and Markdown</span></div>
+      <div class="node step"><span class="nt">Hierarchical</span><span class="ns">Small precise chunk plus larger parent — small-to-big retrieval</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node step"><span class="nt">Embedding model</span><span class="ns">Each chunk becomes a numerical vector of meaning</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node alt step"><span class="nt">Vector database</span><span class="ns">Pinecone, Weaviate, Qdrant, Milvus, Chroma DB — embeddings live here</span></div>
+    </div>
+  </div>
+  <div class="verdict">Semantic and document-aware chunking beat fixed-size cuts; hierarchical chunking is one of the best production techniques.</div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg3">Step through diagram</button></div>
+</section>
+
+<section class="panel" id="dg4">
+  <div class="panel-head">
+    <h2>4. Query Time: Hybrid Retrieval and Grounded Generation</h2>
+  </div>
+  <p class="lede">Traces the online path through Sections 3.2 and 3.4 of "Inside the Architecture": embedding the query, hybrid search, and prompt assembly before the LLM writes.</p>
+  <div class="col flowwrap">
+    <div class="row">
+      <div class="node key step"><span class="nt">User question</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node step"><span class="nt">Query embedding</span><span class="ns">The question is embedded with the same model used for chunks</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="tagwrap"><span class="tag">Hybrid search — both lanes run, results merge</span></div>
+    <div class="pair">
+      <div class="half alt"><span class="nt">Vector search</span><span class="ns">Nearest neighbors by meaning — semantic similarity</span><small>Lane fed from the vector database; metadata filters (date, source, category) apply before the search</small></div>
+      <div class="half"><span class="nt">Keyword search</span><span class="ns">Exact-term matching — catches names and code the vectors miss</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node step"><span class="nt">Top-K chunks</span><span class="ns">The best matches are merged and ranked</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node step"><span class="nt">Prompt assembly</span><span class="ns">Question plus retrieved chunks, no noise</span></div>
+    </div>
+    <div class="dn">&#8595;</div>
+    <div class="row">
+      <div class="node good step"><span class="nt">Grounded answer</span><span class="ns">The LLM generates from the retrieved context</span></div>
+    </div>
+  </div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg4">Step through diagram</button></div>
+</section>
+
+<section class="panel" id="dg5">
+  <div class="panel-head">
+    <h2>5. Ten RAG Patterns: The Evolution of an Architecture</h2>
+  </div>
+  <p class="lede">Compresses all of Section 4, "Ten RAG Patterns to Know in 2026", into one progression — also the rebuttal to the "RAG is dead" myth from Section 2.1.</p>
+  <div class="era">
+    <h4>Foundations — patterns 1 and 2</h4>
+    <div class="chipgrid">
+      <div class="pchip step" data-tip="Best for prototyping and learning the pipeline"><span class="pnum">1</span><div><strong>Simple RAG</strong><small>Retrieve relevant chunks, stuff them into the prompt, generate</small></div></div>
+      <div class="pchip step" data-tip="Underlies chat-style assistants that still need retrieval"><span class="pnum">2</span><div><strong>RAG with Memory</strong><small>Carries earlier questions, answers, and retrievals between turns</small></div></div>
+    </div>
+  </div>
+  <div class="dn">&#8595;</div>
+  <div class="era">
+    <h4>Smarter retrieval — patterns 3 through 5</h4>
+    <div class="chipgrid">
+      <div class="pchip step" data-tip="Solves questions that span several topics"><span class="pnum">3</span><div><strong>Branch RAG</strong><small>LLM decomposes the question; parallel retrieval per sub-question; synthesis</small></div></div>
+      <div class="pchip step" data-tip="Fixes the mismatch between question-shaped and document-shaped embeddings"><span class="pnum">4</span><div><strong>HyDE</strong><small>Hypothetical document embeddings — embed a draft answer, not the query</small></div></div>
+      <div class="pchip step" data-tip="Skips retrieval when it does not earn its keep"><span class="pnum">5</span><div><strong>Adaptive RAG</strong><small>Routing layer decides: answer directly, simple retrieval, or multi-step</small></div></div>
+    </div>
+  </div>
+  <div class="dn">&#8595;</div>
+  <div class="era">
+    <h4>Quality gates — patterns 6 and 7</h4>
+    <div class="chipgrid">
+      <div class="pchip step" data-tip="A quality gate that catches bad retrievals before they poison the answer"><span class="pnum">6</span><div><strong>Corrective RAG</strong><small>Evaluation step after retrieval; reformulate, retry, or fall back to web search</small></div></div>
+      <div class="pchip step" data-tip="For high-stakes answers that must be grounded and transparent"><span class="pnum">7</span><div><strong>Self-RAG</strong><small>Reflection tokens while writing: is retrieval needed? Is this relevant? Supported?</small></div></div>
+    </div>
+  </div>
+  <div class="dn">&#8595;</div>
+  <div class="era">
+    <h4>The frontier — patterns 8 through 10</h4>
+    <div class="chipgrid">
+      <div class="pchip step" data-tip="The direction the whole field is moving"><span class="pnum">8</span><div><strong>Agentic RAG</strong><small>LLM orchestrator loops over searches, APIs, and code until the answer is good enough</small></div></div>
+      <div class="pchip step" data-tip="Essential as enterprise data gets richer and more visual"><span class="pnum">9</span><div><strong>Multimodal RAG</strong><small>Vision models describe images and tables; embeddings cover non-text content</small></div></div>
+      <div class="pchip step" data-tip="Wins when an answer must connect multiple pieces of information"><span class="pnum">10</span><div><strong>Graph RAG</strong><small>Knowledge graph maps entities and relationships, not just similarity</small></div></div>
+    </div>
+  </div>
+  <div class="verdict">The pattern list is evidence: RAG is not dying, it is maturing.</div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg5">Step through patterns</button></div>
+</section>
+
+<section class="panel" id="dg6">
+  <div class="panel-head">
+    <h2>6. Agentic RAG: The Orchestrator Loop</h2>
+  </div>
+  <p class="lede">Zooms into the pattern from Section 4.8: the LLM orchestrates retrieval, APIs, and code in a loop until it has enough context to answer.</p>
+  <div class="col">
+    <div class="msgrow step"><span class="actor a-u">User</span><span class="arrow">&#8594;</span><span class="mtxt">Complex multi-step question</span></div>
+    <div class="loopbox">
+      <div class="tagwrap"><span class="tag">Agent loop — decide, act, observe, until the context is enough</span></div>
+      <div class="selfnote step">LLM orchestrator decides what to do next</div>
+      <div class="optrow">
+        <span class="opt">More information &#8594; search</span>
+        <span class="opt">Tool needed &#8594; API or code</span>
+        <span class="opt">Enough context &#8594; answer</span>
+      </div>
+      <div class="msgrow step"><span class="actor a-o">Orchestrator</span><span class="arrow">&#8594;</span><span class="mtxt">Retrieve from another source</span></div>
+      <div class="msgrow reply step"><span class="actor a-r">Retriever</span><span class="arrow back">&#8594;</span><span class="mtxt">Relevant chunks</span></div>
+      <div class="msgrow step"><span class="actor a-o">Orchestrator</span><span class="arrow">&#8594;</span><span class="mtxt">Run code or call an API</span></div>
+      <div class="msgrow reply step"><span class="actor a-t">Tools</span><span class="arrow back">&#8594;</span><span class="mtxt">Tool result</span></div>
+      <div class="msgrow step"><span class="actor a-o">Orchestrator</span><span class="arrow">&#8594;</span><span class="mtxt">Re-evaluate: is the answer good enough now?</span></div>
+      <div class="selfnote warn step">Enough context — exit the loop</div>
+    </div>
+    <div class="msgrow step"><span class="actor a-o">Orchestrator</span><span class="arrow">&#8594;</span><span class="mtxt">Final grounded answer</span></div>
+    <div class="verdict">Frameworks like LangChain and LlamaIndex workflows are built for exactly this pattern.</div>
+  </div>
+  <div class="stepwrap"><button class="btn stepbtn" data-panel="dg6">Step through loop</button></div>
+</section>
+
+<footer class="docfoot">Figures 1 through 6 mirror the mermaid diagram blocks spliced into the article; use the tabs to switch and the buttons to walk each flow.</footer>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.tab');
+  var panels=document.querySelectorAll('.panel');
+  function stopAll(){
+    panels.forEach(function(p){
+      if(p._timer){clearInterval(p._timer);p._timer=null}
+      p.querySelectorAll('.lit').forEach(function(s){s.classList.remove('lit')});
+    });
+    document.querySelectorAll('.stepbtn').forEach(function(b){b.textContent=b.dataset.label||'Step through diagram'});
+  }
+  function activate(id){
+    stopAll();
+    panels.forEach(function(p){p.classList.toggle('active',p.id===id)});
+    tabs.forEach(function(t){t.classList.toggle('active',t.dataset.panel===id)});
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click',function(){activate(t.dataset.panel)});
+  });
+  document.querySelectorAll('.stepbtn').forEach(function(btn){
+    var panel=document.getElementById(btn.dataset.panel);
+    btn.dataset.label=btn.textContent;
+    btn.addEventListener('click',function(){
+      stopAll();
+      var steps=panel.querySelectorAll('.step');
+      var i=0;
+      btn.textContent='Playing sequence';
+      steps[0].classList.add('lit');
+      i=1;
+      panel._timer=setInterval(function(){
+        if(i>=steps.length){clearInterval(panel._timer);panel._timer=null;btn.textContent=btn.dataset.label;return}
+        steps[i].classList.add('lit');
+        i++;
+      },600);
+    });
+  });
+})();
+</script>
+</main>
+</body>
+</html>
