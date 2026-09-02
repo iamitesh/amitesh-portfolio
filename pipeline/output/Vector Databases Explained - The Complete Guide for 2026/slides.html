@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vector Databases Explained — The Complete Guide for 2026</title>
+<style>
+  :root {
+    --bg: #0b101c;
+    --panel: #141b2d;
+    --panel-2: #1a2338;
+    --text: #e9edf6;
+    --muted: #94a0b8;
+    --accent: #6ea8fe;
+    --accent-2: #a78bfa;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --border: #273349;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* progress bar */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    z-index: 30; transition: width .25s ease;
+  }
+
+  /* deck */
+  #deck { height: 100%; width: 100%; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 7vh 9vw;
+    opacity: 0; transform: translateX(40px);
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease;
+    max-height: 100vh; overflow: auto;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  .kicker {
+    font-size: .8rem; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 1.1rem;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 3.4vw, 2.7rem);
+    line-height: 1.15; font-weight: 800;
+    margin-bottom: 1.4rem; letter-spacing: -.02em;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p, li { color: var(--text); }
+  .lead { font-size: clamp(1rem, 1.6vw, 1.25rem); color: var(--muted); line-height: 1.6; max-width: 60ch; }
+  .sub { color: var(--muted); font-size: .95rem; margin-top: .8rem; }
+
+  /* layout helpers */
+  .grid { display: grid; gap: 1.1rem; }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 820px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .slide { padding: 6vh 6vw; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.4rem;
+  }
+  .card h3 { font-size: 1.02rem; margin-bottom: .6rem; color: var(--accent); letter-spacing: -.01em; }
+  .card p, .card li { font-size: .92rem; color: var(--muted); line-height: 1.55; }
+  .card li { margin: .35rem 0 .35rem 1.1rem; }
+  .card .big { font-size: 1.05rem; color: var(--text); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: .45rem .95rem;
+    font-size: .88rem; color: var(--text);
+  }
+  .chip.accent { border-color: var(--accent); color: var(--accent); }
+  .chip.bad { border-color: var(--bad); color: var(--bad); }
+  .chip.good { border-color: var(--good); color: var(--good); }
+  .chip.warn { border-color: var(--warn); color: var(--warn); }
+
+  table {
+    width: 100%; border-collapse: collapse; font-size: .92rem;
+    background: var(--panel); border-radius: 12px; overflow: hidden;
+  }
+  th, td {
+    text-align: left; padding: .72rem .95rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--panel-2); color: var(--accent);
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .1em;
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 600; }
+  td { color: var(--muted); line-height: 1.5; }
+
+  .steps { display: flex; flex-wrap: wrap; gap: .6rem; counter-reset: step; }
+  .step {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; color: var(--text);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b101c; font-weight: 800; font-size: .72rem;
+    border-radius: 6px; padding: .25rem .45rem;
+  }
+
+  .quote {
+    border-left: 3px solid var(--accent-2);
+    padding: .9rem 1.2rem; margin-top: 1.2rem;
+    background: var(--panel); border-radius: 0 12px 12px 0;
+    font-size: 1.02rem; color: var(--text); font-style: italic; line-height: 1.55;
+  }
+
+  .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  @media (max-width: 820px) { .checklist { grid-template-columns: 1fr; } }
+  .check {
+    display: flex; align-items: center; gap: .7rem;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: .75rem 1rem; font-size: .95rem;
+  }
+  .check::before {
+    content: "✓"; color: var(--good); font-weight: 800;
+    background: rgba(52,211,153,.12); border-radius: 6px; padding: .15rem .5rem;
+  }
+
+  /* controls */
+  #counter {
+    position: fixed; right: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .85rem; z-index: 30;
+    font-variant-numeric: tabular-nums;
+  }
+  #hint {
+    position: fixed; left: 1.4rem; bottom: 1.2rem;
+    color: var(--muted); font-size: .78rem; z-index: 30; opacity: .7;
+  }
+  #nav {
+    position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+    display: flex; gap: .5rem; z-index: 30;
+  }
+  #nav button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: .45rem .95rem; cursor: pointer; font-size: .9rem;
+  }
+  #nav button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<main id="deck">
+
+  <!-- 1 · Title -->
+  <section class="slide">
+    <p class="kicker">Vector Databases Explained</p>
+    <h1>Vector Databases:<br><span class="grad">The Complete Guide for 2026</span></h1>
+    <p class="lead">Chatbots with memory, semantic search, RAG systems, and AI agents that answer questions about your documents all run on one piece of unglamorous infrastructure — here is what vector databases actually do and why meaning-based retrieval works.</p>
+    <p class="sub">Source: youtube.com/watch?v=4pUYfY-b5CQ · Channel: Aishwarya Srinivasan · Companion doc: article.md</p>
+  </section>
+
+  <!-- 2 · Agenda -->
+  <section class="slide">
+    <p class="kicker">Agenda</p>
+    <h1>What We'll Cover</h1>
+    <div class="grid g2">
+      <div class="card"><h3>Foundations</h3>
+        <ul>
+          <li>Why traditional databases fall short</li>
+          <li>Vectors &amp; embeddings: how machines capture meaning</li>
+          <li>What a vector database actually does</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Applications &amp; Practice</h3>
+        <ul>
+          <li>RAG — the backbone of modern AI</li>
+          <li>The RAG pipeline &amp; chunking</li>
+          <li>Choosing your vector database</li>
+          <li>Vector databases beyond RAG</li>
+          <li>The mental model that makes it click</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · Why Traditional Databases Fall Short -->
+  <section class="slide">
+    <p class="kicker">Section 1 · The Problem</p>
+    <h1>Why Traditional Databases Fall Short</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="color:var(--warn)">The employee question</h3>
+        <p class="big">"How many days off do I get per year?"</p>
+        <p>The word <em style="color:var(--text)">vacation</em> never appears in the question. MySQL and PostgreSQL match text literally — no index, query planner, or operator connects "days off" to the vacation policy in an HR manual.</p>
+        <div class="chip-row" style="margin-top:.7rem"><span class="chip bad">Exact / partial text matching only</span></div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--good)">The meaning match</h3>
+        <p class="big">Find documents that are about the same thing — shared words or not.</p>
+        <p>A vector database relates "days off" to the vacation policy because the two are semantically close, so the relevant documents come back even with zero overlapping words.</p>
+        <div class="chip-row" style="margin-top:.7rem"><span class="chip good">Relevant documents returned</span></div>
+      </div>
+    </div>
+    <div class="quote">That distinction is everything: it turns a database from a lookup tool into something that understands what your data means.</div>
+  </section>
+
+  <!-- 4 · Vectors and Embeddings -->
+  <section class="slide">
+    <p class="kicker">Section 2 · Vectors &amp; Embeddings</p>
+    <h1>Meaning Becomes Geometry</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>An embedding is a list of numbers</h3>
+        <p class="big">Words, sentences, images — basically any data — become vectors.</p>
+        <p>ML models convert inputs into numbers that are not random: they are positioned in mathematical space in a way that actually captures meaning.</p>
+      </div>
+      <div class="card">
+        <h3>Similar meanings land close together</h3>
+        <p class="big">Nearby points are semantically related.</p>
+        <p>Convert your company's thousands of documents into vectors and each one becomes a point in space, positioned so nearby points mean related things.</p>
+      </div>
+    </div>
+    <div class="chip-row" style="margin:1.2rem 0 0">
+      <span class="chip">king</span>
+      <span class="chip">− man</span>
+      <span class="chip">+ woman</span>
+      <span class="chip accent">≈ queen</span>
+    </div>
+    <div class="quote">That's not magic. That's a well-trained embedding model doing its job.</div>
+  </section>
+
+  <!-- 5 · What a Vector Database Actually Does -->
+  <section class="slide">
+    <p class="kicker">Section 3 · Inside the Database</p>
+    <h1>Store Vectors, Answer Similarity Queries Fast</h1>
+    <p class="lead" style="margin-bottom:1.1rem">A query is converted into a vector exactly the way the documents were; the database finds the vectors closest to it in meaning — even if they share no words at all.</p>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Embed millions of documents</span>
+      <span class="step">Store vectors in the database</span>
+      <span class="step">Embed the user question the same way</span>
+      <span class="step">Search for the closest vectors in meaning</span>
+      <span class="step">Return the top few documents, fast</span>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Without speed</h3>
+        <p>Scanning millions of vectors for every query would be useless in practice.</p>
+      </div>
+      <div class="card">
+        <h3>Without meaning</h3>
+        <p>Results would be no better than a keyword search.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:.9rem">Meaning-based representation + retrieval that is fast at scale — that combination is the entire product.</p>
+  </section>
+
+  <!-- 6 · RAG — The Backbone -->
+  <section class="slide">
+    <p class="kicker">Section 4 · The Main Use Case</p>
+    <h1>RAG: The Backbone of Modern AI</h1>
+    <p class="lead" style="margin-bottom:1.1rem"><strong style="color:var(--text)">RAG</strong> — retrieval augmented generation — is currently the most important use case for vector databases: the mechanism that lets LLMs answer questions about information they never saw during training.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="color:var(--bad)">Without RAG</h3>
+        <p>Ask something after the model's training cutoff, or highly specific to your company, and it either hallucinates a confident-sounding answer or admits it does not know.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--good)">With RAG</h3>
+        <p>The relevant passages are placed in front of the model, and it reasons from them — the model never has to bluff about your policies or your product.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · Closed-Book vs Open-Book Exams -->
+  <section class="slide">
+    <p class="kicker">Section 4.1 · The Analogy</p>
+    <h1>From Closed-Book to Open-Book</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="color:var(--warn)">Closed-book exam — LLM without RAG</h3>
+        <p class="big">You can only answer what you memorized.</p>
+        <p>If you did not study something, you are stuck. That is an LLM limited to its training data.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--good)">Open-book exam — RAG</h3>
+        <p class="big">The textbook sits in front of you.</p>
+        <p>You get the question, flip to the relevant chapter, read it, and write the answer using both your reasoning and the actual information in the book.</p>
+      </div>
+    </div>
+    <div class="quote">The LLM is the student with great reasoning ability, and the vector database is the textbook.</div>
+  </section>
+
+  <!-- 8 · The RAG Pipeline, Step by Step -->
+  <section class="slide">
+    <p class="kicker">Section 4.2 · The Pipeline</p>
+    <h1>The RAG Pipeline, Step by Step</h1>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Embed all documents with an embedding model</span>
+      <span class="step">Store the vectors in the vector database</span>
+      <span class="step">Convert the user query into a vector</span>
+      <span class="step">Search for the most semantically similar documents</span>
+      <span class="step">Retrieve the top results</span>
+      <span class="step">Pass results + query to the LLM</span>
+      <span class="step">Generate a grounded answer instead of guessing</span>
+    </div>
+    <div class="quote">This is why RAG matters: it solves the hallucination problem for domain-specific knowledge — and the vector database sits at the heart of the retrieval step that makes it possible.</div>
+  </section>
+
+  <!-- 9 · Chunking -->
+  <section class="slide">
+    <p class="kicker">Section 4.3 · Retrieval Quality</p>
+    <h1>Chunking: The Step People Get Wrong</h1>
+    <div class="grid g3">
+      <div class="card">
+        <h3 style="color:var(--warn)">Chunks too large</h3>
+        <p><strong style="color:var(--text)">Precision loss</strong> — each chunk mixes many topics, so retrieval blurs.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--warn)">Chunks too small</h3>
+        <p><strong style="color:var(--text)">Context loss</strong> — meaning gets sliced apart at chunk boundaries.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--good)">The sweet spot</h3>
+        <p><strong style="color:var(--text)">300–500 tokens per chunk</strong> with <strong style="color:var(--text)">50–100 tokens of overlap</strong> — an answer straddling a boundary survives intact.</p>
+      </div>
+    </div>
+    <div class="chip-row" style="margin-top:1.1rem">
+      <span class="chip good">Use a semantic chunker where the framework supports it</span>
+    </div>
+    <div class="quote">If your chunks are too large, you lose precision. If they are too small, you lose context.</div>
+  </section>
+
+  <!-- 10 · Choosing Your Vector Database -->
+  <section class="slide">
+    <p class="kicker">Section 5 · The Landscape</p>
+    <h1>Choosing Your Vector Database</h1>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Chroma DB</h3>
+        <p class="big">Local experimentation</p>
+        <p>Incredibly easy to set up; works well with LangChain and LlamaIndex; a working RAG prototype on your laptop in under an hour.</p>
+      </div>
+      <div class="card">
+        <h3>Qdrant</h3>
+        <p class="big">Self-hosted performance</p>
+        <p>Open source, written in Rust — extremely fast and memory-efficient — with excellent documentation. Running locally with Docker in about five minutes.</p>
+      </div>
+      <div class="card">
+        <h3>Pinecone</h3>
+        <p class="big">Fully managed production</p>
+        <p>The most popular fully managed option: scales automatically, integrates well with most AI frameworks, and has a generous free tier.</p>
+      </div>
+      <div class="card">
+        <h3>Weaviate</h3>
+        <p class="big">Hybrid search</p>
+        <p>Combines vector similarity with traditional keyword search in one query — exact matches on product IDs or part numbers alongside semantic matches.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · The Selection Pattern -->
+  <section class="slide">
+    <p class="kicker">Section 5 · Choosing (cont.)</p>
+    <h1>A Ladder, Not a Coin Flip</h1>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Start with Chroma to learn</span>
+      <span class="step">Graduate to Qdrant if you want to own the stack</span>
+      <span class="step">Reach for Pinecone when you want managed scale</span>
+      <span class="step">Keep Weaviate in mind for lexical + semantic</span>
+    </div>
+    <div class="card">
+      <h3>The pattern to take away</h3>
+      <p>Start with Chroma to learn, graduate to Qdrant if you want to own the stack, reach for Pinecone when you want managed scale, and keep Weaviate in mind when <strong style="color:var(--text)">lexical precision</strong> and <strong style="color:var(--text)">semantic recall</strong> need to coexist.</p>
+    </div>
+  </section>
+
+  <!-- 12 · Beyond RAG -->
+  <section class="slide">
+    <p class="kicker">Section 6 · Beyond RAG</p>
+    <h1>The Same Machinery Runs Products You Use</h1>
+    <p class="lead" style="margin-bottom:1.1rem">It is a mistake to leave with the impression that vector databases are only for RAG.</p>
+    <div class="grid g4">
+      <div class="card"><h3>Spotify</h3><p>Listening history becomes a vector, matched against a catalog of song vectors — songs you've never heard but will probably love.</p></div>
+      <div class="card"><h3>Netflix</h3><p>The same vector similarity drives content recommendation.</p></div>
+      <div class="card"><h3>Pinterest</h3><p>Photograph a room you like; a vision model turns the image into a vector and finds visually similar pins.</p></div>
+      <div class="card"><h3>Cybersecurity</h3><p>Normal network traffic clusters in vector space — behavior far from the cluster is your alert: an outlier in meaning, not a rule match.</p></div>
+    </div>
+  </section>
+
+  <!-- 13 · The Mental Model -->
+  <section class="slide">
+    <p class="kicker">Section 7 · The Mental Model</p>
+    <h1>Embed, Store, Match — and Do It Again</h1>
+    <div class="steps" style="margin-bottom:1.2rem">
+      <span class="step">Embed — convert data into a rich numerical representation</span>
+      <span class="step">Store — keep similarity search fast at scale</span>
+      <span class="step">Match — retrieve, recommend, or alert</span>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>See use cases everywhere</h3>
+        <p>Almost any problem that involves finding <strong style="color:var(--text)">the closest thing to this thing</strong> is a vector search problem in disguise.</p>
+      </div>
+      <div class="card">
+        <h3>Go deeper</h3>
+        <p>The video description links documentation for Chroma DB, Qdrant, and Pinecone, plus hands-on RAG tutorials and a dedicated explainer on how RAG works.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · Key Takeaways -->
+  <section class="slide">
+    <p class="kicker">Final Takeaway</p>
+    <h1>What to Remember</h1>
+    <div class="checklist">
+      <div class="check">Vector DBs match meaning — relevant results with zero shared words</div>
+      <div class="check">Embeddings position similar items close together in space</div>
+      <div class="check">Similarity search stays fast across millions of vectors</div>
+      <div class="check">RAG makes the LLM open-book: answers from evidence, not guesses</div>
+      <div class="check">Chunk at 300–500 tokens with 50–100 tokens of overlap</div>
+      <div class="check">Chroma to learn · Qdrant to own · Pinecone for managed · Weaviate for hybrid</div>
+      <div class="check">Recommendations, visual search &amp; anomaly detection run the same loop</div>
+    </div>
+  </section>
+
+  <!-- 15 · End -->
+  <section class="slide">
+    <p class="kicker">The End</p>
+    <h1>Understand the Infrastructure<br><span class="grad">Before You Build</span></h1>
+    <p class="lead">Once you internalize the embed–store–match loop, you will start seeing vector search everywhere — it is the unglamorous infrastructure behind chatbots with memory, semantic search engines, and AI agents grounded in your own documents.</p>
+    <p class="sub">Source: "Vector Databases Explained: The Complete Guide for 2026" — Aishwarya Srinivasan (youtube.com/watch?v=4pUYfY-b5CQ) · Full transcript + article in this repo.</p>
+  </section>
+
+</main>
+
+<div id="counter"></div>
+<div id="hint">← → to navigate · swipe on mobile</div>
+<div id="nav">
+  <button id="prev">← Prev</button>
+  <button id="next">Next →</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+
+  // touch swipe
+  let touchX = null;
+  window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, { passive: true });
+
+  show(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector Databases Explained: The Complete Guide for 2026</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+  --radius:14px;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+#view-workflow *{box-sizing:border-box}
+#view-workflow body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55;-webkit-font-smoothing:antialiased}
+#view-workflow main#workflow-content{max-width:980px;margin:0 auto;padding:30px 20px 64px}
+#view-workflow .deck-head{padding-bottom:4px}
+#view-workflow .kicker{margin:0;font-size:11px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent-2)}
+#view-workflow .deck-head h1{margin:8px 0 4px;font-size:clamp(21px,3vw,30px);line-height:1.2;letter-spacing:-.2px}
+#view-workflow .channel{margin:0;color:var(--muted);font-size:13.5px}
+#view-workflow .channel b{color:var(--text);font-weight:600}
+#view-workflow .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
+#view-workflow .tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font:600 12.5px var(--font);padding:8px 13px;border-radius:999px;cursor:pointer;transition:all .18s}
+#view-workflow .tab:hover{color:var(--text);border-color:var(--accent)}
+#view-workflow .tab.on{background:rgba(110,168,254,.13);border-color:var(--accent);color:var(--text)}
+#view-workflow .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#view-workflow .panel{display:none;padding-top:6px}
+#view-workflow .panel.on{display:block;animation:rise .22s ease}
+@keyframes rise{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+#view-workflow .panel-head h3{margin:22px 0 2px;font-size:19px;line-height:1.3;display:flex;align-items:center;gap:11px}
+#view-workflow .badge{flex:none;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font:800 15px var(--font);color:var(--accent);background:linear-gradient(135deg,rgba(110,168,254,.22),rgba(167,139,250,.14));border:1px solid rgba(110,168,254,.45)}
+#view-workflow .where{margin:0 0 16px;color:var(--muted);font-size:13px}
+#view-workflow .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);white-space:nowrap}
+#view-workflow .chip .lead{color:var(--accent-2);font-weight:700}
+#view-workflow .chip-strong{display:inline-flex;align-items:center;padding:7px 14px;border-radius:12px;font-size:13.5px;font-weight:600;background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.5);color:var(--text)}
+#view-workflow .chip.good{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.1)}
+#view-workflow .chip.warn{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.09)}
+#view-workflow .chip.bad{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}
+#view-workflow .chip.alt{border-color:rgba(167,139,250,.5);background:rgba(167,139,250,.1)}
+#view-workflow .chip.sub{color:var(--muted)}
+#view-workflow .flow{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:8px 0 6px}
+#view-workflow .arr{color:var(--muted);font-size:17px;flex:none;user-select:none}
+#view-workflow [data-tip]{position:relative;cursor:help}
+#view-workflow [data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);width:max-content;max-width:250px;background:#0d1426;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:7px 10px;font:12px/1.45 var(--font);box-shadow:0 10px 26px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .15s;z-index:6}
+#view-workflow [data-tip]:hover::after{opacity:1}
+#view-workflow .cards{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:780px){#view-workflow .cards.two{grid-template-columns:1fr 1fr}}
+#view-workflow .lane{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;min-width:0}
+#view-workflow .lane h4{margin:0 0 12px;font-size:14.5px;display:flex;align-items:center;gap:9px}
+#view-workflow .dotc{flex:none;width:9px;height:9px;border-radius:50%;display:inline-block}
+#view-workflow .dotc.bad{background:var(--bad);box-shadow:0 0 8px rgba(248,113,113,.75)}
+#view-workflow .dotc.good{background:var(--good);box-shadow:0 0 8px rgba(52,211,153,.75)}
+#view-workflow .dotc.alt{background:var(--accent-2);box-shadow:0 0 8px rgba(167,139,250,.75)}
+#view-workflow .dotc.warn{background:var(--warn);box-shadow:0 0 8px rgba(251,191,36,.75)}
+#view-workflow ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#view-workflow .step{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 13px;transition:border-color .25s,background .25s,box-shadow .25s}
+#view-workflow .lane .step{background:var(--panel-2)}
+#view-workflow .step .n{flex:none;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 12.5px var(--font);color:var(--muted);background:rgba(148,160,184,.08);border:1px solid var(--border);transition:all .25s}
+#view-workflow .step .t{font-size:14px}
+#view-workflow .step .tag{margin-left:auto;flex:none;font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);background:rgba(148,160,184,.05)}
+#view-workflow .step .tag.idx{color:var(--accent-2);border-color:rgba(167,139,250,.4)}
+#view-workflow .step .tag.qry{color:var(--accent);border-color:rgba(110,168,254,.4)}
+#view-workflow .step .tag.ans{color:var(--good);border-color:rgba(52,211,153,.4)}
+#view-workflow .step.lit{border-color:var(--accent);background:linear-gradient(90deg,rgba(110,168,254,.14),rgba(110,168,254,.02));box-shadow:0 0 0 1px rgba(110,168,254,.22)}
+#view-workflow .step.lit .n{background:var(--accent);border-color:var(--accent);color:#081226}
+#view-workflow .lane .step.lit{background:linear-gradient(90deg,rgba(110,168,254,.2),rgba(110,168,254,.05))}
+#view-workflow .outcome{margin-top:13px;border-radius:10px;padding:9px 13px;font-size:13.5px;border:1px solid}
+#view-workflow .outcome.bad{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.09);color:#fecaca}
+#view-workflow .outcome.good{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.09);color:#a7f3d0}
+#view-workflow .outcome.warn{border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08);color:#fde68a}
+#view-workflow .outcome .lbl{display:block;font-weight:700;letter-spacing:.4px}
+#view-workflow .run{margin-top:14px;appearance:none;border:1px solid var(--accent);background:rgba(110,168,254,.1);color:var(--accent);font:600 13px var(--font);padding:9px 16px;border-radius:11px;cursor:pointer;transition:all .18s}
+#view-workflow .run:hover{background:rgba(110,168,254,.2)}
+#view-workflow .run.warn{border-color:var(--warn);color:var(--warn);background:rgba(251,191,36,.08)}
+#view-workflow .run:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#view-workflow .hint{margin:10px 0 0;color:var(--muted);font-size:12px}
+#view-workflow .vec{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;padding:7px 9px;border-radius:12px;border:1px dashed rgba(110,168,254,.5);background:rgba(110,168,254,.05)}
+#view-workflow .vec .num{font:11px var(--mono);color:var(--muted);background:var(--panel-2);border:1px solid var(--border);border-radius:5px;padding:2px 6px}
+#view-workflow .vec .num.led{color:#081226;background:var(--accent);border-color:var(--accent);font-weight:700}
+#view-workflow .op{color:var(--muted);font-size:15px;padding:0 1px;user-select:none}
+#view-workflow .eq-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 0 2px}
+#view-workflow .dots{display:flex;flex-wrap:wrap;gap:5px;max-width:430px;margin-top:4px}
+#view-workflow .dot{width:13px;height:13px;border-radius:3px;background:var(--panel-2);border:1px solid var(--border);transition:all .3s}
+#view-workflow .dot.cluster{background:rgba(52,211,153,.25);border-color:rgba(52,211,153,.6)}
+#view-workflow .dot.near{background:rgba(251,191,36,.2);border-color:var(--warn)}
+#view-workflow .dot.near.hit{background:var(--good);border-color:var(--good);box-shadow:0 0 9px rgba(52,211,153,.6);transform:scale(1.25)}
+#view-workflow .db-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:14px 16px;transition:border-color .3s,box-shadow .3s}
+#view-workflow .db-card h5{margin:0 0 4px;font-size:13px;display:flex;gap:8px;align-items:center;letter-spacing:.2px}
+#view-workflow .db-card p{margin:0 0 6px;color:var(--muted);font-size:12.5px}
+#view-workflow .db-card.built{border-color:var(--accent);box-shadow:0 0 0 1px rgba(110,168,254,.35),0 0 22px rgba(110,168,254,.12)}
+#view-workflow .db-card.scan{border-color:var(--warn);box-shadow:0 0 0 1px rgba(251,191,36,.3),0 0 22px rgba(251,191,36,.1)}
+#view-workflow .loop-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:stretch;margin:10px 0 4px}
+#view-workflow .loop-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;display:flex;flex-direction:column;gap:10px;transition:border-color .3s,box-shadow .3s,background .3s}
+#view-workflow .loop-card h4{margin:0;font-size:15px;display:flex;align-items:center;gap:9px}
+#view-workflow .loop-card p{margin:0;color:var(--muted);font-size:12.5px}
+#view-workflow .loop-card.lit{border-color:var(--accent-2);background:linear-gradient(160deg,rgba(167,139,250,.16),rgba(110,168,254,.03));box-shadow:0 0 20px rgba(167,139,250,.15)}
+#view-workflow .loop-card .numdot{flex:none;width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font:800 13px var(--font);color:var(--accent-2);background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.45)}
+#view-workflow .loop-arr{align-self:center;color:var(--muted);font-size:22px;text-align:center;user-select:none}
+#view-workflow .loop-arr::before{content:"\2192"}
+@media(max-width:860px){#view-workflow .loop-grid{grid-template-columns:1fr}
+#view-workflow .loop-arr{transform:rotate(90deg);padding:2px 0}
+
+}
+#view-workflow .repeat{margin:14px 0 0;display:flex;justify-content:center}
+#view-workflow .loop-note{max-width:560px;margin:14px auto 0;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;padding:10px 16px;background:rgba(20,27,45,.6)}
+#view-workflow .loop-note b{color:var(--good);font-weight:700}
+#view-workflow .presets{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+#view-workflow .preset{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);font:600 12.5px var(--font);padding:7px 14px;border-radius:999px;cursor:pointer;transition:all .18s}
+#view-workflow .preset:hover{color:var(--text)}
+#view-workflow .preset.on{color:var(--text)}
+#view-workflow .preset[data-size="large"].on{border-color:var(--bad);background:rgba(248,113,113,.12);color:#fecaca}
+#view-workflow .preset[data-size="sweet"].on{border-color:var(--good);background:rgba(52,211,153,.12);color:#a7f3d0}
+#view-workflow .preset[data-size="small"].on{border-color:var(--warn);background:rgba(251,191,36,.1);color:#fde68a}
+#view-workflow .bar-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 10px}
+#view-workflow .variant{display:none;align-items:center;gap:6px;min-height:34px}
+#view-workflow #chunk-bar.large .v-large, #view-workflow #chunk-bar.sweet .v-sweet, #view-workflow #chunk-bar.small .v-small{display:flex}
+#view-workflow .seg{flex:1 1 0;min-width:0;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#view-workflow .seg span{font-size:10px;color:var(--muted);white-space:nowrap;padding:0 4px}
+#view-workflow .seg:nth-child(odd){background:rgba(110,168,254,.09);border:1px solid rgba(110,168,254,.32)}
+#view-workflow .seg:nth-child(even){background:var(--panel-2);border:1px solid var(--border)}
+#view-workflow .ov{flex:none;height:20px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;font:600 9.5px var(--font);color:var(--accent-2);background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.55);white-space:nowrap}
+@media(max-width:560px){#view-workflow .seg span{display:none}}
+#view-workflow .cnote{display:none;margin:12px 0 0;font-size:13.5px;border-left:3px solid;padding:2px 0 2px 12px}
+#view-workflow .cnote.on{display:block}
+#view-workflow .cnote.large{border-color:var(--bad);color:#fecaca}
+#view-workflow .cnote.small{border-color:var(--warn);color:#fde68a}
+#view-workflow .cnote.sweet{border-color:var(--good);color:#a7f3d0}
+#view-workflow .cnote b{color:var(--text)}
+#view-workflow .legend{margin:10px 0 0;color:var(--muted);font-size:12px}
+#view-workflow .legend i{font-style:normal;display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px}
+#view-workflow .deck-foot{margin:34px 0 0;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between}
+#view-workflow .panel{display:block!important}
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>Vector Databases Explained: The Complete Guide for 2026</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=4pUYfY-b5CQ">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Captions are auto-generated.</p>
+</header>
+<h1 id="vector-databases-explained-the-complete-guide-for-2026">Vector Databases Explained: The Complete Guide for 2026</h1>
+<p>Chatbots with memory, semantic search engines, RAG systems, and AI agents that answer questions about your own documents all run on the same piece of unglamorous infrastructure: the vector database. In this guide, Aishwarya Srinivasan — a machine-learning engineer with over ten years of experience at companies including IBM, Microsoft, and Google — explains what vector databases actually do, why ordinary databases cannot do the job, and how meaning-based retrieval works under the hood. It is for anyone who wants to understand the infrastructure behind modern AI before building with it, whether you are wiring up your first retrieval prototype or trying to see past the hype around agents and RAG.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<p>1. Why Traditional Databases Fall Short 2. Vectors and Embeddings: How Machines Capture Meaning 3. What a Vector Database Actually Does 4. RAG: Why Vector Databases Are the Backbone of Modern AI - 4.1 Closed-Book vs. Open-Book Exams - 4.2 The RAG Pipeline, Step by Step - 4.3 Chunking: The Step People Get Wrong 5. Choosing Your Vector Database 6. Vector Databases Beyond RAG 7. The Mental Model That Makes It All Click</p>
+<h2 id="1-why-traditional-databases-fall-short">1. Why Traditional Databases Fall Short</h2>
+<p>The best way to understand why vector databases exist is to start with the problem they solve. Imagine you are building an AI assistant for a company that holds thousands of internal documents — HR policies, product manuals, legal contracts — and your assistant needs to answer employee questions using that information.</p>
+<p>The obvious approach is to dump all of those documents into a regular database and search through them. That idea breaks down almost immediately. A traditional database such as MySQL or PostgreSQL is designed for exact or partial text matching. Queries like &quot;find me all the documents where the word <em>vacation</em> appears&quot; work perfectly, because the matching is purely lexical: the database is comparing strings, not meaning.</p>
+<p>Now consider what a real employee actually asks: <em>how many days off do I get per year?</em> The word &quot;vacation&quot; may never appear in that question. A traditional database has no idea that the two are related — no index, no query planner, no operator connects &quot;days off&quot; to the vacation policy in an HR manual. It can only find documents that literally contain the words you typed.</p>
+<p>That is the core limitation vector databases were built to solve. They are designed not for exact matching, but for meaning-based matching — finding documents that are <em>about</em> the same thing as your question, regardless of whether they share a single word. That distinction is everything: it is what turns a database from a lookup tool into something that understands what your data means.</p>
+<h2 id="2-vectors-and-embeddings-how-machines-capture-meaning">2. Vectors and Embeddings: How Machines Capture Meaning</h2>
+<p>Before you can understand vector databases, you need to understand vectors — and despite the math-sounding name, the idea is intuitive. Think about how your own brain understands meaning. When you hear the word <em>king</em>, you do not just store the letters k-i-n-g; you store a whole web of associations: royalty, power, leadership, crown. Your brain holds a rich, multi-dimensional understanding of what that word means in relation to everything else you know.</p>
+<p>Machine learning models do something very similar. They convert words, sentences, images — basically any kind of data — into a list of numbers. That list of numbers is called a <strong>vector</strong> or an <strong>embedding</strong>. The beautiful part is that the numbers are not random. They are positioned in mathematical space in a way that actually captures meaning: words with similar meanings end up with similar numbers, which means they end up close to each other in the vector space.</p>
+<p>The classic demonstration: take the vector for <em>king</em>, subtract the vector for <em>man</em>, and add the vector for <em>woman</em>, and you land extremely close to the vector for <em>queen</em>. The model has learned that royalty and gender are real, manipulable dimensions of meaning, and vector arithmetic lets you move along them.</p>
+<blockquote>That&#x27;s not magic. That&#x27;s a well-trained embedding model doing its job.</blockquote>
+<p>When you convert your company&#x27;s thousands of documents into vectors, you have translated all of that text into a mathematical language that captures meaning rather than keywords. Each document becomes a point in space, positioned so that nearby points are semantically related.</p>
+<h2 id="3-what-a-vector-database-actually-does">3. What a Vector Database Actually Does</h2>
+<p>The workflow is simple in shape. When a user asks a question — say, <em>how many days off do I get this year?</em> — that question is converted into a vector in exactly the same way the documents were. The database then finds the documents whose vectors are closest to the query&#x27;s vector in meaning, even if those documents share no words at all with the original question.</p>
+<p>A vector database is built to do precisely this: store vectors and answer nearest-neighbor-style similarity queries quickly, even across millions of documents. That combination — a meaning-based representation plus retrieval that is fast at scale — is the entire product. Without the speed, scanning millions of vectors for every query would be useless in practice; without the semantic representation, the results would be no better than a keyword search.</p>
+<p>Which brings us to the most important place this technology shows up right now: RAG.</p>
+<h2 id="4-rag-why-vector-databases-are-the-backbone-of-modern-ai">4. RAG: Why Vector Databases Are the Backbone of Modern AI</h2>
+<p><strong>RAG</strong> stands for <strong>retrieval augmented generation</strong>, and it is currently the most important use case for vector databases — the mechanism that lets large language models answer questions about information they never saw during training.</p>
+<p>Think about a closed-book exam. You can only answer questions based on what you have memorized. If you did not study something, you are simply stuck. That is essentially a large language model without RAG: it can only answer based on what it learned during training. Ask it something that happened after its training cutoff, or something highly specific to your company, and it will either hallucinate a confident-sounding answer or admit it does not know.</p>
+<p>Now imagine an open-book exam. The textbook sits in front of you; you get the question, flip to the relevant chapter, read the relevant section, and write your answer using both your reasoning ability and the actual information from the book. That is RAG.</p>
+<blockquote>The LLM is the student with great reasoning ability, and the vector database is the textbook.</blockquote>
+<p>In practice, a RAG system built on a vector database works like this:</p>
+<ol><li>Take all of your documents and convert them into vectors using an embedding model.</li><li>Store those vectors in a vector database.</li><li>When a user submits a query, convert the query into a vector.</li><li>Search the database for the most semantically similar documents.</li><li>Retrieve the top results.</li><li>Pass those results, together with the original query, to the LLM.</li><li>The LLM generates a grounded, accurate response instead of guessing.</li></ol>
+<p>This is why RAG matters so much: it solves the hallucination problem for domain-specific knowledge. The model never has to bluff about your policies or your product — the relevant passages are placed in front of it, and it reasons from them. The vector database sits at the heart of the retrieval step that makes that possible.</p>
+<p>One mistake the speaker says she sees constantly: treating the database choice as the only decision that matters, when how you chunk documents <em>before</em> embedding them matters just as much. Documents are not embedded whole; they are split into passages, and the size of those passages shapes retrieval quality.</p>
+<blockquote>If your chunks are too large, you lose precision. If they are too small, you lose context.</blockquote>
+<p>A solid starting point is roughly 300–500 tokens per chunk, with about 50–100 tokens of overlap at chunk boundaries. The overlap matters because a relevant answer can straddle a boundary, and overlap keeps that context from being sliced in half. Where your framework supports it, use a semantic chunker rather than a fixed-size character splitter — chunks that break at meaningful boundaries retrieve better, and the difference in retrieval quality is real, not theoretical.</p>
+<h2 id="5-choosing-your-vector-database">5. Choosing Your Vector Database</h2>
+<p>If you are ready to start building, the practical question is where to start. The speaker is direct about the landscape, and the options fall into a few clear buckets.</p>
+<p><strong>Chroma DB</strong> is the entry point for local experimentation. It is incredibly easy to set up, works well with LangChain and LlamaIndex, and you can have a working RAG prototype running on your laptop in under an hour.</p>
+<p><strong>Qdrant</strong> is the pick when you want performance and are willing to self-host. It is open source, written in Rust, which makes it extremely fast and memory-efficient, and its documentation is excellent. You can run it locally with Docker in about five minutes.</p>
+<p><strong>Pinecone</strong> suits production applications where you do not want to manage infrastructure. It is currently the most popular fully managed option: it scales automatically, integrates well with most AI frameworks, and its free tier is generous enough to prototype before you commit.</p>
+<p><strong>Weaviate</strong> is worth knowing about because it supports hybrid search — combining vector similarity search with traditional keyword search in the same query. That is powerful for production use cases where you want the strengths of both approaches, such as exact matches on product IDs or part numbers alongside semantic matches on natural language.</p>
+<p>The pattern to take away: start with Chroma to learn, graduate to Qdrant if you want to own the stack, reach for Pinecone when you want managed scale, and keep Weaviate in mind when lexical precision and semantic recall need to coexist.</p>
+<h2 id="6-vector-databases-beyond-rag">6. Vector Databases Beyond RAG</h2>
+<p>Vector databases are not only for RAG, and it is a mistake to leave with that impression. The same similarity-search machinery powers a surprising share of the products you already use.</p>
+<p><strong>Spotify</strong> uses vector similarity to recommend songs you have never heard but will probably love: your listening history is converted into a vector and matched against a catalog of song vectors. <strong>Netflix</strong> does the same for content recommendation. <strong>Pinterest</strong> lets you photograph a room you like and find visually similar pins, because a vision model converts the image into a vector that can be compared against millions of others.</p>
+<p>The pattern even extends to security. In anomaly detection for cybersecurity, normal network traffic clusters together in vector space; behavior that lands far away from that cluster is your alert — an outlier in meaning rather than a rule-match against a known attack signature.</p>
+<h2 id="7-the-mental-model-that-makes-it-all-click">7. The Mental Model That Makes It All Click</h2>
+<p>Every one of these use cases runs on the same three-step mental model. Convert your data into a rich numerical representation (the vector). Store it in a way that makes similarity search fast (the vector database). Then use that machinery for matching, recommendation, or retrieval. Once you internalize that loop, you will start seeing vector database use cases everywhere — because almost any problem that involves finding <em>the closest thing to this thing</em> is a vector search problem in disguise.</p>
+<p>If you want to go deeper, the speaker&#x27;s video description links the documentation for Chroma DB, Qdrant, and Pinecone, along with hands-on RAG tutorials and a dedicated explainer on how RAG works — a natural next step once you have the infrastructure mental model in place.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>Traditional databases (MySQL, PostgreSQL) match text literally; vector databases match meaning, finding relevant documents even when they share no words with the query.</li><li>An embedding is a list of numbers that positions data in mathematical space so that semantically similar items land close together — the reason <em>king − man + woman</em> lands near <em>queen</em>.</li><li>A vector database stores those embeddings and makes similarity search fast even across millions of documents.</li><li>RAG turns an LLM from a closed-book student into an open-book one: retrieve the closest documents to a query, then hand them to the model so it answers from evidence instead of guessing — solving hallucinations on domain-specific knowledge.</li><li>Chunking quality matters as much as database choice: roughly 300–500 tokens per chunk with 50–100 tokens of overlap, and a semantic chunker where available.</li><li>Start with Chroma DB for local prototypes, Qdrant for self-hosted performance, Pinecone for fully managed production, and Weaviate when you need hybrid keyword-plus-vector search.</li><li>The same vector machinery powers recommendation (Spotify, Netflix), visual similarity (Pinterest), and anomaly detection in cybersecurity — and follows one mental model: embed, store for fast similarity search, then match.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=4pUYfY-b5CQ">Vector Databases Explained: The Complete Guide for 2026</a></li><li>Channel: <a href="https://www.youtube.com/@aishwaryasrinivasan">Aishwarya Srinivasan</a></li><li>Fetched: 2026-09-02T10:49:57.927398+00:00</li></ul>
+<p><em>This article was written from auto-generated captions, which may contain minor transcription errors; the content was reconstructed for accuracy from context.</em></p>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart TD
+    Q[&quot;Question: how many days off do I get per year&quot;]
+    Q --&gt; K1
+    Q --&gt; M1
+
+    subgraph TRAD[&quot;Traditional database - matches words literally&quot;]
+        K1[&quot;Looks for the exact words of the question&quot;]
+        K2[&quot;The word vacation never appears in the query&quot;]
+        K3[&quot;No documents match&quot;]
+        K1 --&gt; K2 --&gt; K3
+    end
+
+    subgraph SEM[&quot;Vector database - matches meaning&quot;]
+        M1[&quot;Asks what the question is about&quot;]
+        M2[&quot;Vacation policy and HR rules are nearby in meaning&quot;]
+        M3[&quot;Relevant documents are returned&quot;]
+        M1 --&gt; M2 --&gt; M3
+    end
+
+    K3 --&gt; FAIL[&quot;Search fails - employee gets no answer&quot;]
+    M3 --&gt; WIN[&quot;Search succeeds - the policy is found&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    Q[&quot;Question: how many days off do I get per year&quot;]
+    Q --&gt; K1
+    Q --&gt; M1
+
+    subgraph TRAD[&quot;Traditional database - matches words literally&quot;]
+        K1[&quot;Looks for the exact words of the question&quot;]
+        K2[&quot;The word vacation never appears in the query&quot;]
+        K3[&quot;No documents match&quot;]
+        K1 --&gt; K2 --&gt; K3
+    end
+
+    subgraph SEM[&quot;Vector database - matches meaning&quot;]
+        M1[&quot;Asks what the question is about&quot;]
+        M2[&quot;Vacation policy and HR rules are nearby in meaning&quot;]
+        M3[&quot;Relevant documents are returned&quot;]
+        M1 --&gt; M2 --&gt; M3
+    end
+
+    K3 --&gt; FAIL[&quot;Search fails - employee gets no answer&quot;]
+    M3 --&gt; WIN[&quot;Search succeeds - the policy is found&quot;]
+</code></pre></details>
+<figcaption>1. Keyword Match vs. Meaning Match: The Problem Vector Databases Solve</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    W1[&quot;Words and sentences&quot;] --&gt; EM
+    W2[&quot;Images&quot;] --&gt; EM
+    W3[&quot;User behavior&quot;] --&gt; EM
+    EM[&quot;Embedding model converts any input into numbers&quot;]
+    EM --&gt; VEC[&quot;Vector: a list of numbers&quot;]
+    VEC --&gt; PNT[&quot;The vector becomes a point in space&quot;]
+    PNT --&gt; NEAR[&quot;Similar meanings land close together&quot;]
+    PNT --&gt; AR[&quot;king minus man plus woman&quot;]
+    AR --&gt; QUEEN[&quot;Lands very close to the vector for queen&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    W1[&quot;Words and sentences&quot;] --&gt; EM
+    W2[&quot;Images&quot;] --&gt; EM
+    W3[&quot;User behavior&quot;] --&gt; EM
+    EM[&quot;Embedding model converts any input into numbers&quot;]
+    EM --&gt; VEC[&quot;Vector: a list of numbers&quot;]
+    VEC --&gt; PNT[&quot;The vector becomes a point in space&quot;]
+    PNT --&gt; NEAR[&quot;Similar meanings land close together&quot;]
+    PNT --&gt; AR[&quot;king minus man plus woman&quot;]
+    AR --&gt; QUEEN[&quot;Lands very close to the vector for queen&quot;]
+</code></pre></details>
+<figcaption>2. Embeddings: Turning Words, Images, and Behavior into Points in Space</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph INDEX[&quot;Before the query - build the index&quot;]
+        DOCS[&quot;Millions of documents&quot;] --&gt; EMB1[&quot;Embedding model&quot;]
+        EMB1 --&gt; VDB[(&quot;Vector database&quot;)]
+    end
+
+    subgraph ASK[&quot;At query time - find the nearest neighbors&quot;]
+        Q[&quot;User question&quot;] --&gt; QV[&quot;Converted to a vector the same way&quot;]
+        QV --&gt; NN[&quot;Search the index for the closest vectors in meaning&quot;]
+        VDB --&gt; NN
+        NN --&gt; TOP[&quot;Top few closest documents, returned fast&quot;]
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph INDEX[&quot;Before the query - build the index&quot;]
+        DOCS[&quot;Millions of documents&quot;] --&gt; EMB1[&quot;Embedding model&quot;]
+        EMB1 --&gt; VDB[(&quot;Vector database&quot;)]
+    end
+
+    subgraph ASK[&quot;At query time - find the nearest neighbors&quot;]
+        Q[&quot;User question&quot;] --&gt; QV[&quot;Converted to a vector the same way&quot;]
+        QV --&gt; NN[&quot;Search the index for the closest vectors in meaning&quot;]
+        VDB --&gt; NN
+        NN --&gt; TOP[&quot;Top few closest documents, returned fast&quot;]
+    end
+</code></pre></details>
+<figcaption>3. Similarity Search: What a Vector Database Does With Millions of Vectors</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    Q[&quot;User asks about company documents&quot;]
+    Q --&gt; CB[&quot;Closed book: the LLM relies on training memory alone&quot;]
+    CB --&gt; HALL[&quot;Confident guess or hallucination&quot;]
+
+    subgraph TEXTBOOK[&quot;Build the textbook - index the documents&quot;]
+        DOC[&quot;HR policies, manuals and contracts&quot;] --&gt; CH[&quot;Split into chunks&quot;]
+        CH --&gt; EMB[&quot;Embedding model&quot;]
+        EMB --&gt; VDB[(&quot;Vector database&quot;)]
+    end
+
+    Q --&gt; EMBQ[&quot;Question embedded into a vector&quot;]
+    EMBQ --&gt; RET[&quot;Similarity search for the closest passages&quot;]
+    VDB --&gt; RET
+    RET --&gt; TOP[&quot;Top passages retrieved&quot;]
+    TOP --&gt; OB[&quot;Open book: the LLM reads the passages with the question&quot;]
+    OB --&gt; ANS[&quot;Grounded answer written from real evidence&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    Q[&quot;User asks about company documents&quot;]
+    Q --&gt; CB[&quot;Closed book: the LLM relies on training memory alone&quot;]
+    CB --&gt; HALL[&quot;Confident guess or hallucination&quot;]
+
+    subgraph TEXTBOOK[&quot;Build the textbook - index the documents&quot;]
+        DOC[&quot;HR policies, manuals and contracts&quot;] --&gt; CH[&quot;Split into chunks&quot;]
+        CH --&gt; EMB[&quot;Embedding model&quot;]
+        EMB --&gt; VDB[(&quot;Vector database&quot;)]
+    end
+
+    Q --&gt; EMBQ[&quot;Question embedded into a vector&quot;]
+    EMBQ --&gt; RET[&quot;Similarity search for the closest passages&quot;]
+    VDB --&gt; RET
+    RET --&gt; TOP[&quot;Top passages retrieved&quot;]
+    TOP --&gt; OB[&quot;Open book: the LLM reads the passages with the question&quot;]
+    OB --&gt; ANS[&quot;Grounded answer written from real evidence&quot;]
+</code></pre></details>
+<figcaption>4. RAG: The LLM Goes From a Closed-Book Exam to an Open-Book Exam</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    DOC[&quot;A document to search&quot;] --&gt; SPL[&quot;Split into chunks before embedding&quot;]
+    SPL --&gt; BIG[&quot;Chunks too large&quot;]
+    BIG --&gt; BL[&quot;Precision loss: each chunk mixes many topics&quot;]
+    SPL --&gt; TINY[&quot;Chunks too small&quot;]
+    TINY --&gt; TL[&quot;Context loss: meaning is sliced apart&quot;]
+    SPL --&gt; SW[&quot;Sweet spot: 300 to 500 tokens per chunk&quot;]
+    SW --&gt; OV[&quot;50 to 100 tokens of overlap between chunks&quot;]
+    OV --&gt; SAVE[&quot;An answer straddling a boundary survives intact&quot;]
+    SW --&gt; SEM[&quot;Use a semantic chunker when the framework supports it&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    DOC[&quot;A document to search&quot;] --&gt; SPL[&quot;Split into chunks before embedding&quot;]
+    SPL --&gt; BIG[&quot;Chunks too large&quot;]
+    BIG --&gt; BL[&quot;Precision loss: each chunk mixes many topics&quot;]
+    SPL --&gt; TINY[&quot;Chunks too small&quot;]
+    TINY --&gt; TL[&quot;Context loss: meaning is sliced apart&quot;]
+    SPL --&gt; SW[&quot;Sweet spot: 300 to 500 tokens per chunk&quot;]
+    SW --&gt; OV[&quot;50 to 100 tokens of overlap between chunks&quot;]
+    OV --&gt; SAVE[&quot;An answer straddling a boundary survives intact&quot;]
+    SW --&gt; SEM[&quot;Use a semantic chunker when the framework supports it&quot;]
+</code></pre></details>
+<figcaption>5. Chunking: Sizing the Passages Before You Embed</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Embed
+    Embed --&gt; Store: turn data into vectors
+    Store --&gt; Match: keep similarity search fast at scale
+    Match --&gt; Embed: new data feeds the loop again
+    Match --&gt; Apply: retrieve, recommend, match or alert
+    Apply --&gt; [*]
+</pre>
+<details><summary>Source</summary><pre><code>stateDiagram-v2
+    [*] --&gt; Embed
+    Embed --&gt; Store: turn data into vectors
+    Store --&gt; Match: keep similarity search fast at scale
+    Match --&gt; Embed: new data feeds the loop again
+    Match --&gt; Apply: retrieve, recommend, match or alert
+    Apply --&gt; [*]
+</code></pre></details>
+<figcaption>6. The Mental Model: Embed, Store, Match — and Do It Again</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+<style>
+:root{
+  --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8; --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+  --radius:14px;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55;-webkit-font-smoothing:antialiased}
+main#workflow-content{max-width:980px;margin:0 auto;padding:30px 20px 64px}
+.deck-head{padding-bottom:4px}
+.kicker{margin:0;font-size:11px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent-2)}
+.deck-head h1{margin:8px 0 4px;font-size:clamp(21px,3vw,30px);line-height:1.2;letter-spacing:-.2px}
+.channel{margin:0;color:var(--muted);font-size:13.5px}
+.channel b{color:var(--text);font-weight:600}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
+.tab{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);font:600 12.5px var(--font);padding:8px 13px;border-radius:999px;cursor:pointer;transition:all .18s}
+.tab:hover{color:var(--text);border-color:var(--accent)}
+.tab.on{background:rgba(110,168,254,.13);border-color:var(--accent);color:var(--text)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{display:none;padding-top:6px}
+.panel.on{display:block;animation:rise .22s ease}
+@keyframes rise{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+.panel-head h3{margin:22px 0 2px;font-size:19px;line-height:1.3;display:flex;align-items:center;gap:11px}
+.badge{flex:none;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font:800 15px var(--font);color:var(--accent);background:linear-gradient(135deg,rgba(110,168,254,.22),rgba(167,139,250,.14));border:1px solid rgba(110,168,254,.45)}
+.where{margin:0 0 16px;color:var(--muted);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);white-space:nowrap}
+.chip .lead{color:var(--accent-2);font-weight:700}
+.chip-strong{display:inline-flex;align-items:center;padding:7px 14px;border-radius:12px;font-size:13.5px;font-weight:600;background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.5);color:var(--text)}
+.chip.good{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.1)}
+.chip.warn{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.09)}
+.chip.bad{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}
+.chip.alt{border-color:rgba(167,139,250,.5);background:rgba(167,139,250,.1)}
+.chip.sub{color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:8px 0 6px}
+.arr{color:var(--muted);font-size:17px;flex:none;user-select:none}
+[data-tip]{position:relative;cursor:help}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);width:max-content;max-width:250px;background:#0d1426;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:7px 10px;font:12px/1.45 var(--font);box-shadow:0 10px 26px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .15s;z-index:6}
+[data-tip]:hover::after{opacity:1}
+.cards{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:780px){.cards.two{grid-template-columns:1fr 1fr}}
+.lane{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;min-width:0}
+.lane h4{margin:0 0 12px;font-size:14.5px;display:flex;align-items:center;gap:9px}
+.dotc{flex:none;width:9px;height:9px;border-radius:50%;display:inline-block}
+.dotc.bad{background:var(--bad);box-shadow:0 0 8px rgba(248,113,113,.75)}
+.dotc.good{background:var(--good);box-shadow:0 0 8px rgba(52,211,153,.75)}
+.dotc.alt{background:var(--accent-2);box-shadow:0 0 8px rgba(167,139,250,.75)}
+.dotc.warn{background:var(--warn);box-shadow:0 0 8px rgba(251,191,36,.75)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 13px;transition:border-color .25s,background .25s,box-shadow .25s}
+.lane .step{background:var(--panel-2)}
+.step .n{flex:none;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 12.5px var(--font);color:var(--muted);background:rgba(148,160,184,.08);border:1px solid var(--border);transition:all .25s}
+.step .t{font-size:14px}
+.step .tag{margin-left:auto;flex:none;font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);background:rgba(148,160,184,.05)}
+.step .tag.idx{color:var(--accent-2);border-color:rgba(167,139,250,.4)}
+.step .tag.qry{color:var(--accent);border-color:rgba(110,168,254,.4)}
+.step .tag.ans{color:var(--good);border-color:rgba(52,211,153,.4)}
+.step.lit{border-color:var(--accent);background:linear-gradient(90deg,rgba(110,168,254,.14),rgba(110,168,254,.02));box-shadow:0 0 0 1px rgba(110,168,254,.22)}
+.step.lit .n{background:var(--accent);border-color:var(--accent);color:#081226}
+.lane .step.lit{background:linear-gradient(90deg,rgba(110,168,254,.2),rgba(110,168,254,.05))}
+.outcome{margin-top:13px;border-radius:10px;padding:9px 13px;font-size:13.5px;border:1px solid}
+.outcome.bad{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.09);color:#fecaca}
+.outcome.good{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.09);color:#a7f3d0}
+.outcome.warn{border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08);color:#fde68a}
+.outcome .lbl{display:block;font-weight:700;letter-spacing:.4px}
+.run{margin-top:14px;appearance:none;border:1px solid var(--accent);background:rgba(110,168,254,.1);color:var(--accent);font:600 13px var(--font);padding:9px 16px;border-radius:11px;cursor:pointer;transition:all .18s}
+.run:hover{background:rgba(110,168,254,.2)}
+.run.warn{border-color:var(--warn);color:var(--warn);background:rgba(251,191,36,.08)}
+.run:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{margin:10px 0 0;color:var(--muted);font-size:12px}
+.vec{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;padding:7px 9px;border-radius:12px;border:1px dashed rgba(110,168,254,.5);background:rgba(110,168,254,.05)}
+.vec .num{font:11px var(--mono);color:var(--muted);background:var(--panel-2);border:1px solid var(--border);border-radius:5px;padding:2px 6px}
+.vec .num.led{color:#081226;background:var(--accent);border-color:var(--accent);font-weight:700}
+.op{color:var(--muted);font-size:15px;padding:0 1px;user-select:none}
+.eq-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 0 2px}
+.dots{display:flex;flex-wrap:wrap;gap:5px;max-width:430px;margin-top:4px}
+.dot{width:13px;height:13px;border-radius:3px;background:var(--panel-2);border:1px solid var(--border);transition:all .3s}
+.dot.cluster{background:rgba(52,211,153,.25);border-color:rgba(52,211,153,.6)}
+.dot.near{background:rgba(251,191,36,.2);border-color:var(--warn)}
+.dot.near.hit{background:var(--good);border-color:var(--good);box-shadow:0 0 9px rgba(52,211,153,.6);transform:scale(1.25)}
+.db-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:14px 16px;transition:border-color .3s,box-shadow .3s}
+.db-card h5{margin:0 0 4px;font-size:13px;display:flex;gap:8px;align-items:center;letter-spacing:.2px}
+.db-card p{margin:0 0 6px;color:var(--muted);font-size:12.5px}
+.db-card.built{border-color:var(--accent);box-shadow:0 0 0 1px rgba(110,168,254,.35),0 0 22px rgba(110,168,254,.12)}
+.db-card.scan{border-color:var(--warn);box-shadow:0 0 0 1px rgba(251,191,36,.3),0 0 22px rgba(251,191,36,.1)}
+.loop-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:stretch;margin:10px 0 4px}
+.loop-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;display:flex;flex-direction:column;gap:10px;transition:border-color .3s,box-shadow .3s,background .3s}
+.loop-card h4{margin:0;font-size:15px;display:flex;align-items:center;gap:9px}
+.loop-card p{margin:0;color:var(--muted);font-size:12.5px}
+.loop-card.lit{border-color:var(--accent-2);background:linear-gradient(160deg,rgba(167,139,250,.16),rgba(110,168,254,.03));box-shadow:0 0 20px rgba(167,139,250,.15)}
+.loop-card .numdot{flex:none;width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font:800 13px var(--font);color:var(--accent-2);background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.45)}
+.loop-arr{align-self:center;color:var(--muted);font-size:22px;text-align:center;user-select:none}
+.loop-arr::before{content:"\2192"}
+@media(max-width:860px){
+  .loop-grid{grid-template-columns:1fr}
+  .loop-arr{transform:rotate(90deg);padding:2px 0}
+}
+.repeat{margin:14px 0 0;display:flex;justify-content:center}
+.loop-note{max-width:560px;margin:14px auto 0;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;padding:10px 16px;background:rgba(20,27,45,.6)}
+.loop-note b{color:var(--good);font-weight:700}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.preset{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);font:600 12.5px var(--font);padding:7px 14px;border-radius:999px;cursor:pointer;transition:all .18s}
+.preset:hover{color:var(--text)}
+.preset.on{color:var(--text)}
+.preset[data-size="large"].on{border-color:var(--bad);background:rgba(248,113,113,.12);color:#fecaca}
+.preset[data-size="sweet"].on{border-color:var(--good);background:rgba(52,211,153,.12);color:#a7f3d0}
+.preset[data-size="small"].on{border-color:var(--warn);background:rgba(251,191,36,.1);color:#fde68a}
+.bar-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 10px}
+.variant{display:none;align-items:center;gap:6px;min-height:34px}
+#chunk-bar.large .v-large,#chunk-bar.sweet .v-sweet,#chunk-bar.small .v-small{display:flex}
+.seg{flex:1 1 0;min-width:0;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.seg span{font-size:10px;color:var(--muted);white-space:nowrap;padding:0 4px}
+.seg:nth-child(odd){background:rgba(110,168,254,.09);border:1px solid rgba(110,168,254,.32)}
+.seg:nth-child(even){background:var(--panel-2);border:1px solid var(--border)}
+.ov{flex:none;height:20px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;font:600 9.5px var(--font);color:var(--accent-2);background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.55);white-space:nowrap}
+@media(max-width:560px){.seg span{display:none}}
+.cnote{display:none;margin:12px 0 0;font-size:13.5px;border-left:3px solid;padding:2px 0 2px 12px}
+.cnote.on{display:block}
+.cnote.large{border-color:var(--bad);color:#fecaca}
+.cnote.small{border-color:var(--warn);color:#fde68a}
+.cnote.sweet{border-color:var(--good);color:#a7f3d0}
+.cnote b{color:var(--text)}
+.legend{margin:10px 0 0;color:var(--muted);font-size:12px}
+.legend i{font-style:normal;display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px}
+.deck-foot{margin:34px 0 0;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between}
+</style>
+<noscript><style>.panel{display:block!important}</style></noscript>
+
+<header class="deck-head">
+  <p class="kicker">Diagram Deck — How It All Fits</p>
+  <h1>Vector Databases Explained: The Complete Guide for 2026</h1>
+  <p class="channel"><b>Aishwarya Srinivasan</b> &nbsp;·&nbsp; six diagrams, one per key idea of the article</p>
+</header>
+
+<nav class="tabs" aria-label="Diagrams">
+  <button type="button" class="tab on" data-panel="1">1 · The Problem</button>
+  <button type="button" class="tab" data-panel="2">2 · Embeddings</button>
+  <button type="button" class="tab" data-panel="3">3 · Similarity Search</button>
+  <button type="button" class="tab" data-panel="4">4 · RAG Pipeline</button>
+  <button type="button" class="tab" data-panel="5">5 · Chunking</button>
+  <button type="button" class="tab" data-panel="6">6 · The Loop</button>
+</nav>
+
+<section class="panel on" id="panel-1">
+  <div class="panel-head">
+    <h3><span class="badge">1</span> Keyword Match vs. Meaning Match: The Problem Vector Databases Solve</h3>
+    <p class="where">Illustrates article Section 1 — Why Traditional Databases Fall Short. One question, two databases, two fates.</p>
+  </div>
+
+  <div class="flow">
+    <span class="chip-strong">Employee asks: how many days off do I get per year?</span>
+    <span class="arr">→</span>
+    <span class="chip sub" data-tip="Exact and partial word matching — no concept of meaning.">traditional DB</span>
+    <span class="chip sub" data-tip="Stores vectors and searches by meaning.">vector DB</span>
+  </div>
+
+  <div class="cards two">
+    <div class="lane">
+      <h4><span class="dotc bad"></span>Traditional database — keyword matching</h4>
+      <ol class="steps">
+        <li class="step"><span class="n">1</span><span class="t">Looks for the exact words of the question in each document.</span></li>
+        <li class="step"><span class="n">2</span><span class="t">The word <i>vacation</i> never appears in the query.</span></li>
+        <li class="step"><span class="n">3</span><span class="t">No index and no operator connect days off to the vacation policy.</span></li>
+      </ol>
+      <p class="outcome bad"><span class="lbl">No documents match</span>Search fails — the employee gets no answer.</p>
+    </div>
+    <div class="lane">
+      <h4><span class="dotc good"></span>Vector database — meaning matching</h4>
+      <ol class="steps">
+        <li class="step"><span class="n">1</span><span class="t">Asks what the question is <i>about</i>, not what it literally says.</span></li>
+        <li class="step"><span class="n">2</span><span class="t">Vacation policy and HR rules sit nearby in meaning.</span></li>
+        <li class="step"><span class="n">3</span><span class="t">Closest documents are found regardless of shared words.</span></li>
+      </ol>
+      <p class="outcome good"><span class="lbl">Relevant documents returned</span>Search succeeds — the policy is found.</p>
+    </div>
+  </div>
+
+  <button type="button" class="run" data-run="steps-1" data-label="Walk through the comparison">Walk through the comparison</button>
+  <p class="hint">Hover any dashed-outline chip for a tooltip; press the button to light each step in order.</p>
+</section>
+
+<section class="panel" id="panel-2">
+  <div class="panel-head">
+    <h3><span class="badge">2</span> Embeddings: Turning Words, Images, and Behavior into Points in Space</h3>
+    <p class="where">Illustrates article Section 2 — Vectors and Embeddings: meaning becomes geometry, and vector arithmetic follows meaning.</p>
+  </div>
+
+  <div class="flow">
+    <span class="chip" data-tip="Any kind of data can become a vector.">words &amp; sentences</span>
+    <span class="chip" data-tip="Vision models embed pictures too.">images</span>
+    <span class="chip" data-tip="Even listening history and network traffic.">user behavior</span>
+    <span class="arr">→</span>
+    <span class="chip-strong" data-tip="A machine-learning model trained so that similar inputs get similar numbers.">embedding model</span>
+    <span class="arr">→</span>
+    <span class="vec" data-tip="A vector is just a list of numbers — each dimension is a learned facet of meaning."><span class="num">0.42</span><span class="num led">0.87</span><span class="num">0.03</span><span class="num">0.55</span><span class="num led">0.91</span><span class="num">0.17</span><span class="num">0.64</span><span class="num">0.29</span></span>
+    <span class="arr">→</span>
+    <span class="chip alt" data-tip="The numbers place the item at one point in a high-dimensional space.">a point in vector space</span>
+  </div>
+
+  <div class="cards two">
+    <div class="lane">
+      <h4><span class="dotc good"></span>Nearby points share meaning</h4>
+      <p class="hint">Semantically similar items land close together — that proximity is the entire trick.</p>
+      <div class="dots" data-tip="Each dot is one embedded document — the vacation policy and a question about days off cluster together.">
+        <span class="dot cluster"></span><span class="dot cluster"></span><span class="dot cluster"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot cluster"></span><span class="dot cluster"></span>
+        <span class="dot"></span><span class="dot cluster"></span><span class="dot cluster"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot cluster"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <p class="hint">Documents about the same topic — and questions about it — end up in the same green neighborhood.</p>
+    </div>
+    <div class="lane">
+      <h4><span class="dotc alt"></span>Vector arithmetic follows meaning</h4>
+      <div class="eq-row">
+        <span class="chip">king</span>
+        <span class="op">−</span>
+        <span class="chip">man</span>
+        <span class="op">+</span>
+        <span class="chip">woman</span>
+        <span class="op">≈</span>
+        <span class="chip alt" data-tip="The model learned that royalty and gender are real, manipulable dimensions of meaning.">queen</span>
+      </div>
+      <p class="hint">Subtract royalty-gender in one direction, add it in another, and you walk the vector space to a new meaning. That is a well-trained embedding model doing its job — not magic.</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-3">
+  <div class="panel-head">
+    <h3><span class="badge">3</span> Similarity Search: What a Vector Database Does With Millions of Vectors</h3>
+    <p class="where">Illustrates article Section 3 — What a Vector Database Actually Does: an index is built once, then every query is a fast nearest-neighbor search.</p>
+  </div>
+
+  <div class="cards">
+    <div class="db-card" id="db-idx">
+      <h5><span class="dotc alt"></span>Build the index — before any question arrives</h5>
+      <p>Documents are converted to vectors and stored with an index that makes neighbor search fast.</p>
+      <div class="dots" data-tip="One dot per stored document vector. Here: your whole corpus — each dot is a document or passage.">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+    <div class="db-card" id="db-qry">
+      <h5><span class="dotc warn"></span>At query time — find the nearest neighbors</h5>
+      <p>The question becomes a vector too, then the index hands back the closest stored vectors.</p>
+      <div class="dots" data-tip="The three yellow dots are the nearest neighbors of the query — the top results.">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot near"></span><span class="dot near"></span><span class="dot near"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+  </div>
+
+  <ol class="steps" id="steps-3">
+    <li class="step"><span class="n">1</span><span class="t">Take every document and convert it into a vector with an embedding model.</span><span class="tag idx">index</span></li>
+    <li class="step" data-sel="#db-idx" data-go="built"><span class="n">2</span><span class="t">Store those vectors in the vector database, indexed for fast search.</span><span class="tag idx">index</span></li>
+    <li class="step"><span class="n">3</span><span class="t">Millions of vectors are now queryable in meaning-space.</span><span class="tag idx">index</span></li>
+    <li class="step" data-sel="#db-qry" data-go="scan"><span class="n">4</span><span class="t">A user question arrives and is converted to a vector the same way.</span><span class="tag qry">query</span></li>
+    <li class="step"><span class="n">5</span><span class="t">Search the index for the closest vectors in meaning.</span><span class="tag qry">query</span></li>
+    <li class="step" data-sel="#db-qry .near" data-go="hit"><span class="n">6</span><span class="t">The nearest neighbors surface — the top few, not thousands.</span><span class="tag qry">query</span></li>
+    <li class="step"><span class="n">7</span><span class="t">Return the closest documents fast — without the speed this would be useless at scale.</span><span class="tag ans">result</span></li>
+  </ol>
+
+  <button type="button" class="run" data-run="steps-3" data-label="Run a query end to end">Run a query end to end</button>
+  <p class="hint">Watch the build phase light up, then the query phase — the yellow dots turn green as the top results are found.</p>
+</section>
+
+<section class="panel" id="panel-4">
+  <div class="panel-head">
+    <h3><span class="badge">4</span> RAG: The LLM Goes From a Closed-Book Exam to an Open-Book Exam</h3>
+    <p class="where">Illustrates article Sections 4.1 and 4.2 — Closed-Book vs. Open-Book Exams and the RAG Pipeline, step by step.</p>
+  </div>
+
+  <div class="cards two">
+    <div class="lane">
+      <h4><span class="dotc bad"></span>Without RAG — closed-book exam</h4>
+      <p class="hint">The model can only answer from what it memorized during training.</p>
+      <p class="outcome bad"><span class="lbl">Confident guess or hallucination</span>Ask about anything after its training cutoff or private to your company and it guesses.</p>
+    </div>
+    <div class="lane">
+      <h4><span class="dotc good"></span>With RAG — open-book exam</h4>
+      <p class="hint">The textbook sits open: relevant passages are placed in front of the model.</p>
+      <p class="outcome good"><span class="lbl">Grounded answer from real evidence</span>The LLM is the student with great reasoning; the vector database is the textbook.</p>
+    </div>
+  </div>
+
+  <p class="hint" style="margin:16px 0 8px"><b>The RAG pipeline, step by step:</b> the model never has to bluff — the relevant passages are retrieved and handed to it.</p>
+  <ol class="steps" id="steps-4">
+    <li class="step"><span class="n">1</span><span class="t">Take all your documents and convert them into vectors with an embedding model.</span><span class="tag idx">index</span></li>
+    <li class="step"><span class="n">2</span><span class="t">Store those vectors in a vector database.</span><span class="tag idx">index</span></li>
+    <li class="step"><span class="n">3</span><span class="t">The user submits a query — convert it into a vector too.</span><span class="tag qry">query</span></li>
+    <li class="step"><span class="n">4</span><span class="t">Search the database for the most semantically similar documents.</span><span class="tag qry">query</span></li>
+    <li class="step"><span class="n">5</span><span class="t">Retrieve the top results.</span><span class="tag qry">query</span></li>
+    <li class="step"><span class="n">6</span><span class="t">Pass those results, together with the original query, to the LLM.</span><span class="tag ans">answer</span></li>
+    <li class="step"><span class="n">7</span><span class="t">The LLM generates a grounded, accurate response instead of guessing.</span><span class="tag ans">answer</span></li>
+  </ol>
+
+  <button type="button" class="run" data-run="steps-4" data-label="Step through the pipeline">Step through the pipeline</button>
+</section>
+
+<section class="panel" id="panel-5">
+  <div class="panel-head">
+    <h3><span class="badge">5</span> Chunking: Sizing the Passages Before You Embed</h3>
+    <p class="where">Illustrates article Section 4.3 — Chunking: The Step People Get Wrong. Chunk size trades precision against context.</p>
+  </div>
+
+  <div class="presets" role="group" aria-label="Chunk size presets">
+    <button type="button" class="preset" data-size="large">Chunks too large</button>
+    <button type="button" class="preset on" data-size="sweet">Sweet spot</button>
+    <button type="button" class="preset" data-size="small">Chunks too small</button>
+  </div>
+
+  <div class="bar-wrap">
+    <div id="chunk-bar" class="sweet">
+      <div class="variant v-large">
+        <div class="seg"><span>onboarding + vacation + payroll in one chunk</span></div>
+        <div class="seg"><span>benefits + expenses + leave rules mixed</span></div>
+        <div class="seg"><span>travel policy + insurance in one chunk</span></div>
+      </div>
+      <div class="variant v-sweet">
+        <div class="seg"><span>~400 tokens</span></div>
+        <span class="ov" data-tip="50–100 tokens of overlap repeat the cut region between neighbors.">50–100</span>
+        <div class="seg"><span>~400 tokens</span></div>
+        <span class="ov" data-tip="50–100 tokens of overlap repeat the cut region between neighbors.">50–100</span>
+        <div class="seg"><span>~400 tokens</span></div>
+        <span class="ov" data-tip="50–100 tokens of overlap repeat the cut region between neighbors.">50–100</span>
+        <div class="seg"><span>~400 tokens</span></div>
+      </div>
+      <div class="variant v-small">
+        <div class="seg"><span>1</span></div><div class="seg"><span>2</span></div><div class="seg"><span>3</span></div><div class="seg"><span>4</span></div><div class="seg"><span>5</span></div><div class="seg"><span>6</span></div><div class="seg"><span>7</span></div><div class="seg"><span>8</span></div><div class="seg"><span>9</span></div><div class="seg"><span>10</span></div><div class="seg"><span>11</span></div><div class="seg"><span>12</span></div><div class="seg"><span>13</span></div><div class="seg"><span>14</span></div>
+      </div>
+    </div>
+    <p class="legend">Segments are chunks of one document; violet pills are overlap. Hover the pills.</p>
+    <p class="cnote large" data-note="large"><b>Precision loss.</b> Each oversized chunk mixes several topics, so the closest match drags irrelevant material in with the one passage you needed.</p>
+    <p class="cnote sweet on" data-note="sweet"><b>The sweet spot.</b> Roughly 300–500 tokens per chunk with 50–100 tokens of overlap — an answer straddling a boundary survives intact because the overlap repeats the cut region.</p>
+    <p class="cnote small" data-note="small"><b>Context loss.</b> Tiny chunks slice a single idea across many pieces, so each retrieved fragment is too thin to carry its meaning.</p>
+  </div>
+
+  <div class="flow" style="margin-top:14px">
+    <span class="chip good" data-tip="A semantic chunker splits at meaningful boundaries instead of fixed character counts — the retrieval gain is real.">prefer a semantic chunker when supported</span>
+    <span class="chip good">300–500 tokens per chunk</span>
+    <span class="chip good">50–100 tokens of overlap</span>
+  </div>
+</section>
+
+<section class="panel" id="panel-6">
+  <div class="panel-head">
+    <h3><span class="badge">6</span> The Mental Model: Embed, Store, Match — and Do It Again</h3>
+    <p class="where">Illustrates article Sections 6 and 7 — Vector Databases Beyond RAG and the Mental Model That Makes It All Click.</p>
+  </div>
+
+  <div class="loop-grid">
+    <div class="loop-card" id="c-embed">
+      <h4><span class="numdot">1</span>Embed</h4>
+      <p>Convert your data into a rich numerical representation — the vector.</p>
+      <div class="flow">
+        <span class="chip sub">documents</span>
+        <span class="chip sub">listening history</span>
+        <span class="chip sub">photos</span>
+        <span class="chip sub">network traffic</span>
+      </div>
+    </div>
+    <div class="loop-arr"></div>
+    <div class="loop-card" id="c-store">
+      <h4><span class="numdot">2</span>Store</h4>
+      <p>Keep the vectors indexed so similarity search stays fast at scale.</p>
+      <div class="dots" data-tip="Millions of vectors, each one searchable in a few milliseconds.">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="dot cluster"></span><span class="dot cluster"></span><span class="dot cluster"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+    <div class="loop-arr"></div>
+    <div class="loop-card" id="c-match">
+      <h4><span class="numdot">3</span>Match</h4>
+      <p>Use the machinery for anything that means finding the closest thing to this thing.</p>
+      <div class="flow">
+        <span class="chip good">retrieve an answer</span>
+        <span class="chip good">recommend a song</span>
+        <span class="chip good">find similar pins</span>
+        <span class="chip good">alert on outliers</span>
+      </div>
+    </div>
+  </div>
+
+  <ol class="steps" id="steps-6">
+    <li class="step" data-sel="#c-embed" data-go="lit"><span class="n">1</span><span class="t">Embed — turn data into vectors that place meaning in space.</span><span class="tag idx">data</span></li>
+    <li class="step" data-sel="#c-store" data-go="lit"><span class="n">2</span><span class="t">Store — index the vectors so similarity search stays fast at scale.</span><span class="tag idx">index</span></li>
+    <li class="step" data-sel="#c-match" data-go="lit"><span class="n">3</span><span class="t">Match — retrieve, recommend, or raise an alert on the closest thing.</span><span class="tag ans">use</span></li>
+  </ol>
+
+  <button type="button" class="run" data-run="steps-6" data-label="Spin the loop">Spin the loop</button>
+
+  <p class="loop-note"><b>New data feeds the loop again</b> — every query, recommendation, and alert can flow back in as fresh vectors. Once you internalize this loop, almost any closest-thing-to-this-thing problem is a vector search problem in disguise. In cybersecurity, normal traffic clusters together and an outlier in meaning is the alert; Spotify, Netflix, and Pinterest run the same machinery.</p>
+</section>
+
+<footer class="deck-foot">
+  <span>Six diagrams — one per key idea, in article order.</span>
+  <span>Interactive deck · works offline</span>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  function qa(sel,ctx){return Array.prototype.slice.call((ctx||document).querySelectorAll(sel));}
+  var timers=[];
+
+  function stopAll(){
+    timers.forEach(function(t){clearTimeout(t);});
+    timers=[];
+    qa(".run").forEach(function(b){b.classList.remove("warn");b.textContent=b.getAttribute("data-label");});
+  }
+
+  /* Tabs */
+  qa(".tab").forEach(function(tab){
+    tab.addEventListener("click",function(){
+      if(tab.classList.contains("on")){return;}
+      stopAll();
+      qa(".tab").forEach(function(t){t.classList.remove("on");t.setAttribute("aria-selected","false");});
+      tab.classList.add("on");tab.setAttribute("aria-selected","true");
+      qa(".panel").forEach(function(p){p.classList.toggle("on",p.id==="panel-"+tab.getAttribute("data-panel"));});
+    });
+  });
+
+  /* Step-through */
+  qa("[data-run]").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      stopAll();
+      var holder=document.getElementById(btn.getAttribute("data-run"));
+      var steps=qa(".step",holder);
+      steps.forEach(function(s){
+        s.classList.remove("lit");
+        var sel=s.getAttribute("data-sel");
+        if(sel){qa(sel).forEach(function(el){el.classList.remove(s.getAttribute("data-go"));});}
+      });
+      btn.classList.add("warn");
+      btn.textContent="Stop";
+      var base=btn.textContent;
+      steps.forEach(function(s,i){
+        timers.push(setTimeout(function(){
+          s.classList.add("lit");
+          var sel=s.getAttribute("data-sel");
+          if(sel){qa(sel).forEach(function(el){el.classList.add(s.getAttribute("data-go"));});}
+        },650*i));
+      });
+      timers.push(setTimeout(function(){
+        btn.classList.remove("warn");
+        btn.textContent=btn.getAttribute("data-label");
+      },650*steps.length+150));
+    });
+  });
+
+  /* Chunk presets */
+  qa(".preset").forEach(function(p){
+    p.addEventListener("click",function(){
+      qa(".preset").forEach(function(x){x.classList.toggle("on",x===p);});
+      var bar=document.getElementById("chunk-bar");
+      bar.className=bar.className.replace(/(large|sweet|small)/,p.getAttribute("data-size"));
+      qa(".cnote").forEach(function(n){n.classList.toggle("on",n.getAttribute("data-note")===p.getAttribute("data-size"));});
+    });
+  });
+})();
+</script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>
