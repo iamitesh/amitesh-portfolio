@@ -19,66 +19,73 @@ const topics = [
   },
   {
     index: "02",
-    title: "React Architecture",
-    description: "A practical decision guide for component boundaries, state ownership, rendering, data fetching, performance, accessibility, and maintainable frontend systems.",
-    href: "/knowledge-base/react-architecture/",
-    tags: ["React", "Frontend", "Performance"],
-  },
-  {
-    index: "03",
-    title: "Microfrontend Architecture",
-    description: "How to split independently delivered frontend domains while keeping contracts, routing, shared dependencies, design systems, and observability under control.",
-    href: "/knowledge-base/microfrontends/",
-    tags: ["Microfrontends", "Next.js", "Platform"],
-  },
-  {
-    index: "04",
-    title: "Enterprise Design Systems",
-    description: "Tokens, component contracts, Web Components, Storybook, accessibility, framework parity, governance, and release strategies for large design-system platforms.",
-    href: "/knowledge-base/design-systems/",
-    tags: ["Design Systems", "Web Components", "Accessibility"],
-  },
-  {
-    index: "05",
-    title: "RAG & MCP Engineering",
-    description: "A systems view of retrieval pipelines and Model Context Protocol, expanded into the two full pipeline articles — RAG Explained and MCP Complete Explanation — with their original diagrams.",
-    href: "/knowledge-base/rag-and-mcp/",
-    tags: ["RAG", "MCP", "Tools", "LLMs"],
-  },
-  {
-    index: "06",
     title: "AI Evals",
     description: "A practical guide to evaluating AI agents: what evals measure, how they differ from benchmarks, which metrics to track per task, and the evaluation loop that separates teams shipping production AI.",
     href: "/knowledge-base/ai-evals/",
     tags: ["Evals", "Applied AI", "LLMs"],
   },
   {
-    index: "07",
-    title: "Harness Engineering",
-    description: "The discipline behind production AI: why the model is the easy part, and how testing, tracing, guardrails, and continuous evaluation build agentic systems people can rely on.",
-    href: "/knowledge-base/harness-engineering/",
-    tags: ["Agentic AI", "Production", "Observability"],
-  },
-  {
-    index: "08",
+    index: "03",
     title: "LLM Fine-Tuning",
     description: "The complete guide to fine-tuning: when it pays off, dataset preparation, LoRA and QLoRA, hyperparameters, and preference alignment with RLHF or DPO.",
     href: "/knowledge-base/llm-fine-tuning/",
     tags: ["Fine-Tuning", "LoRA", "LLMs"],
   },
   {
-    index: "09",
+    index: "04",
+    title: "MCP Complete Explanation",
+    description: "The Model Context Protocol in full: the drawer-of-chargers problem it solves, host, client, and server, where MCP sits inside an agent, local vs remote servers, security, and building your first server.",
+    href: "/knowledge-base/mcp/",
+    tags: ["MCP", "Tools", "Protocols", "LLMs"],
+  },
+  {
+    index: "05",
+    title: "RAG Explained",
+    description: "Retrieval-augmented generation in full: how RAG works inside the architecture, the misconceptions that persist, ten RAG patterns for 2026, and where to go next.",
+    href: "/knowledge-base/rag/",
+    tags: ["RAG", "Retrieval", "Embeddings", "LLMs"],
+  },
+  {
+    index: "06",
+    title: "Harness Engineering",
+    description: "The discipline behind production AI: why the model is the easy part, and how testing, tracing, guardrails, and continuous evaluation build agentic systems people can rely on.",
+    href: "/knowledge-base/harness-engineering/",
+    tags: ["Agentic AI", "Production", "Observability"],
+  },
+  {
+    index: "07",
     title: "Vector Databases",
     description: "Embeddings, indexing (HNSW, IVF), hybrid search, and RAG — the complete 2026 guide to the unglamorous infrastructure behind chatbots with memory and semantic search.",
     href: "/knowledge-base/vector-databases/",
     tags: ["Vector DB", "RAG", "Embeddings"],
   },
   {
-    index: "10",
+    index: "08",
     title: "Nvidia CUDA in 100 Seconds",
     description: "The parallel computing platform behind GPU training: why GPUs win at parallel work, the host-device execution model, and a first CUDA program in C++.",
     href: "/knowledge-base/nvidia-cuda/",
     tags: ["CUDA", "GPU", "Parallel Computing"],
+  },
+  {
+    index: "09",
+    title: "React Architecture",
+    description: "A practical decision guide for component boundaries, state ownership, rendering, data fetching, performance, accessibility, and maintainable frontend systems.",
+    href: "/knowledge-base/react-architecture/",
+    tags: ["React", "Frontend", "Performance"],
+  },
+  {
+    index: "10",
+    title: "Microfrontend Architecture",
+    description: "How to split independently delivered frontend domains while keeping contracts, routing, shared dependencies, design systems, and observability under control.",
+    href: "/knowledge-base/microfrontends/",
+    tags: ["Microfrontends", "Next.js", "Platform"],
+  },
+  {
+    index: "11",
+    title: "Enterprise Design Systems",
+    description: "Tokens, component contracts, Web Components, Storybook, accessibility, framework parity, governance, and release strategies for large design-system platforms.",
+    href: "/knowledge-base/design-systems/",
+    tags: ["Design Systems", "Web Components", "Accessibility"],
   },
 ];
 
@@ -98,7 +105,7 @@ export default function KnowledgeBasePage() {
             A growing set of architecture notes and production playbooks. Each route is designed as a reusable reference for system design, implementation decisions, and engineering trade-offs.
           </p>
           <div className={styles.stats}>
-            <span className={styles.pill}>10 reference routes</span>
+            <span className={styles.pill}>11 reference routes</span>
             <span className={styles.pill}>Frontend architecture</span>
             <span className={styles.pill}>Applied AI</span>
             <span className={styles.pill}>Platform engineering</span>
