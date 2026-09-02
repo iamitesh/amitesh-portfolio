@@ -29,6 +29,7 @@ export default function PillFilter({
   variant?: "discipline" | "company";
 }) {
   const [active, setActive] = useState("all");
+  const [matchStats, setMatchStats] = useState<{ visible: number; total: number } | null>(null);
   const filters = variant === "company" ? companyFilters : disciplineFilters;
 
   useEffect(() => {
@@ -36,17 +37,30 @@ export default function PillFilter({
     if (!target) return;
 
     const items = Array.from(target.querySelectorAll<HTMLElement>("[data-filter-tags]"));
+    let visibleCount = 0;
     items.forEach((item) => {
       const tags = (item.dataset.filterTags ?? "").split(" ");
       const matches = active === "all" || tags.includes(active);
       item.hidden = !matches;
       item.setAttribute("aria-hidden", String(!matches));
+      if (matches) visibleCount++;
     });
+    const frame = requestAnimationFrame(() => {
+      setMatchStats({ visible: visibleCount, total: items.length });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [active, targetId]);
 
   return (
     <div className="filter-panel" data-reveal>
-      <p className="filter-label">{label}</p>
+      <div className="filter-header">
+        <p className="filter-label">{label}</p>
+        {matchStats && (
+          <span className="filter-count-badge">
+            Showing {matchStats.visible} of {matchStats.total}
+          </span>
+        )}
+      </div>
       <div className="filter-pills" role="group" aria-label={label}>
         {filters.map((filter) => (
           <button

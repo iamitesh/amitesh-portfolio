@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#07101F"/>
+  
+  <!-- Architectural Blueprint Grid Lines -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#175CFF" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2F6BFF"/>
+      <stop offset="100%" stop-color="#C8F230"/>
+    </linearGradient>
+    <linearGradient id="aura-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2F6BFF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#C8F230" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Glowing Ambient Aura -->
+  <circle cx="950" cy="180" r="380" fill="url(#aura-grad)" />
+
+  <!-- Top Accent Bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#brand-grad)"/>
+
+  <!-- Logo Mark -->
+  <g transform="translate(100, 100)">
+    <rect x="0" y="0" width="64" height="64" rx="14" fill="#0B162A" stroke="#2A3951" stroke-width="2"/>
+    <text x="32" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#F3F0E8" text-anchor="middle">AA <tspan fill="#C8F230">/</tspan></text>
+  </g>
+
+  <!-- Content Block -->
+  <text x="100" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="600" fill="#C8F230" letter-spacing="3">FRONTEND ARCHITECTURE · DESIGN SYSTEMS · APPLIED AI</text>
+  
+  <text x="100" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="800" fill="#F3F0E8" letter-spacing="-1">Amitesh Anand</text>
+  
+  <text x="100" y="380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="400" fill="#9AA6B8">Software Engineer II at Caterpillar Inc.</text>
+  <text x="100" y="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#637082">Building scalable UI platforms, Web Components, and governed multi-agent workflows.</text>
+
+  <!-- Metrics Strip Cards -->
+  <g transform="translate(100, 490)">
+    <!-- Card 1 -->
+    <rect x="0" y="0" width="310" height="76" rx="10" fill="#0B162A" stroke="#2A3951" stroke-width="1.5"/>
+    <text x="24" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#2F6BFF">60%</text>
+    <text x="24" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="500" fill="#9AA6B8">smaller production bundle</text>
+
+    <!-- Card 2 -->
+    <rect x="330" y="0" width="310" height="76" rx="10" fill="#0B162A" stroke="#2A3951" stroke-width="1.5"/>
+    <text x="354" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#C8F230">85%+</text>
+    <text x="354" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="500" fill="#9AA6B8">automated test coverage</text>
+
+    <!-- Card 3 -->
+    <rect x="660" y="0" width="340" height="76" rx="10" fill="#0B162A" stroke="#2A3951" stroke-width="1.5"/>
+    <text x="684" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#F3F0E8">77</text>
+    <text x="684" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="500" fill="#9AA6B8">AI quality checks in spec blocks</text>
+  </g>
+</svg>

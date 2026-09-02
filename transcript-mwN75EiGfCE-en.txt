@@ -1,0 +1,642 @@
+[00:00:00] A lot of people don't understand
+[00:00:02] what AI agents are. But when you are
+[00:00:04] actually building AI agents, in fact, is
+[00:00:06] one of the most important concepts that
+[00:00:08] you need [Music] to understand is the system
+[00:00:10] design behind it. See, because an agentic
+[00:00:13] AI system [Music] is not just an LLM
+[00:00:15] wrapped inside a chat interface. It is a
+[00:00:17] production software system where a model
+[00:00:20] can reason over a goal. It can use tools, it
+[00:00:23] can retrieve context, it will maintain
+[00:00:25] state, and it will make decisions across
+[00:00:27] multiple steps and trigger real actions
+[00:00:30] through APIs. And in this video, I want
+[00:00:33] to break down agentic AI system design
+[00:00:35] from a builder's perspective. We will
+[00:00:37] quickly recap what agentic AI
+[00:00:39] systems are, how single-agent and multi-
+[00:00:42] agent systems differ. And then we will move
+[00:00:44] directly into the core building blocks
+[00:00:47] about model routing, tools, memory,
+[00:00:49] orchestration, state management,
+[00:00:52] evaluations, [Music]
+[00:00:52] observability, security, and production
+[00:00:55] controls. If you are absolutely new to
+[00:00:57] AI agents, I have already covered two
+[00:00:59] separate videos on my YouTube. One is AI
+[00:01:02] Agents Explained and the second one is
+[00:01:04] Single Agents versus Multi Agents. I
+[00:01:06] link both of them below. So you can go watch
+[00:01:08] them. I would say watch them first if you need
+[00:01:11] the beginner foundation and then come back to this
+[00:01:13] video. This one is going to be more focused
+[00:01:15] on the system design level. By the end of
+[00:01:18] this video you will have a practical mental
+[00:01:20] model for how production-grade agentic AI
+[00:01:22] systems are designed and what do you need
+[00:01:25] to think about before you move from a demo
+[00:01:27] to something that real users can rely on.
+[00:01:30] If you are new to my channel, welcome here. I
+[00:01:32] am Aishwarya Srinivasan. I spent over 10
+[00:01:34] years in machine learning and AI. And I am
+[00:01:36] currently building the Gen Academy where we
+[00:01:38] train people to become top-tier AI
+[00:01:40] professionals by learning the real AI
+[00:01:42] systems that teams are building in
+[00:01:44] production. OK, now let's quickly define
+[00:01:46] what do we mean by agentic AI
+[00:01:48] systems. A basic LLM application
+[00:01:50] usually takes an input, sends it to a
+[00:01:53] model, and returns an output. An agentic
+[00:01:55] AI system actually goes further. It can
+[00:01:58] decompose a goal, decide which step to take
+[00:02:01] next, call external tools, inspect the
+[00:02:04] tool result, update its state, and
+[00:02:06] continue the workflow until it reaches a
+[00:02:09] stopping condition. At a high level there are
+[00:02:11] two common patterns. One is single-agent
+[00:02:14] systems and the other one is multi-agent
+[00:02:16] systems. In a single-agent system, one
+[00:02:18] primary agent owns the workflow. It may
+[00:02:21] still call multiple tools, retrieve
+[00:02:23] documents, update the memory, and perform
+[00:02:26] multiple reasoning steps, but the control
+[00:02:28] loop is centralized. For example, a
+[00:02:31] customer support agent may classify a
+[00:02:33] request. It may retrieve an account
+[00:02:35] context, call a billing API, ask
+[00:02:38] for confirmation, and then generate a final
+[00:02:40] response. But on the other hand, in a multi-
+[00:02:43] agent system the workflow is split
+[00:02:45] across multiple specialized agents. One
+[00:02:48] agent may handle planning, another may retrieve
+[00:02:51] knowledge, another may write code, another may review
+[00:02:54] the output, and another may handle the
+[00:02:57] execution. The key idea is separation of
+[00:03:00] responsibilities. So instead of one
+[00:03:02] agent doing everything, you design multiple
+[00:03:05] agents with defined roles, input
+[00:03:07] contracts, output contracts, and
+[00:03:10] routing logic between these agents. Multi-
+[00:03:12] agent systems are useful when the task
+[00:03:15] has clear specialization, parallel work,
+[00:03:18] review loops, or long-running work
+[00:03:21] flows. But they also add complexity.
+[00:03:24] You now may have more coordination overhead,
+[00:03:26] more failure modes, more states to track,
+[00:03:29] more logs to inspect, and more places
+[00:03:32] where cost and latency can increase. Now,
+[00:03:35] that is why agentic AI system design
+[00:03:38] matters. The hard part is not just getting
+[00:03:40] a model to answer. The hard part is
+[00:03:43] designing a system that is reliable, cost-
+[00:03:45] aware, fast enough for the user experience,
+[00:03:48] context-aware, observable, and safe
+[00:03:51] enough to connect to real tools. So, now that
+[00:03:54] you understand the context, let's jump
+[00:03:56] into the building blocks. The first
+[00:03:58] building block is the model layer. This
+[00:04:00] includes the actual LLM or multiple
+[00:04:03] models if you are using them, but also the
+[00:04:05] strategy for when each model gets used.
+[00:04:08] In production, you usually don't want a
+[00:04:11] single powerful model handling every step.
+[00:04:13] That gets expensive and slow very
+[00:04:15] quickly. A better design is actually model
+[00:04:17] routing. So use cheaper and faster models
+[00:04:20] for low-complexity steps like
+[00:04:22] intent classification, routing,
+[00:04:24] extraction, schema filling, and simple
+[00:04:27] summarization. And use stronger reasoning
+[00:04:30] models only for steps where deeper
+[00:04:32] reasoning changes the outcome. For example, in
+[00:04:35] an appointment booking agent, you probably
+[00:04:37] don't need a frontier reasoning model to
+[00:04:40] detect whether the user wants to book,
+[00:04:42] reschedule, cancel, or ask a question.
+[00:04:44] A smaller model can also classify that.
+[00:04:47] You also may not need an LLM to
+[00:04:49] extract date, time, doctor name, and
+[00:04:52] appointment type into a JSON schema. But
+[00:04:54] you may want a stronger model when the user
+[00:04:57] gives ambiguous constraints, like "I am
+[00:04:59] gonna be traveling next week, I want
+[00:05:01] to avoid mornings", or "make sure that
+[00:05:03] this is happening after my lab results
+[00:05:05] come in". You should also think about structured
+[00:05:08] outputs at the model layer. Any step that
+[00:05:11] feeds another system should return
+[00:05:13] predictable structure, not free-form
+[00:05:15] prose. So use JSON schema, Pydantic
+[00:05:18] models, function and tool calling, or which-
+[00:05:20] ever structured output mechanism your
+[00:05:22] model provider supports. The model layer should
+[00:05:25] answer three specific questions. What
+[00:05:27] model is going to be used for this step?
+[00:05:29] What output contract does it return?
+[00:05:31] And what happens if the model fails or
+[00:05:34] returns invalid output. Now that leads
+[00:05:36] me to the second building block which is
+[00:05:38] tools. Tools are basically interfaces between the
+[00:05:41] model and the external world. A tool can
+[00:05:44] be a database lookup, a CRM API, a
+[00:05:46] calendar API, a payment API, a code
+[00:05:49] interpreter, an internal search service, a
+[00:05:52] ticketing system, a Slack action, a Google
+[00:05:54] action, or any backend function that the
+[00:05:57] agent is allowed to call. In production,
+[00:06:00] tools should be designed like APIs with
+[00:06:02] strict constraints. Every tool should
+[00:06:04] have a clear name, a description, input
+[00:06:07] schema, output schema, permission boundaries,
+[00:06:10] timeout behavior, retry behavior, and
+[00:06:13] error format. This is important because
+[00:06:15] the model should not be allowed to send arbitrary
+[00:06:18] instructions into your backend. For
+[00:06:20] example, a tool called update_user should not
+[00:06:23] accept one vague natural language
+[00:06:25] string, like "update this user based on the
+[00:06:27] request". That is too open-ended. A safer
+[00:06:30] tool contract would be user ID, field
+[00:06:33] to update, new value, reason, source
+[00:06:36] request ID, and confirmation
+[00:06:38] required. You also want your tool
+[00:06:40] outputs to be machine-readable. So if a tool
+[00:06:42] fails, it returns a structured error. If
+[00:06:45] a tool succeeds, it also returns a
+[00:06:47] structured result. The agent should not have
+[00:06:49] to parse a messy prose from your backend.
+[00:06:51] Now a good design pattern is to separate the
+[00:06:54] read tools from your write tools. Start
+[00:06:56] with your read-only capabilities, then add low-
+[00:06:59] risk write tools, then add high-risk write
+[00:07:02] tools only with validation and human
+[00:07:04] approval. Fetching available appointment
+[00:07:07] slots is very different from canceling
+[00:07:09] an appointment. So, you need to understand
+[00:07:11] the risk factor here. This is also where
+[00:07:13] MCP becomes very relevant. MCP, or
+[00:07:16] Model Context Protocol, is one
+[00:07:18] emerging pattern for exposing tools,
+[00:07:20] resources, and context to agents in
+[00:07:23] a standardized manner. But, even if you are
+[00:07:25] not using MCP, the system design
+[00:07:27] principle is the same. Tools need
+[00:07:30] contracts, they need permissions, they need
+[00:07:32] boundaries, and they need logs. Now the third
+[00:07:35] building block is memory and state. This
+[00:07:37] is where many agentic systems become
+[00:07:40] messy. See, memory is not one thing. In
+[00:07:42] agentic systems you need to separate memory
+[00:07:45] from state. State is the current execution
+[00:07:47] context for the workflow. So, things
+[00:07:49] like what step are we on, what
+[00:07:52] information has already been collected,
+[00:07:54] which tools have we called, what did these
+[00:07:57] tools return, has the user confirmed the
+[00:08:00] action, and did the workflow pass or fail. But
+[00:08:03] memory is actually broader. It can
+[00:08:05] include conversation history, user
+[00:08:07] preferences, past actions, any retrieved
+[00:08:10] knowledge, document context, summaries, and
+[00:08:14] long-form information that may be useful
+[00:08:16] later. A common mistake is pulling all of this
+[00:08:19] into a vector database. That is not a good
+[00:08:22] default. You should choose storage based on
+[00:08:24] access pattern. So conversation and workflow
+[00:08:27] state may belong to Redis, Dynamo
+[00:08:29] DB, Postgres, MongoDB, or another
+[00:08:32] low-latency store. Application state
+[00:08:35] belongs in your application database. And
+[00:08:38] knowledge retrieval may use RAG with Pinecone,
+[00:08:41] PG Vector, Weaviate, Elasticsearch, Open
+[00:08:44] Search, or a managed knowledge base. And long-
+[00:08:46] term archive may live in a cheaper object
+[00:08:49] storage like an S3 bucket. In a simple
+[00:08:51] example, if an agent is helping a user
+[00:08:54] reschedule a doctor's appointment, the
+[00:08:56] current appointment ID, proposed new time,
+[00:09:00] confirmation status, and workflow step
+[00:09:02] should be stored as a structured work
+[00:09:04] flow state. The user's medical history should
+[00:09:07] not be casually passed through the LLM if the
+[00:09:10] model only needs appointment ID and the
+[00:09:12] list of available slots. You should also
+[00:09:15] distinguish short-term context and
+[00:09:17] long-term memory. Short-term
+[00:09:19] context is what you pass into the
+[00:09:21] prompt for your current turn. And long-
+[00:09:23] term memory is something that you retrieve
+[00:09:25] selectively. The goal is not to stuff
+[00:09:28] everything into the context window of the
+[00:09:30] model. It will create a context bloat.
+[00:09:32] The goal is rather to retrieve the smallest
+[00:09:35] useful context for the current step for
+[00:09:38] the model to take a decision on. This is
+[00:09:40] exactly why memory design is really
+[00:09:42] data architecture. You are deciding what
+[00:09:45] to store, where to store, how long to
+[00:09:48] keep it, how to retrieve it, and what is
+[00:09:50] safe to send to the model or not. Now, once
+[00:09:53] you have the model, tools, and memory, you need
+[00:09:56] something to coordinate them. And that is
+[00:09:58] orchestration. Orchestration is the
+[00:10:00] control layer of an agentic system. It
+[00:10:03] defines how the system moves from user
+[00:10:05] request to intermediate steps to tool
+[00:10:08] calls to final output. This can be
+[00:10:10] implemented with plain application code, a
+[00:10:13] graph-based framework like LangGraph,
+[00:10:15] workflow engines like Temporal, Llama
+[00:10:18] Index Workflows, LangChain, and custom
+[00:10:20] state machines, queues, or a combination of all
+[00:10:23] of these. The orchestration layer should define
+[00:10:26] the control flow explicitly. For
+[00:10:28] example, you receive a user message, you
+[00:10:30] classify the intent, you retrieve the
+[00:10:33] required context, you decide whether the
+[00:10:35] request is in scope or not. Then you
+[00:10:38] select the tools, then you validate the tool
+[00:10:40] inputs, then you execute the tools, then
+[00:10:43] you inspect the results, then you ask for
+[00:10:45] confirmation if it's needed, and then you
+[00:10:47] finally generate the response. And then you log
+[00:10:51] the trace and send evaluation data
+[00:10:53] asynchronously. For simple use cases, a
+[00:10:56] deterministic pipeline is often better than a
+[00:10:59] fully autonomous agent loop. Not every work
+[00:11:02] flow needs planning and reflection. So,
+[00:11:05] if a sequence of steps is mostly known,
+[00:11:08] design it as a pipeline or a state machine.
+[00:11:11] Use agentic reasoning only when the work
+[00:11:14] flow genuinely needs dynamic decision
+[00:11:17] making. See, for most complex
+[00:11:19] systems, graph-based orchestration
+[00:11:21] becomes useful because you can actually
+[00:11:23] represent branching, retries, loops,
+[00:11:27] approval gates, and fallback parts. For
+[00:11:29] example, if extraction fails, you can
+[00:11:32] retry with a different prompt or a different
+[00:11:35] model. If the tool returns a "no available
+[00:11:37] appointment", you can branch into "suggest
+[00:11:40] alternate" path. If the user asks for a
+[00:11:42] cancellation, you can branch into a
+[00:11:45] confirmation path. For multi-agent AI
+[00:11:47] systems, orchestration also includes
+[00:11:50] agent-to-agent routing. You need to define
+[00:11:53] which agent owns the next step, what
+[00:11:55] information gets passed, what output
+[00:11:58] format is expected, and how
+[00:12:00] conflicts are resolved. Now, without
+[00:12:03] this, multi-agent AI systems become
+[00:12:05] extremely difficult to debug. The key point
+[00:12:08] is this: do not confuse autonomy with lack
+[00:12:12] of structure. Production agents need a
+[00:12:14] very clear control flow. Now let's talk
+[00:12:16] about one of the most important yet
+[00:12:19] ignored parts of agentic AI system
+[00:12:21] design, which is evaluation. I have also
+[00:12:23] created a deep dive video on AI evals, so
+[00:12:26] you should go check that out as well after
+[00:12:28] this. See, in traditional software, if the
+[00:12:30] function runs and no exception is thrown, we
+[00:12:33] often assume that the system works. But in
+[00:12:36] agentic AI systems, that assumption very
+[00:12:38] quickly breaks. The model can return a
+[00:12:41] valid JSON that is semantically wrong. It
+[00:12:44] can call the correct tool with the wrong
+[00:12:46] arguments. It can retrieve irrelevant
+[00:12:49] context. It can answer using stale
+[00:12:51] information. Or it can fail to ask for
+[00:12:54] confirmation, and it can even refuse a
+[00:12:57] valid request, or comply with an unsafe
+[00:12:59] request. So, evals or evaluation need
+[00:13:02] to be designed into the system from the very
+[00:13:05] beginning. For agentic systems, you need
+[00:13:07] more than a final answer evaluation. You need
+[00:13:10] trace-level evaluation. That means, you are
+[00:13:13] evaluating each and every important
+[00:13:15] step in the trajectory, right from
+[00:13:17] intent classification, retrieval quality,
+[00:13:20] tool selection, tool arguments, policy
+[00:13:23] compliance, confirmation behavior, final
+[00:13:26] answer quality, and task success. For
+[00:13:29] example, a support agent could produce a
+[00:13:32] very polished final answer, but it may have
+[00:13:35] selected the wrong refund policy. If you
+[00:13:37] only evaluate the final text, you miss the
+[00:13:40] actual failure. If you evaluate the trace,
+[00:13:43] you can see that the retrieved step pulled the
+[00:13:46] wrong policy document or the model mis-
+[00:13:48] classified the user's plan type. You should
+[00:13:51] always maintain a test set of realistic
+[00:13:54] scenarios. Things like happy paths,
+[00:13:56] ambiguous requests, out-of-scope
+[00:13:58] requests, tool failures, malicious
+[00:14:01] inputs, partial information, policy edge
+[00:14:04] cases, and escalation cases. This becomes
+[00:14:07] regression tests whenever you change the model,
+[00:14:10] prompt, retrieval logic, or your tool
+[00:14:12] schema. You can also run sampled
+[00:14:15] asynchronous evaluations in production. A
+[00:14:17] judge model or an LLM-as-a-judge can score a
+[00:14:21] percentage of conversations offline. And high-
+[00:14:24] signal user feedback can go directly
+[00:14:26] into your eval queue. But be careful: LLM
+[00:14:30] as a judge is useful but it is not perfect.
+[00:14:33] For important workflows, combine model-
+[00:14:36] based grading with deterministic checks and
+[00:14:39] human review. Your eval system should
+[00:14:41] eventually produce metrics, not just
+[00:14:44] examples. So, things like intent
+[00:14:46] accuracy, tool call success rate, invalid
+[00:14:50] schema rate, retrieval hit rate, refusal
+[00:14:53] accuracy, escalation rate, task completion
+[00:14:56] rate, user flag rate, and cost per
+[00:14:59] successful task. These are just some of the
+[00:15:02] metrics that you need to track. Yes,
+[00:15:04] evaluation is actually a very, very
+[00:15:06] complex field. And this is where
+[00:15:07] agentic systems start to look like real
+[00:15:10] production systems. Now the next
+[00:15:12] building block is approval and policy
+[00:15:15] control. Not every action needs human
+[00:15:18] approval, but high-impact actions should have
+[00:15:21] gates. Sending an email, deleting data,
+[00:15:25] issuing a refund, canceling an appointment,
+[00:15:28] changing your billing, updating a CRM
+[00:15:30] record, or running code, or placing an
+[00:15:33] order, or making a financial
+[00:15:35] transaction should not happen just because the
+[00:15:39] model inferred the intent. It should always have a
+[00:15:42] human in the loop. A safer design pattern is
+[00:15:45] this: the model suggests something, a code validates
+[00:15:49] it, a user approves it, and then the tool
+[00:15:52] executes it. The validation step should be
+[00:15:55] deterministic wherever possible. So,
+[00:15:57] always check ownership, check permissions, check whether
+[00:16:01] the requested action is allowed, check whether
+[00:16:03] required fields are present, check whether the
+[00:16:06] user has confirmed the exact action, and
+[00:16:10] then execute. See, for example, if the
+[00:16:12] user says "cancel my appointment", the model
+[00:16:15] can classify that intent as cancellation
+[00:16:18] and propose the target appointment. But the
+[00:16:20] system should verify that the logged-in user
+[00:16:23] owns that appointment, that it is
+[00:16:25] cancelable, and that cancellation is allowed
+[00:16:28] under policy, and actually that the user
+[00:16:31] explicitly confirms before the cancellation
+[00:16:34] API is called. This is also
+[00:16:36] important for multi-agent AI
+[00:16:38] systems. If one agent generates a plan
+[00:16:41] and another agent executes it, the
+[00:16:43] execution layer should not blindly
+[00:16:46] trust the planning layer. Tool execution
+[00:16:48] still needs validation and authorization. The
+[00:16:52] agent should not be the source of truth for
+[00:16:54] your business rules. Your application code should
+[00:16:57] be. Now that you have the main building
+[00:16:59] blocks, let's talk about the production
+[00:17:00] principles that hold the entire system
+[00:17:03] together. The first one is reliability.
+[00:17:05] Reliability means that the system behaves
+[00:17:08] predictably even when the model does not.
+[00:17:11] You get reliability through decomposition,
+[00:17:14] contracts, retries, validation,
+[00:17:16] fallbacks, as well as monitoring. What you
+[00:17:19] do is you decompose large prompts into
+[00:17:22] smaller steps. A single joint prompt
+[00:17:24] that classifies intent, retrieves
+[00:17:27] context, decides policies, calls
+[00:17:30] tools, and writes the final response is
+[00:17:32] going to be very, very hard to test.
+[00:17:34] Smaller steps are rather easier to evaluate
+[00:17:37] and debug. Then you need to make sure that you
+[00:17:39] are using structured outputs. If the
+[00:17:41] next step depends on the model's output,
+[00:17:44] do not rely on free-form text. You
+[00:17:46] need to validate the schema. If the output is
+[00:17:48] invalid, you just retry. If it still
+[00:17:51] fails, use a fallback path. Now the next
+[00:17:54] thing that you need to do is wrap every model
+[00:17:57] call like an unreliable upstream
+[00:17:59] dependency. So, things like timeouts,
+[00:18:01] malformed outputs, rate limits,
+[00:18:04] provider errors, and degraded quality
+[00:18:07] should all have handling paths. Also, you need
+[00:18:10] to separate deterministic validation from
+[00:18:12] model reasoning. If the model extracts a
+[00:18:15] date, code should be able to validate the date. If
+[00:18:19] the model selects a user ID, code should be
+[00:18:22] able to verify the permissions. If the model
+[00:18:24] proposes a tool call, a code should be able to
+[00:18:27] validate the arguments. Reliability is
+[00:18:30] not about making the model perfect. It is
+[00:18:32] about designing the system so model
+[00:18:34] imperfections do not immediately become
+[00:18:37] product failures. Now the next thing
+[00:18:39] that you need to take care of is cost and
+[00:18:41] latency. Both cost and latency need to be
+[00:18:44] designed together because agentic systems
+[00:18:47] often involve multiple model calls per user
+[00:18:50] request. A single interaction might
+[00:18:52] include intent classification, query
+[00:18:55] rewriting, retrieval, planning, tool
+[00:18:58] selection, tool argument generation, tool
+[00:19:00] result interpretation, final response
+[00:19:03] generation, and evaluation. If every step
+[00:19:06] uses a large reasoning model, your system is
+[00:19:09] going to be super slow and super
+[00:19:11] expensive. So, this is exactly where
+[00:19:13] you use model routing. Use small models
+[00:19:16] for simple classification and extraction.
+[00:19:18] Use larger models only when there's
+[00:19:20] ambiguity, reasoning, and synthesis that's
+[00:19:23] required. Then, you should limit tokens
+[00:19:25] aggressively. Output tokens are both a cost
+[00:19:29] lever as well as a latency lever. If the
+[00:19:31] user only needs a two-sentence answer, do
+[00:19:34] not generate a long explanation. If the
+[00:19:36] downstream system only needs a JSON, do
+[00:19:39] not ask for prose. Now, this one is also
+[00:19:41] important: use caching where it makes
+[00:19:44] sense. You should be caching things like
+[00:19:46] retrieval results, repeated policy
+[00:19:49] lookups, tool metadata, as well as stable
+[00:19:51] context. And then you can also do
+[00:19:53] batching and asynchronous execution for
+[00:19:56] non-blocking work like evaluation and
+[00:19:59] summaries. One thing to keep in mind is always
+[00:20:02] use streaming responses for user-
+[00:20:04] facing tasks when the response may take
+[00:20:07] time. If the workflow requires long-
+[00:20:09] running tool calls, show the progress states
+[00:20:12] instead of leaving the user with a blank
+[00:20:14] screen. Also, very early enforce scope
+[00:20:18] early. Out-of-scope requests can burn
+[00:20:20] tokens and tool calls. So you can use cheap
+[00:20:23] filters, rules, and intent gates before
+[00:20:26] the expensive reasoning step even happens.
+[00:20:28] A production agent should have cost
+[00:20:30] observability. Things like tokens in,
+[00:20:32] tokens out, cost per step, cost per
+[00:20:35] conversation, and cost per successful task.
+[00:20:38] Now the third production principle is
+[00:20:41] context and RAG design. Context
+[00:20:43] design is one of the biggest differences
+[00:20:45] between a toy agent and a useful
+[00:20:47] production agent. The goal here is not to
+[00:20:50] pass everything into the prompt. The goal is
+[00:20:52] to pass the right context for the current
+[00:20:55] step. In practice, context can come
+[00:20:57] from the user message, or the conversation state,
+[00:21:00] or the application database, or the retrieved
+[00:21:03] documents, the tool results, user
+[00:21:05] profile, or even the long-term memory. Each
+[00:21:08] source has different freshness, trust,
+[00:21:11] privacy, and latency characteristics.
+[00:21:13] Now for RAG, retrieval quality matters more
+[00:21:17] than simply having a vector database. You
+[00:21:19] need to do document chunking. You have to
+[00:21:21] do metadata filters. You have to do
+[00:21:23] hybrid search when useful. Then you have
+[00:21:26] reranking, then you have freshness
+[00:21:28] controls, and source attribution when
+[00:21:30] the user needs trust. You also need to
+[00:21:33] separate trusted instructions from
+[00:21:35] untrusted content. Retrieved
+[00:21:37] documents should not be allowed to override
+[00:21:40] the system instructions. Tool outputs should
+[00:21:42] be treated as data and not instructions.
+[00:21:45] And user-provided content should be
+[00:21:48] isolated from developer or system
+[00:21:50] instructions. For really long
+[00:21:52] conversations, use summarization and check-
+[00:21:55] points instead of passing the full history
+[00:21:57] forever. Store the summary separately from the
+[00:22:00] raw conversation logs, and keep track of
+[00:22:02] what the summary is allowed to influence. A
+[00:22:05] context-aware system is the one that knows
+[00:22:07] what information it needs, where it should
+[00:22:09] retrieve it from, whether it is trusted or
+[00:22:12] not, and whether it is safe to be sent to the
+[00:22:14] model. Now the final production layer
+[00:22:16] principle, I promise, is observability,
+[00:22:18] security, and privacy. For
+[00:22:20] observability, you need to log the anatomy of
+[00:22:23] every agent run. What's the model name,
+[00:22:26] what's the model version, the prompt version,
+[00:22:29] step name, workflow ID, conversation
+[00:22:32] ID, tool name, tool arguments with
+[00:22:35] sensitive values masked, of course. Then
+[00:22:37] latency, then time to first token, tokens
+[00:22:40] in, tokens out, what are the costs, how many
+[00:22:43] retries, were there any fallbacks, were
+[00:22:45] there any errors, was there any use of
+[00:22:48] feedback, and what the eval scores were. I
+[00:22:50] know this is a lot, but you need to log all of
+[00:22:53] them, and more. You should be able to answer:
+[00:22:55] where did the failure happen? Was it intent
+[00:22:58] classification, was it retrieval, planning,
+[00:23:01] tool selection, tool execution, policy
+[00:23:04] validation, or was it the final response
+[00:23:07] error? For security, treat everything that
+[00:23:10] touches the model as an attacker-controlled
+[00:23:12] input, unless proven otherwise. User
+[00:23:16] messages can contain direct prompt
+[00:23:18] injection. Retrieved documents can
+[00:23:20] also contain indirect prompt
+[00:23:22] injection. Tool outputs could also contain
+[00:23:25] poisoned data, and model outputs can contain
+[00:23:28] unsafe commands, things like SQL,
+[00:23:30] HTML, or other kinds of code. So, you
+[00:23:32] need to isolate the untrusted content. So,
+[00:23:35] separate the instructions from the data. Do
+[00:23:38] not execute raw model output. Do not
+[00:23:40] run any SQL or shell commands
+[00:23:43] directly from model-generated text.
+[00:23:45] Give tools least-privilege permissions and add
+[00:23:49] approval gates for risky actions. Now for
+[00:23:51] privacy, send the minimum data needed to the
+[00:23:54] model. If the model only needs appointment
+[00:23:57] ID and availability, do not send the full
+[00:24:00] patient report. If it only requires a
+[00:24:02] summary ticket, do not send the full customer
+[00:24:05] history. And regarding PII, always
+[00:24:08] mask PII at the right time. Set retention
+[00:24:11] details for logs, traces, and
+[00:24:13] conversation archives. Make sure that you
+[00:24:15] keep the sensitive fields out of the
+[00:24:17] prompt unless they are required for the
+[00:24:19] task. Your model provider, your vector
+[00:24:22] database, your observability platform,
+[00:24:24] and logging systems are all part of your
+[00:24:27] data boundary. This is why agentic AI
+[00:24:29] system design is not just about prompt
+[00:24:31] engineering. It is actually the backend
+[00:24:34] design. It is the data design, it is a
+[00:24:36] security design, and it is the product
+[00:24:38] design with LLM in the loop. So here is the
+[00:24:41] final takeaway that you should have from this
+[00:24:43] video: a production-grade agentic AI
+[00:24:45] system needs clear model routing,
+[00:24:48] strict tool contracts, explicit
+[00:24:51] memory and state management, it needs
+[00:24:54] orchestration, it [Music] needs trace-
+[00:24:56] level evals, it needs approval gates,
+[00:24:59] cost and latency controls, along with
+[00:25:02] context design, observability,
+[00:25:04] security, [Music]
+[00:25:05] and privacy. It is all of it. And if you
+[00:25:09] want to go deeper, we have a free Agentic AI
+[00:25:11] system design masterclass recording
+[00:25:14] that's almost two hours long. It goes much
+[00:25:16] deeper into the architecture, production
+[00:25:18] patterns, tradeoffs, and real design decisions
+[00:25:20] [Music] behind agentic AI systems. I
+[00:25:23] will also link that in the description
+[00:25:24] below. And if this video made you think,
+[00:25:27] OK, I don't just want to watch this, I
+[00:25:29] actually want to build these systems,
+[00:25:31] [Music] then definitely go check out Gen
+[00:25:33] Academy. Our flagship program is a
+[00:25:35] Mastering Agentic certification. It is a
+[00:25:37] live certification program where every
+[00:25:40] single week I and my co-founder Arvind are
+[00:25:43] actually teaching you classes, and every
+[00:25:45] single week you are going to be building
+[00:25:47] projects, [Music] and not demo
+[00:25:49] projects — production-level projects.
+[00:25:51] For the projects we have two tracks: you
+[00:25:53] can either choose the low-code/no-code tools or you
+[00:25:55] can choose the code-heavy tools. This is not
+[00:25:57] just for engineers or developers. This is
+[00:26:00] for anybody who wants to become an AI
+[00:26:02] professional and wants to understand how
+[00:26:04] AI agents are built. What I am super
+[00:26:07] excited about is that we have
+[00:26:08] partnered with companies like NVIDIA, OpenAI,
+[00:26:11] Fireworks AI, Replit, Pinecone, Mem0, 11
+[00:26:14] Labs, LlamaIndex, LangChain, [Music] and
+[00:26:17] many more. So as a student in the cohort, you
+[00:26:19] will get credits for all of
+[00:26:21] these tools, and you will get to learn
+[00:26:23] directly from AI experts [Music]
+[00:26:25] from their teams as well. A lot of people
+[00:26:27] are actually using their company's learning
+[00:26:29] and development budget for this [Music]
+[00:26:30] certification. So, definitely check with your
+[00:26:32] manager for reimbursement. And for my
+[00:26:34] YouTube audience, I have added a special
+[00:26:36] discount code which is also there in the
+[00:26:37] description below. OK, I hope this
+[00:26:39] video was insightful for you. I know it
+[00:26:41] was a lot to unpack, but you know, you can always
+[00:26:44] rewatch this. And if you are like me, just make
+[00:26:46] handwritten notes. It just makes the learning
+[00:26:48] process so much easier. If you have any
+[00:26:51] questions, you know, you can drop the comments
+[00:26:52] below. And I will check it out. OK, then I
+[00:26:54] will see you in the next one.

@@ -5,6 +5,7 @@ import PillFilter from "./pill-filter";
 import ProjectBrand from "./project-brand";
 import ProjectDisclosure from "./project-disclosure";
 import ExperienceBrand from "./experience-brand";
+import ContactActions from "./contact-actions";
 
 const metrics = [
   { value: 60, suffix: "%", label: "smaller production bundle", index: "01" },
@@ -475,11 +476,7 @@ export default function Home() {
           <div className="contact-note"><span>[04]</span><p>Available for thoughtful conversations</p></div>
           <h2>Have an ambitious system to build?<br /> Let&apos;s compare notes.</h2>
           <p className="contact-copy">I’m interested in frontend platforms, design systems, applied AI, and forward-deployed product work with real-world consequence.</p>
-          <div className="contact-actions">
-            <a className="button button-primary" href="mailto:aamitesh.dev@gmail.com" data-magnetic>Start a conversation <span aria-hidden="true">↗</span></a>
-            <a className="text-link" href="https://www.linkedin.com/in/amitesh-anand" target="_blank" rel="noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
-            <a className="text-link" href="https://github.com/iamitesh" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-          </div>
+          <ContactActions />
           <div className="human-note">
             <span>Beyond the screen</span>
             <p>Reading books · Mentoring · Event anchoring · Team-activity planning · Long walks · Cycling</p>
