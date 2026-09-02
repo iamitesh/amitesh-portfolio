@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Fine-Tuning Explained: The Complete Guide</title>
+<style>
+:root {
+  --bg: #0b101c; --panel: #141b2d; --panel-2: #1a2338; --text: #e9edf6;
+  --muted: #94a0b8; --accent: #6ea8fe; --accent-2: #a78bfa; --good: #34d399;
+  --warn: #fbbf24; --bad: #f87171; --border: #273349;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+article { max-width: 72ch; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+article > header { margin-bottom: 3rem; }
+article > header .kicker {
+  color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .8rem; margin: 0 0 .6rem;
+}
+article > header h1 {
+  margin: 0 0 .6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2;
+}
+article > header .meta { color: var(--muted); font-size: .9rem; }
+article > header .meta a { color: var(--accent); }
+h2 { margin-top: 2.6rem; border-bottom: 1px solid var(--border); padding-bottom: .4rem; }
+h3 { margin-top: 1.8rem; }
+code { background: var(--panel); border: 1px solid var(--border);
+       border-radius: 4px; padding: .1em .35em; font-size: .9em; }
+pre { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 1.2rem 0; padding: .6rem 1.2rem;
+              border-left: 3px solid var(--accent-2);
+              background: var(--panel); border-radius: 0 8px 8px 0; }
+blockquote p { margin: .3rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { border: 1px solid var(--border); padding: .5rem .8rem; text-align: left; }
+th { background: var(--panel-2); color: var(--accent);
+     text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+section#diagrams { margin-top: 3rem; }
+#diagram-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.view-btn {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer;
+  font: inherit; font-size: .85rem;
+}
+.view-btn.active { background: var(--panel-2); color: var(--text);
+                    border-color: var(--accent); }
+figure { margin: 1.8rem 0; }
+figure figcaption { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+figure details { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+#mermaid-errors { color: var(--bad); background: var(--panel);
+                   border: 1px solid var(--bad); border-radius: 8px;
+                   padding: 1rem; white-space: pre-wrap; }
+/* diagrams.html styles, scoped to the workflow view */
+#view-workflow :root{
+    --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8;
+    --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+  }
+#view-workflow *{box-sizing:border-box}
+#view-workflow body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+#view-workflow main{max-width:1100px;margin:0 auto;padding:36px 20px 64px}
+#view-workflow .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:700}
+#view-workflow h1{font-size:28px;line-height:1.2;margin:0 0 6px}
+#view-workflow .chan{color:var(--accent-2);font-size:15px;margin:0 0 12px}
+#view-workflow .lead{color:var(--muted);font-size:14px;max-width:860px;margin:0 0 18px}
+#view-workflow .legend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+#view-workflow .sw{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+#view-workflow .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+#view-workflow .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+#view-workflow .tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;transition:border-color .15s,color .15s,background .15s}
+#view-workflow .tab:hover{color:var(--text);border-color:var(--accent)}
+#view-workflow .tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c;font-weight:600}
+#view-workflow .panel{display:none}
+#view-workflow .panel.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#view-workflow .phead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin:0 0 16px}
+#view-workflow .phead h2{font-size:19px;margin:0 0 4px}
+#view-workflow .psec{font-size:12px;color:var(--muted);margin:0}
+#view-workflow .ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#view-workflow .ctrls button{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:9px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+#view-workflow .ctrls button:hover:not(:disabled){border-color:var(--accent)}
+#view-workflow .ctrls button:disabled{opacity:.4;cursor:default}
+#view-workflow .ctrls .count{font-size:12px;color:var(--muted);min-width:64px;text-align:center}
+#view-workflow .hint{font-size:12px;color:var(--muted);margin:0 0 14px}
+#view-workflow .lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:8px}
+#view-workflow .lane{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:14px}
+#view-workflow .lane-h{margin:0 0 12px}
+#view-workflow .lane-h b{font-size:15px;display:block}
+#view-workflow .lane-h span{font-size:12px;color:var(--muted)}
+#view-workflow .flow{display:flex;flex-direction:column}
+#view-workflow .arrow{color:var(--muted);font-size:14px;text-align:center;line-height:1;padding:7px 0 8px;letter-spacing:0}
+#view-workflow .fstep{display:flex;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:11px 14px;align-items:flex-start;transition:opacity .2s,border-color .2s,box-shadow .2s}
+#view-workflow .fidx{flex:0 0 26px;height:26px;border-radius:50%;background:var(--panel-2);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+#view-workflow .fbody{min-width:0}
+#view-workflow .ft{display:block;font-size:14px;font-weight:600}
+#view-workflow .desc{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+#view-workflow .desc b{color:var(--text);font-weight:600}
+#view-workflow [data-order].done{opacity:.5}
+#view-workflow [data-order].active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);opacity:1}
+#view-workflow [data-order].active .fidx{background:var(--accent);color:#0b101c}
+#view-workflow .fstep.is-q{border-color:var(--warn)}
+#view-workflow .fstep.is-q .fidx{color:var(--warn);border-color:var(--warn)}
+#view-workflow .fstep.is-q.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+#view-workflow .fstep.is-good{border-color:var(--good)}
+#view-workflow .fstep.is-good .fidx{color:var(--good);border-color:var(--good)}
+#view-workflow .fstep.is-good.active .fidx{background:var(--good)}
+#view-workflow .fstep.is-bad{border-color:var(--bad)}
+#view-workflow .fstep.is-bad .fidx{color:var(--bad);border-color:var(--bad)}
+#view-workflow .fstep.is-bad.active .fidx{background:var(--bad)}
+#view-workflow .fstep.is-lab{border-color:var(--accent-2)}
+#view-workflow .fstep.is-lab .fidx{color:var(--accent-2);border-color:var(--accent-2)}
+#view-workflow .fstep.is-lab.active .fidx{background:var(--accent-2)}
+#view-workflow .fstep.is-act{border-color:var(--accent)}
+#view-workflow .fstep.is-start{border-color:var(--border)}
+#view-workflow .fstep.is-start .fidx{color:var(--muted);border-color:var(--border)}
+#view-workflow .qtag{display:inline-block;font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--warn);margin:0 0 2px}
+#view-workflow .qtag.acc{color:var(--accent)}
+#view-workflow .qtag.acc2{color:var(--accent-2)}
+#view-workflow .qtag.good{color:var(--good)}
+#view-workflow .qtag.bad{color:var(--bad)}
+#view-workflow .qtag.mut{color:var(--muted)}
+#view-workflow .chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);margin:2px 2px 0 0;white-space:nowrap}
+#view-workflow .chip.c-acc{color:var(--accent);border-color:var(--accent)}
+#view-workflow .chip.c-acc2{color:var(--accent-2);border-color:var(--accent-2)}
+#view-workflow .chip.c-good{color:var(--good);border-color:var(--good)}
+#view-workflow .chip.c-warn{color:var(--warn);border-color:var(--warn)}
+#view-workflow .chip.c-bad{color:var(--bad);border-color:var(--bad)}
+#view-workflow .ladder{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+#view-workflow .lchip{display:inline-flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 12px;font-size:12.5px;transition:opacity .2s,border-color .2s,box-shadow .2s}
+#view-workflow .lchip .fidx{flex-basis:22px;height:22px;font-size:11px}
+#view-workflow .lchip.active .fidx{background:var(--accent);color:#0b101c}
+#view-workflow .tip{position:relative;border-bottom:1px dotted var(--muted);cursor:help}
+#view-workflow .tip:hover::after{content:attr(data-tip);position:absolute;bottom:130%;left:0;z-index:9;background:var(--panel-2);border:1px solid var(--border);color:var(--text);font-size:12px;line-height:1.45;padding:7px 11px;border-radius:9px;width:max-content;max-width:280px;box-shadow:0 8px 22px rgba(0,0,0,.45);white-space:normal}
+#view-workflow .msg-flow{display:flex;flex-direction:column;gap:6px}
+#view-workflow .who{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;margin-right:6px}
+#view-workflow .who.m{background:rgba(110,168,254,.14);color:var(--accent);border:1px solid rgba(110,168,254,.4)}
+#view-workflow .who.v{background:rgba(167,139,250,.14);color:var(--accent-2);border:1px solid rgba(167,139,250,.4)}
+#view-workflow .who.t{background:rgba(52,211,153,.12);color:var(--good);border:1px solid rgba(52,211,153,.4)}
+#view-workflow .arrowglyph{color:var(--muted);font-size:11px;margin:0 4px}
+#view-workflow .routes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:4px 0 0}
+#view-workflow .route{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 14px;transition:opacity .2s,border-color .2s,box-shadow .2s}
+#view-workflow .route.r-good{border-color:var(--good)}
+#view-workflow .route.r-violet{border-color:var(--accent-2)}
+#view-workflow .route-h{font-size:12.5px;font-weight:700;margin:6px 0 2px}
+#view-workflow .mini{border:1px solid var(--border);background:var(--panel-2);border-radius:9px;padding:7px 10px;font-size:12px;margin-top:7px;color:var(--text)}
+#view-workflow .mini b{color:var(--accent)}
+#view-workflow .mini .yes{color:var(--good);font-weight:700}
+#view-workflow .mini .no{color:var(--warn);font-weight:700}
+#view-workflow .converge{text-align:center;font-size:12px;color:var(--muted);padding:8px 0 2px}
+#view-workflow footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:640px){#view-workflow main{padding:24px 14px 48px}
+#view-workflow h1{font-size:22px}}
+
+
+</style>
+</head>
+<body>
+<article>
+<header>
+  <p class="kicker">Aishwarya Srinivasan</p>
+  <h1>LLM Fine-Tuning Explained: The Complete Guide</h1>
+  <p class="meta"><a href="https://www.youtube.com/watch?v=Wx1oiBCmxjY">Watch on YouTube</a> &middot; Aishwarya Srinivasan &middot; Transcript fetched 2026-09-02 &middot; Translated from hi by this pipeline.</p>
+</header>
+<h1 id="llm-fine-tuning-explained-the-complete-guide">LLM Fine-Tuning Explained: The Complete Guide</h1>
+<p>Fine-tuning has become one of the most in-demand skills for AI engineers today — and still one of the least understood. Many practitioners have made a fine-tuning API call once or twice, but the answers get fuzzy very fast once you ask what is actually happening under the hood. This guide covers all of it: where fine-tuning sits relative to pre-training, the difference between fine-tuning open-weight and closed-weight models, the major methodologies (parameter-efficient, full, and reinforcement-based fine-tuning), and when to reach for each one. It is for anyone getting ready to run their first fine-tuning project who wants to understand the methods from a fundamental level rather than just making API calls.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>Pre-Training vs. Post-Training: Where Fine-Tuning Fits</li><li>Fine-Tuning at Scale: Parameters and Access</li><li>Parameter-Efficient Fine-Tuning (PEFT)</li><li>Full Fine-Tuning</li><li>Reinforcement Fine-Tuning</li><li>Choosing the Right Method</li><li>Data Quality and Evaluation: The Real Challenges</li></ol>
+<h2 id="1-pre-training-vs-post-training-where-fine-tuning-fits">1. Pre-Training vs. Post-Training: Where Fine-Tuning Fits</h2>
+<p>The starting point for understanding fine-tuning is the distinction between pre-training and post-training. Pre-training is what foundational labs do inside their own organizations. When OpenAI trains GPT-5.5, when Anthropic trains Claude Opus 4.7, when Meta trains Llama models, or when Google trains its Gemini models, they are running massive pre-training jobs on huge GPU clusters over trillions of tokens of data. That process produces the base model — the thing you actually get out of the box, whether you download it from Hugging Face or call it through an API. You did not train that model; the foundational labs did.</p>
+<p>Post-training is everything that happens after that, and fine-tuning is the most common form of post-training. There is a key point to internalize here: this is not a new concept. Fine-tuning is very, very similar to what traditional machine learning practitioners have done for years. In the old workflow, teams trained their own models from scratch on their own data and then fine-tuned those same models on more specific data for more specific tasks. As a company, you owned the entire pipeline.</p>
+<p>With large language models, the game has changed slightly, into what is effectively model-as-a-service. The pre-trained model is created by the foundational lab and served to you via an API, and you can take that model and fine-tune it to perform better on your specific use case. The crucial shift is that you are not training from zero anymore. You are adapting a model that is already trained on a great deal of knowledge — and that change has profound implications for how much compute, data, and expertise the whole exercise requires.</p>
+<h2 id="2-fine-tuning-at-scale-parameters-and-access">2. Fine-Tuning at Scale: Parameters and Access</h2>
+<p>This is where a lot of people get confused. In traditional machine learning, model parameters might number in the hundreds of thousands, or a few million for bigger models. With large language models, the parameters live in a completely different universe. You are looking at a few billion parameters for small open-source models, 10 to 70 billion for the models most teams actually run in production, hundreds of billions for frontier models, and over a trillion parameters for models like GLM.</p>
+<p>That scale is exactly why fine-tuning LLMs is genuinely challenging: updating even a fraction of a one-trillion-parameter model is not something you can casually do on a single GPU. Training memory grows with the number of trainable parameters — the training run must hold not only the weights being updated but also the gradients and optimizer state produced along the way — so at these sizes even a modest amount of training is a serious infrastructure problem. Every method discussed below is, in one way or another, an answer to this problem of scale.</p>
+<p>The second thing to understand is when you can actually fine-tune a model yourself and when you cannot. Open-weight models are the easy case. When inference providers like Hugging Face Inference or Nebius Token Factory give you an API to an open-source — or rather, open-weight — model, what they are really doing is hosting the model weights and distributing them across GPUs. Because the weights are open, you can go in and change those parameters through fine-tuning. Models like Llama, Mistral, Qwen, DeepSeek, GLM, and [one model name unclear in transcript] are all examples of open-weight models that you can download, fine-tune, and deploy yourself.</p>
+<p>Closed-source models are a completely different story. Anthropic&#x27;s Claude models, OpenAI&#x27;s GPT models, and Google&#x27;s Gemini models are all closed-weight: you cannot fine-tune them from your own infrastructure, because you do not have access to their weights. If you want to fine-tune a closed-source model, you have to use the native fine-tuning service of that provider. OpenAI has a fine-tuning API, Google offers one inside Vertex AI, and Anthropic also has its own service. The workflow is: you submit your data, they run the job on their infrastructure, and you get back a fine-tuned version that you access through their API. What you give up is visibility — you never see how the fine-tuning actually happens under the hood. That is simply the trade-off you accept when you work with closed-source models.</p>
+<h2 id="3-parameter-efficient-fine-tuning-peft">3. Parameter-Efficient Fine-Tuning (PEFT)</h2>
+<p>The first big bucket of fine-tuning methods — and the place most people get confused — is parameter-efficient fine-tuning, or PEFT. This is where techniques like LoRA (low-rank adaptation) and QLoRA (quantized low-rank adaptation) live.</p>
+<p>The idea behind PEFT is simple, and it is worth stating as a question:</p>
+<blockquote>Do I really need to update every single parameter in a 70-billion-parameter model just to make it better at my task?</blockquote>
+<p>The answer is usually no — and all of PEFT is built around that answer.</p>
+<p>LoRA stands for low-rank adaptation. It freezes the original model weights and injects small trainable matrices into specific layers of the model. You only train those small matrices; at inference time they combine with the frozen weights to produce the adapted behavior. Instead of training 70 billion parameters, you are essentially training maybe 100 million — a massive reduction in compute, memory, and cost. The base model&#x27;s original knowledge stays intact and untouched; LoRA just learns a compact adjustment on top of it.</p>
+<p>Concretely, for each layer it touches, LoRA learns a small pair of matrices whose product forms a low-rank update — the &quot;low rank&quot; in the name refers to this update living in a much smaller dimensional space than the full weight matrix it adjusts. Because the update is an addition to the frozen weights, it can be merged back into the original weights ahead of time; the fine-tuned model then runs at inference with no extra latency or memory overhead. And because the learned adjustment is small and separate, it is easy to store, swap, compare, or delete — you can experiment with several fine-tunes of the same base model without keeping multiple full copies of it.</p>
+<p>QLoRA takes the idea one step further. It quantizes the frozen base model down to four-bit precision, then runs LoRA on top of that quantized base. Quantization is a compression step: the weights are stored at a much lower numerical precision than the one used during training, which shrinks their memory footprint dramatically at some cost in precision. QLoRA keeps the small trainable adapters in higher precision, so the adaptation itself is learned precisely even though the base it adjusts is compressed. Because the base weights are so small in memory, you can fine-tune a 70-billion-parameter model on a single H100 this way. QLoRA is honestly the default starting point for most teams fine-tuning their own open-source models today. If you want to experiment, you can start with Hugging Face&#x27;s PEFT library, which makes getting QLoRA up and running drastically faster.</p>
+<h2 id="4-full-fine-tuning">4. Full Fine-Tuning</h2>
+<p>Full fine-tuning is the opposite approach: you update every single parameter in the model. It gives you the most flexibility and usually the best quality, because nothing about the model is held fixed. But it is expensive, slow, and requires a serious amount of GPU infrastructure, precisely because you are back to updating billions or trillions of parameters.</p>
+<p>The practical guidance is to reach for full fine-tuning only when PEFT is not giving you the quality bar you need — which is very rare in practice. For most teams, LoRA or QLoRA is more than enough.</p>
+<h2 id="5-reinforcement-fine-tuning">5. Reinforcement Fine-Tuning</h2>
+<p>The next category to understand is reinforcement fine-tuning, which has exploded in the last year. There are three flavors worth knowing.</p>
+<p>The first flavor is reinforcement fine-tuning with verifiable rewards — the technique behind models like OpenAI&#x27;s o-series, DeepSeek R1, and most modern reasoning models. The idea is simple: you take a task where the answer can be automatically verified, like a math problem or a coding problem where you can run a test. You let the model generate multiple attempts; the correct ones get rewarded and the wrong ones get penalized, and over time the model learns to reason better. In practice the loop looks like this: the model produces several candidate solutions — often complete chains of reasoning — each candidate is checked against the ground-truth answer or a test suite, the reasoning paths that led to correct answers are reinforced, and the paths that led to wrong ones are pushed down. No human labelers are needed at any point, which is precisely what makes the loop scalable. This is powerful whenever your task has an answer that can be checked automatically.</p>
+<p>The second flavor is RLHF — reinforcement learning from human feedback — the classic technique that powered ChatGPT. The approach starts with preference data collected from humans, trains a reward model on that data, and then uses the reward model to guide the actual language model through algorithms like PPO (proximal policy optimization). The pipeline runs roughly like this: collect pairs or rankings of model responses, have human annotators express which responses they prefer, train a reward model to predict those preferences, and then use the reward model&#x27;s signal inside PPO to update the language model toward responses that score higher. RLHF is powerful, but it is expensive: you need a lot of high-quality human preference data, and the training loop is complex.</p>
+<p>The third category is preference optimization, and this is where DPO — direct preference optimization — comes in. To see the contrast: PPO is the core RL algorithm used inside RLHF, which trains a separate reward model and uses it to steer the language model. DPO is a simpler alternative that skips the reward model entirely. Instead of training a reward model and then optimizing against it, DPO directly optimizes the language model on the preference pairs in a single step. It is much easier to implement and requires less compute, and it has become the default choice for most teams doing preference tuning on open-source models.</p>
+<h2 id="6-choosing-the-right-method">6. Choosing the Right Method</h2>
+<p>So when do you use what? The first piece of advice is to remember that fine-tuning is not necessarily the first lever you should pull. Before you even get started with fine-tuning, start optimizing your prompts, then start optimizing your context. Prompt optimization means improving the instructions, examples, and structure you send with every request, so the model is set up to answer the way you want. Context optimization means improving the material available inside the model&#x27;s context window — the documents, retrieved knowledge, or tool outputs it can draw on — so it has what it actually needs to respond well. Both steps should give you a decent bump in performance on their own. Just as importantly, they act as a benchmark: once prompts and context are as good as you can make them, any remaining gap is what fine-tuning has to close, and you can measure exactly how much additional improvement the fine-tuning delivered.</p>
+<p>When you do fine-tune, the guidance is:</p>
+<ul><li><strong>Start with QLoRA for domain adaptation</strong> — when you just want the model to be better at your specific task or tone.</li><li><strong>Use full fine-tuning only if QLoRA is not enough.</strong></li><li><strong>Use RLHF or DPO when you care about aligning the model to human preferences</strong> — for example style, safety, or tone.</li><li><strong>Use reinforcement fine-tuning with verifiable rewards when you are training a reasoning model</strong> on tasks that have automatic verification.</li></ul>
+<p>To make this easier in practice, the video pairs this guidance with a decision tree for choosing the right methodology for your use case, and a set of resources are shared in the description below.</p>
+<h2 id="7-data-quality-and-evaluation-the-real-challenges">7. Data Quality and Evaluation: The Real Challenges</h2>
+<p>Across all of these methods, the biggest challenge is data quality. This deserves to be stated bluntly:</p>
+<blockquote>Fine-tuning with a bad dataset on a good model makes the model bad — not better.</blockquote>
+<p>A &quot;bad&quot; dataset does not only mean wrong answers. It also means examples that misrepresent the task you actually care about, inconsistent formats that teach the model contradictory habits, examples that contradict what the model already knows, or simply too few high-quality samples to steer behavior reliably. A model will faithfully absorb whatever patterns its training data contains, so bad patterns become bad behavior. No amount of clever parameter-efficient machinery or reinforcement-learning sophistication can compensate for feeding the model bad examples.</p>
+<p>The second biggest challenge is evaluation. You need a proper eval set and a clear metric in place before you start, or you will have no idea whether fine-tuning actually improved anything. A proper eval set is a representative, held-out collection of examples that stand for the real task — separate from anything used in training — and a clear metric is a measure you commit to in advance that matches the outcome you care about. Both challenges point to the same habit: treat fine-tuning like an experiment with a defined baseline and a defined yardstick, not a blind API call.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul><li>Fine-tuning is the most common form of post-training: it adapts an already pre-trained model to a specific use case rather than training from scratch.</li><li>Model scale is the core challenge — small open-source models start at billions of parameters and frontier models exceed a trillion — which is why parameter-efficient methods dominate.</li><li>Open-weight models (Llama, Mistral, Qwen, DeepSeek, GLM, and others) can be fine-tuned on your own infrastructure; closed-weight models (Claude, GPT, Gemini) can only be fine-tuned through their providers&#x27; native services.</li><li>PEFT is usually the right starting point: LoRA freezes the base weights and trains small injected matrices, while QLoRA additionally quantizes the base model to 4-bit, letting you fine-tune a 70B model on a single H100.</li><li>Full fine-tuning updates every parameter and offers the most flexibility and best quality, but is expensive and rarely necessary.</li><li>Reinforcement fine-tuning comes in three flavors: verifiable rewards (for reasoning models on auto-verifiable tasks), RLHF (reward model trained on human preferences, steered with PPO), and DPO (skips the reward model and optimizes preference pairs directly).</li><li>Optimize prompts and context before fine-tuning, and treat them as a benchmark; start with QLoRA, escalate to full fine-tuning only if needed, and choose alignment or reasoning methods based on your objective.</li><li>The two biggest failure points are data quality and evaluation — bad data makes a good model worse, and without an eval set and metric you cannot tell whether fine-tuning helped at all.</li></ul>
+<h2 id="source">Source</h2>
+<ul><li>Video: <a href="https://www.youtube.com/watch?v=Wx1oiBCmxjY">LLM Fine-Tuning Explained: The Complete Guide</a></li><li>Channel: Aishwarya Srinivasan (<a href="https://www.youtube.com/@aishwaryasrinivasan">@aishwaryasrinivasan</a>)</li><li>Fetched: 2026-09-02</li></ul>
+<p>Note: the original captions for this video were transcribed from Hindi (phonetic) and translated into English by this pipeline.</p>
+<section id="diagrams">
+  <h2>Diagrams</h2>
+  <div id="diagram-switch">
+    <button class="view-btn active" data-view="mermaid">Mermaid</button>
+    <button class="view-btn" data-view="workflow">Interactive</button>
+  </div>
+  <div id="view-mermaid"><figure>
+<pre class="mermaid">flowchart TD
+    subgraph OLD[&quot;Before LLMs: you owned the whole pipeline&quot;]
+        A1[&quot;Train a model from scratch on your own data&quot;] --&gt; A2[&quot;Fine-tune that model on task-specific data&quot;]
+        A2 --&gt; A3[&quot;Ship your own model&quot;]
+    end
+    subgraph LAB[&quot;Foundation lab: pre-training&quot;]
+        B1[&quot;Massive GPU clusters and trillions of tokens&quot;] --&gt; B2[&quot;Base model: Llama, GPT, Claude, Gemini&quot;]
+    end
+    subgraph NOW[&quot;Today: model-as-a-service&quot;]
+        B2 --&gt; B3[&quot;Base model served to you by download or API&quot;]
+        B3 --&gt; B4[&quot;Fine-tune on your specific use case&quot;]
+        B4 --&gt; B5[&quot;Adapted model — you do not train from zero&quot;]
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph OLD[&quot;Before LLMs: you owned the whole pipeline&quot;]
+        A1[&quot;Train a model from scratch on your own data&quot;] --&gt; A2[&quot;Fine-tune that model on task-specific data&quot;]
+        A2 --&gt; A3[&quot;Ship your own model&quot;]
+    end
+    subgraph LAB[&quot;Foundation lab: pre-training&quot;]
+        B1[&quot;Massive GPU clusters and trillions of tokens&quot;] --&gt; B2[&quot;Base model: Llama, GPT, Claude, Gemini&quot;]
+    end
+    subgraph NOW[&quot;Today: model-as-a-service&quot;]
+        B2 --&gt; B3[&quot;Base model served to you by download or API&quot;]
+        B3 --&gt; B4[&quot;Fine-tune on your specific use case&quot;]
+        B4 --&gt; B5[&quot;Adapted model — you do not train from zero&quot;]
+    end
+</code></pre></details>
+<figcaption>1. Pre-Training vs. Post-Training: Where Fine-Tuning Fits In</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph SCALE[&quot;The parameter universe&quot;]
+        P1[&quot;Traditional ML: hundreds of thousands to a few million&quot;] --&gt; P2[&quot;Small open models: a few billion&quot;]
+        P2 --&gt; P3[&quot;Production models: 10 to 70 billion&quot;]
+        P3 --&gt; P4[&quot;Frontier models: hundreds of billions&quot;]
+        P4 --&gt; P5[&quot;Models like GLM: over a trillion&quot;]
+    end
+    subgraph MEM[&quot;Why scale is the core challenge&quot;]
+        P5 --&gt; M1[&quot;Training memory grows with trainable parameters&quot;]
+        M1 --&gt; M2[&quot;Memory must hold weights, gradients and optimizer state&quot;]
+        M2 --&gt; M3[&quot;Even a fraction of a trillion-parameter model needs serious infrastructure&quot;]
+    end
+    M3 --&gt; Q{&quot;Do you have access to the weights?&quot;}
+    Q --&gt;|&quot;Open-weight models&quot;| O1[&quot;Llama, Mistral, Qwen, DeepSeek, GLM&quot;]
+    O1 --&gt; O2[&quot;Download weights and fine-tune on your own GPUs&quot;]
+    O2 --&gt; O3[&quot;Deploy the fine-tuned model yourself&quot;]
+    Q --&gt;|&quot;Closed-weight models&quot;| C1[&quot;Claude, GPT, Gemini&quot;]
+    C1 --&gt; C2[&quot;Submit your data to the provider&#x27;s fine-tuning service&quot;]
+    C2 --&gt; C3[&quot;Provider runs the job on its own infrastructure&quot;]
+    C3 --&gt; C4[&quot;Access the fine-tuned version through their API&quot;]
+    C4 --&gt; C5[&quot;Trade-off: no visibility into the training&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph SCALE[&quot;The parameter universe&quot;]
+        P1[&quot;Traditional ML: hundreds of thousands to a few million&quot;] --&gt; P2[&quot;Small open models: a few billion&quot;]
+        P2 --&gt; P3[&quot;Production models: 10 to 70 billion&quot;]
+        P3 --&gt; P4[&quot;Frontier models: hundreds of billions&quot;]
+        P4 --&gt; P5[&quot;Models like GLM: over a trillion&quot;]
+    end
+    subgraph MEM[&quot;Why scale is the core challenge&quot;]
+        P5 --&gt; M1[&quot;Training memory grows with trainable parameters&quot;]
+        M1 --&gt; M2[&quot;Memory must hold weights, gradients and optimizer state&quot;]
+        M2 --&gt; M3[&quot;Even a fraction of a trillion-parameter model needs serious infrastructure&quot;]
+    end
+    M3 --&gt; Q{&quot;Do you have access to the weights?&quot;}
+    Q --&gt;|&quot;Open-weight models&quot;| O1[&quot;Llama, Mistral, Qwen, DeepSeek, GLM&quot;]
+    O1 --&gt; O2[&quot;Download weights and fine-tune on your own GPUs&quot;]
+    O2 --&gt; O3[&quot;Deploy the fine-tuned model yourself&quot;]
+    Q --&gt;|&quot;Closed-weight models&quot;| C1[&quot;Claude, GPT, Gemini&quot;]
+    C1 --&gt; C2[&quot;Submit your data to the provider&#x27;s fine-tuning service&quot;]
+    C2 --&gt; C3[&quot;Provider runs the job on its own infrastructure&quot;]
+    C3 --&gt; C4[&quot;Access the fine-tuned version through their API&quot;]
+    C4 --&gt; C5[&quot;Trade-off: no visibility into the training&quot;]
+</code></pre></details>
+<figcaption>2. Fine-Tuning at Scale: The Parameter Universe and Weight Access</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    INTRO[&quot;PEFT question: do I need to update all 70 billion parameters?&quot;] --&gt; L1
+    INTRO --&gt; Q1
+    subgraph LORA[&quot;LoRA: low-rank adaptation&quot;]
+        L1[&quot;Freeze the original model weights&quot;] --&gt; L2[&quot;Inject small trainable matrices into specific layers&quot;]
+        L2 --&gt; L3[&quot;Product of the matrices forms a low-rank update&quot;]
+        L3 --&gt; L4[&quot;Train roughly 100 million parameters instead of 70 billion&quot;]
+        L4 --&gt; L5[&quot;Merge the learned update back into the frozen weights&quot;]
+        L5 --&gt; L6[&quot;Inference with no extra latency or memory overhead&quot;]
+        L6 --&gt; L7[&quot;Adapters are small: store, swap, compare or delete them&quot;]
+    end
+    subgraph QLORA2[&quot;QLoRA: quantized low-rank adaptation&quot;]
+        Q1[&quot;Quantize the frozen base model to 4-bit precision&quot;] --&gt; Q2[&quot;Run LoRA on top of the quantized base&quot;]
+        Q2 --&gt; Q3[&quot;Keep the trainable adapters at higher precision&quot;]
+        Q3 --&gt; Q4[&quot;Fine-tune a 70B model on a single H100&quot;]
+    end
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    INTRO[&quot;PEFT question: do I need to update all 70 billion parameters?&quot;] --&gt; L1
+    INTRO --&gt; Q1
+    subgraph LORA[&quot;LoRA: low-rank adaptation&quot;]
+        L1[&quot;Freeze the original model weights&quot;] --&gt; L2[&quot;Inject small trainable matrices into specific layers&quot;]
+        L2 --&gt; L3[&quot;Product of the matrices forms a low-rank update&quot;]
+        L3 --&gt; L4[&quot;Train roughly 100 million parameters instead of 70 billion&quot;]
+        L4 --&gt; L5[&quot;Merge the learned update back into the frozen weights&quot;]
+        L5 --&gt; L6[&quot;Inference with no extra latency or memory overhead&quot;]
+        L6 --&gt; L7[&quot;Adapters are small: store, swap, compare or delete them&quot;]
+    end
+    subgraph QLORA2[&quot;QLoRA: quantized low-rank adaptation&quot;]
+        Q1[&quot;Quantize the frozen base model to 4-bit precision&quot;] --&gt; Q2[&quot;Run LoRA on top of the quantized base&quot;]
+        Q2 --&gt; Q3[&quot;Keep the trainable adapters at higher precision&quot;]
+        Q3 --&gt; Q4[&quot;Fine-tune a 70B model on a single H100&quot;]
+    end
+</code></pre></details>
+<figcaption>3. Parameter-Efficient Fine-Tuning: LoRA and QLoRA</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">sequenceDiagram
+    participant M as Language model
+    participant V as Auto-verifier
+    participant T as Training update
+    Note over M,V: Task has an answer that can be checked automatically
+    M-&gt;&gt;M: Sample several candidate solutions with full reasoning chains
+    M-&gt;&gt;V: Submit the candidates for checking
+    V-&gt;&gt;V: Compare each answer against ground truth or a test suite
+    alt Candidate is correct
+        V-&gt;&gt;T: Reward the reasoning path that led there
+    else Candidate is wrong
+        V-&gt;&gt;T: Penalize that reasoning path
+    end
+    T-&gt;&gt;M: Reinforce the rewarded reasoning over time
+    Note over M,T: The loop repeats with no human labelers
+</pre>
+<details><summary>Source</summary><pre><code>sequenceDiagram
+    participant M as Language model
+    participant V as Auto-verifier
+    participant T as Training update
+    Note over M,V: Task has an answer that can be checked automatically
+    M-&gt;&gt;M: Sample several candidate solutions with full reasoning chains
+    M-&gt;&gt;V: Submit the candidates for checking
+    V-&gt;&gt;V: Compare each answer against ground truth or a test suite
+    alt Candidate is correct
+        V-&gt;&gt;T: Reward the reasoning path that led there
+    else Candidate is wrong
+        V-&gt;&gt;T: Penalize that reasoning path
+    end
+    T-&gt;&gt;M: Reinforce the rewarded reasoning over time
+    Note over M,T: The loop repeats with no human labelers
+</code></pre></details>
+<figcaption>4. Reinforcement Fine-Tuning with Verifiable Rewards</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    subgraph RLHF[&quot;RLHF: preference data, reward model, PPO&quot;]
+        R1[&quot;Collect pairs or rankings of model responses&quot;] --&gt; R2[&quot;Human annotators say which responses they prefer&quot;]
+        R2 --&gt; R3[&quot;Train a reward model to predict those preferences&quot;]
+        R3 --&gt; R4[&quot;PPO uses the reward model signal to update the language model&quot;]
+        R5[&quot;Language model samples new responses&quot;] --&gt; R4
+        R4 --&gt; R5
+    end
+    subgraph DPO[&quot;DPO: direct preference optimization&quot;]
+        D1[&quot;Start from the same preference pairs&quot;] --&gt; D2[&quot;Skip the reward model entirely&quot;]
+        D2 --&gt; D3[&quot;Optimize the language model on the pairs in a single step&quot;]
+    end
+    R4 --&gt; RN1[&quot;Cost: heavy human data and a complex training loop&quot;]
+    D3 --&gt; DN1[&quot;Much easier to implement and needs less compute&quot;]
+    DN1 --&gt; DN2[&quot;Default choice for preference tuning on open-weight models&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    subgraph RLHF[&quot;RLHF: preference data, reward model, PPO&quot;]
+        R1[&quot;Collect pairs or rankings of model responses&quot;] --&gt; R2[&quot;Human annotators say which responses they prefer&quot;]
+        R2 --&gt; R3[&quot;Train a reward model to predict those preferences&quot;]
+        R3 --&gt; R4[&quot;PPO uses the reward model signal to update the language model&quot;]
+        R5[&quot;Language model samples new responses&quot;] --&gt; R4
+        R4 --&gt; R5
+    end
+    subgraph DPO[&quot;DPO: direct preference optimization&quot;]
+        D1[&quot;Start from the same preference pairs&quot;] --&gt; D2[&quot;Skip the reward model entirely&quot;]
+        D2 --&gt; D3[&quot;Optimize the language model on the pairs in a single step&quot;]
+    end
+    R4 --&gt; RN1[&quot;Cost: heavy human data and a complex training loop&quot;]
+    D3 --&gt; DN1[&quot;Much easier to implement and needs less compute&quot;]
+    DN1 --&gt; DN2[&quot;Default choice for preference tuning on open-weight models&quot;]
+</code></pre></details>
+<figcaption>5. RLHF vs. DPO: Two Routes to Preference Alignment</figcaption>
+</figure>
+<figure>
+<pre class="mermaid">flowchart TD
+    S[&quot;Model not performing well enough&quot;] --&gt; P[&quot;Optimize your prompts: instructions, examples, structure&quot;]
+    P --&gt; C[&quot;Optimize your context: documents, retrieval, tool outputs&quot;]
+    C --&gt; G{&quot;Is there still a gap?&quot;}
+    G --&gt;|&quot;No gap&quot;| KEEP[&quot;Prompts and context carry the improvement&quot;]
+    G --&gt;|&quot;Gap remains&quot;| GOAL{&quot;What is the goal?&quot;}
+    GOAL --&gt;|&quot;Domain task or tone&quot;| QL[&quot;Start with QLoRA: the default for most teams&quot;]
+    QL --&gt; QB{&quot;Quality bar met?&quot;}
+    QB --&gt;|&quot;Yes&quot;| SHIP[&quot;Deploy the fine-tuned model&quot;]
+    QB --&gt;|&quot;No, rare&quot;| FF[&quot;Full fine-tuning: update every parameter, most flexibility, high cost&quot;]
+    GOAL --&gt;|&quot;Style, safety, tone&quot;| RH[&quot;RLHF or DPO on preference data&quot;]
+    GOAL --&gt;|&quot;Reasoning on auto-verifiable tasks&quot;| VR[&quot;Reinforcement fine-tuning with verifiable rewards&quot;]
+    SHIP --&gt; EXP[&quot;Treat it as an experiment: baseline, eval set and metric fixed in advance&quot;]
+    FF --&gt; EXP
+    RH --&gt; EXP
+    VR --&gt; EXP
+    EXP --&gt; DQ[&quot;Watch data quality: bad data on a good model makes it worse&quot;]
+</pre>
+<details><summary>Source</summary><pre><code>flowchart TD
+    S[&quot;Model not performing well enough&quot;] --&gt; P[&quot;Optimize your prompts: instructions, examples, structure&quot;]
+    P --&gt; C[&quot;Optimize your context: documents, retrieval, tool outputs&quot;]
+    C --&gt; G{&quot;Is there still a gap?&quot;}
+    G --&gt;|&quot;No gap&quot;| KEEP[&quot;Prompts and context carry the improvement&quot;]
+    G --&gt;|&quot;Gap remains&quot;| GOAL{&quot;What is the goal?&quot;}
+    GOAL --&gt;|&quot;Domain task or tone&quot;| QL[&quot;Start with QLoRA: the default for most teams&quot;]
+    QL --&gt; QB{&quot;Quality bar met?&quot;}
+    QB --&gt;|&quot;Yes&quot;| SHIP[&quot;Deploy the fine-tuned model&quot;]
+    QB --&gt;|&quot;No, rare&quot;| FF[&quot;Full fine-tuning: update every parameter, most flexibility, high cost&quot;]
+    GOAL --&gt;|&quot;Style, safety, tone&quot;| RH[&quot;RLHF or DPO on preference data&quot;]
+    GOAL --&gt;|&quot;Reasoning on auto-verifiable tasks&quot;| VR[&quot;Reinforcement fine-tuning with verifiable rewards&quot;]
+    SHIP --&gt; EXP[&quot;Treat it as an experiment: baseline, eval set and metric fixed in advance&quot;]
+    FF --&gt; EXP
+    RH --&gt; EXP
+    VR --&gt; EXP
+    EXP --&gt; DQ[&quot;Watch data quality: bad data on a good model makes it worse&quot;]
+</code></pre></details>
+<figcaption>6. Choosing the Right Fine-Tuning Method</figcaption>
+</figure></div>
+  <div id="view-workflow" hidden>
+<main id="workflow-content">
+<style>
+  :root{
+    --bg:#0b101c; --panel:#141b2d; --panel-2:#1a2338; --text:#e9edf6; --muted:#94a0b8;
+    --accent:#6ea8fe; --accent-2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --border:#273349;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  main{max-width:1100px;margin:0 auto;padding:36px 20px 64px}
+  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:700}
+  h1{font-size:28px;line-height:1.2;margin:0 0 6px}
+  .chan{color:var(--accent-2);font-size:15px;margin:0 0 12px}
+  .lead{color:var(--muted);font-size:14px;max-width:860px;margin:0 0 18px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .sw{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;transition:border-color .15s,color .15s,background .15s}
+  .tab:hover{color:var(--text);border-color:var(--accent)}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#0b101c;font-weight:600}
+  .panel{display:none}
+  .panel.active{display:block;animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .phead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin:0 0 16px}
+  .phead h2{font-size:19px;margin:0 0 4px}
+  .psec{font-size:12px;color:var(--muted);margin:0}
+  .ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ctrls button{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:9px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+  .ctrls button:hover:not(:disabled){border-color:var(--accent)}
+  .ctrls button:disabled{opacity:.4;cursor:default}
+  .ctrls .count{font-size:12px;color:var(--muted);min-width:64px;text-align:center}
+  .hint{font-size:12px;color:var(--muted);margin:0 0 14px}
+  .lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:8px}
+  .lane{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .lane-h{margin:0 0 12px}
+  .lane-h b{font-size:15px;display:block}
+  .lane-h span{font-size:12px;color:var(--muted)}
+  .flow{display:flex;flex-direction:column}
+  .arrow{color:var(--muted);font-size:14px;text-align:center;line-height:1;padding:7px 0 8px;letter-spacing:0}
+  .fstep{display:flex;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:11px 14px;align-items:flex-start;transition:opacity .2s,border-color .2s,box-shadow .2s}
+  .fidx{flex:0 0 26px;height:26px;border-radius:50%;background:var(--panel-2);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+  .fbody{min-width:0}
+  .ft{display:block;font-size:14px;font-weight:600}
+  .desc{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+  .desc b{color:var(--text);font-weight:600}
+  [data-order].done{opacity:.5}
+  [data-order].active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);opacity:1}
+  [data-order].active .fidx{background:var(--accent);color:#0b101c}
+  .fstep.is-q{border-color:var(--warn)}
+  .fstep.is-q .fidx{color:var(--warn);border-color:var(--warn)}
+  .fstep.is-q.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .fstep.is-good{border-color:var(--good)}
+  .fstep.is-good .fidx{color:var(--good);border-color:var(--good)}
+  .fstep.is-good.active .fidx{background:var(--good)}
+  .fstep.is-bad{border-color:var(--bad)}
+  .fstep.is-bad .fidx{color:var(--bad);border-color:var(--bad)}
+  .fstep.is-bad.active .fidx{background:var(--bad)}
+  .fstep.is-lab{border-color:var(--accent-2)}
+  .fstep.is-lab .fidx{color:var(--accent-2);border-color:var(--accent-2)}
+  .fstep.is-lab.active .fidx{background:var(--accent-2)}
+  .fstep.is-act{border-color:var(--accent)}
+  .fstep.is-start{border-color:var(--border)}
+  .fstep.is-start .fidx{color:var(--muted);border-color:var(--border)}
+  .qtag{display:inline-block;font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--warn);margin:0 0 2px}
+  .qtag.acc{color:var(--accent)} .qtag.acc2{color:var(--accent-2)} .qtag.good{color:var(--good)} .qtag.bad{color:var(--bad)} .qtag.mut{color:var(--muted)}
+  .chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);margin:2px 2px 0 0;white-space:nowrap}
+  .chip.c-acc{color:var(--accent);border-color:var(--accent)}
+  .chip.c-acc2{color:var(--accent-2);border-color:var(--accent-2)}
+  .chip.c-good{color:var(--good);border-color:var(--good)}
+  .chip.c-warn{color:var(--warn);border-color:var(--warn)}
+  .chip.c-bad{color:var(--bad);border-color:var(--bad)}
+  .ladder{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+  .lchip{display:inline-flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 12px;font-size:12.5px;transition:opacity .2s,border-color .2s,box-shadow .2s}
+  .lchip .fidx{flex-basis:22px;height:22px;font-size:11px}
+  .lchip.active .fidx{background:var(--accent);color:#0b101c}
+  .tip{position:relative;border-bottom:1px dotted var(--muted);cursor:help}
+  .tip:hover::after{content:attr(data-tip);position:absolute;bottom:130%;left:0;z-index:9;background:var(--panel-2);border:1px solid var(--border);color:var(--text);font-size:12px;line-height:1.45;padding:7px 11px;border-radius:9px;width:max-content;max-width:280px;box-shadow:0 8px 22px rgba(0,0,0,.45);white-space:normal}
+  .msg-flow{display:flex;flex-direction:column;gap:6px}
+  .who{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;margin-right:6px}
+  .who.m{background:rgba(110,168,254,.14);color:var(--accent);border:1px solid rgba(110,168,254,.4)}
+  .who.v{background:rgba(167,139,250,.14);color:var(--accent-2);border:1px solid rgba(167,139,250,.4)}
+  .who.t{background:rgba(52,211,153,.12);color:var(--good);border:1px solid rgba(52,211,153,.4)}
+  .arrowglyph{color:var(--muted);font-size:11px;margin:0 4px}
+  .routes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:4px 0 0}
+  .route{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 14px;transition:opacity .2s,border-color .2s,box-shadow .2s}
+  .route.r-good{border-color:var(--good)}
+  .route.r-violet{border-color:var(--accent-2)}
+  .route-h{font-size:12.5px;font-weight:700;margin:6px 0 2px}
+  .mini{border:1px solid var(--border);background:var(--panel-2);border-radius:9px;padding:7px 10px;font-size:12px;margin-top:7px;color:var(--text)}
+  .mini b{color:var(--accent)}
+  .mini .yes{color:var(--good);font-weight:700}
+  .mini .no{color:var(--warn);font-weight:700}
+  .converge{text-align:center;font-size:12px;color:var(--muted);padding:8px 0 2px}
+  footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);padding-top:16px}
+  @media (max-width:640px){main{padding:24px 14px 48px}h1{font-size:22px}}
+</style>
+
+<header class="hero">
+  <p class="kicker">Interactive Diagrams</p>
+  <h1>LLM Fine-Tuning Explained: The Complete Guide</h1>
+  <p class="chan">Channel: Aishwarya Srinivasan</p>
+  <p class="lead">Six diagrams covering where fine-tuning sits after pre-training, why model scale and weight access matter, the parameter-efficient methods (LoRA and QLoRA), reinforcement-based fine-tuning (verifiable rewards, RLHF, DPO), and how to pick the right method. Switch diagrams with the tabs and walk through each flow with the step controls.</p>
+  <div class="legend">
+    <span class="sw"><span class="dot" style="background:var(--accent)"></span>your adaptation work</span>
+    <span class="sw"><span class="dot" style="background:var(--accent-2)"></span>foundation lab / provider</span>
+    <span class="sw"><span class="dot" style="background:var(--good)"></span>recommended path</span>
+    <span class="sw"><span class="dot" style="background:var(--warn)"></span>decision point</span>
+    <span class="sw"><span class="dot" style="background:var(--bad)"></span>cost or risk</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Diagram selector">
+  <button type="button" class="tab active" data-tab="0">1. Training Pipeline</button>
+  <button type="button" class="tab" data-tab="1">2. Scale and Access</button>
+  <button type="button" class="tab" data-tab="2">3. LoRA and QLoRA</button>
+  <button type="button" class="tab" data-tab="3">4. Verifiable Rewards</button>
+  <button type="button" class="tab" data-tab="4">5. RLHF vs. DPO</button>
+  <button type="button" class="tab" data-tab="5">6. Choosing a Method</button>
+</nav>
+
+<!-- Diagram 1 -->
+<section class="panel active" id="p1">
+  <div class="phead">
+    <div>
+      <h2>1. Pre-Training vs. Post-Training: Where Fine-Tuning Fits In</h2>
+      <p class="psec">Article Section 1 — the old train-from-scratch workflow vs. today's model-as-a-service pipeline.</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">Walk the left lane (the pre-LLM workflow), then the right lane (how a base model reaches you today).</p>
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-h"><b>Before LLMs — you owned the whole pipeline</b><span>traditional machine learning workflow</span></div>
+      <div class="flow">
+        <div class="fstep" data-order="1"><span class="fidx">1</span><div class="fbody"><b class="ft">Train a model from scratch on your own data</b><p class="desc">Hundreds of thousands to a few million parameters — feasible to build alone.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="2"><span class="fidx">2</span><div class="fbody"><b class="ft">Fine-tune that model on task-specific data</b><p class="desc">More specific data, more specific tasks — as a company you ran the whole loop.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="3"><span class="fidx">3</span><div class="fbody"><b class="ft">Ship your own model</b></div></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-h"><b>Today — model-as-a-service</b><span>the foundational lab trains, you adapt</span></div>
+      <div class="flow">
+        <div class="fstep is-lab" data-order="4"><span class="fidx">4</span><div class="fbody"><span class="qtag acc2">FOUNDATION LAB</span><b class="ft">Pre-train on massive GPU clusters</b><p class="desc">OpenAI, Anthropic, Meta and Google run pre-training over <span class="tip" data-tip="trillions of tokens of data">trillions of tokens</span>.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-lab" data-order="5"><span class="fidx">5</span><div class="fbody"><span class="qtag acc2">FOUNDATION LAB</span><b class="ft">Base model is produced</b><p class="desc">Llama, GPT, Claude, Gemini — the thing you get out of the box.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="6"><span class="fidx">6</span><div class="fbody"><b class="ft">Base model is served to you</b><p class="desc">Download the weights, or call it through an API.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="7"><span class="fidx">7</span><div class="fbody"><span class="qtag acc">POST-TRAINING</span><b class="ft">Fine-tune on your specific use case</b><p class="desc">Fine-tuning is the most common form of post-training — everything that happens after pre-training.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="8"><span class="fidx">8</span><div class="fbody"><b class="ft">Adapted model for your use case</b><p class="desc">The crucial shift: <span class="tip" data-tip="you adapt a model already trained on vast knowledge — far less compute, data and expertise than training from zero">you are not training from zero</span>.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Diagram 2 -->
+<section class="panel" id="p2">
+  <div class="phead">
+    <div>
+      <h2>2. Fine-Tuning at Scale: The Parameter Universe and Weight Access</h2>
+      <p class="psec">Article Section 2 — scale explains why fine-tuning is hard; weight access decides who fine-tunes and how.</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">Step through the size ladder, the memory problem it creates, and the fork between open-weight and closed-weight fine-tuning.</p>
+  <div class="ladder">
+    <div class="lchip" data-order="1"><span class="fidx">1</span>Traditional ML: ~100K – a few million</div>
+    <div class="lchip" data-order="2"><span class="fidx">2</span>Small open models: a few billion</div>
+    <div class="lchip" data-order="3"><span class="fidx">3</span>Production models: 10–70 billion</div>
+    <div class="lchip" data-order="4"><span class="fidx">4</span>Frontier models: hundreds of billions</div>
+    <div class="lchip" data-order="5"><span class="fidx">5</span>GLM-class: over a trillion</div>
+  </div>
+  <div class="flow">
+    <div class="fstep is-q" data-order="6"><span class="fidx">6</span><div class="fbody"><span class="qtag">WHY SCALE IS THE CORE CHALLENGE</span><b class="ft">Training memory grows with trainable parameters</b><p class="desc">The run must hold the weights being updated <b>plus</b> the gradients and optimizer state produced along the way. Even a fraction of a trillion-parameter model needs serious infrastructure.</p><p class="desc"><span class="chip c-warn">single GPU is not enough</span></p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-q" data-order="7"><span class="fidx">7</span><div class="fbody"><span class="qtag">DECISION</span><b class="ft">Do you have access to the weights?</b><p class="desc">Every method below is an answer to the scale problem — and access decides which methods are even possible.</p></div></div>
+  </div>
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-h"><b>Open-weight models — full control</b><span>Llama, Mistral, Qwen, DeepSeek, GLM</span></div>
+      <div class="flow">
+        <div class="fstep is-good" data-order="8"><span class="fidx">8</span><div class="fbody"><span class="qtag good">YOU CAN</span><b class="ft">Download the weights and fine-tune on your own GPUs</b><p class="desc">Because the weights are open you can go in and change the parameters.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="9"><span class="fidx">9</span><div class="fbody"><b class="ft">Deploy the fine-tuned model yourself</b><p class="desc"><span class="chip c-good">download</span><span class="chip c-good">fine-tune</span><span class="chip c-good">deploy</span></p></div></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-h"><b>Closed-weight models — through the provider</b><span>Claude, GPT, Gemini</span></div>
+      <div class="flow">
+        <div class="fstep is-bad" data-order="10"><span class="fidx">10</span><div class="fbody"><span class="qtag bad">YOU CANNOT</span><b class="ft">Submit your data to the provider's native fine-tuning service</b><p class="desc">OpenAI's fine-tuning API, Vertex AI on Google, Anthropic's own service.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-lab" data-order="11"><span class="fidx">11</span><div class="fbody"><span class="qtag acc2">PROVIDER</span><b class="ft">Provider runs the job on its infrastructure</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="12"><span class="fidx">12</span><div class="fbody"><b class="ft">You access the fine-tuned version through their API</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-bad" data-order="13"><span class="fidx">13</span><div class="fbody"><span class="qtag bad">TRADE-OFF</span><b class="ft">No visibility into how fine-tuning happens</b><p class="desc">What you give up: you never see the training under the hood.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Diagram 3 -->
+<section class="panel" id="p3">
+  <div class="phead">
+    <div>
+      <h2>3. Parameter-Efficient Fine-Tuning: LoRA and QLoRA</h2>
+      <p class="psec">Article Section 3 — PEFT shrinks the trainable parameter count; QLoRA adds 4-bit quantization of the frozen base.</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">One question starts PEFT; LoRA and QLoRA are two answers to it. Walk LoRA first, then QLoRA.</p>
+  <div class="flow">
+    <div class="fstep is-q" data-order="1"><span class="fidx">1</span><div class="fbody"><span class="qtag">PEFT QUESTION</span><b class="ft">Do I really need to update every parameter in a 70B model?</b><p class="desc">Usually no — and all of PEFT is built around that answer.</p></div></div>
+  </div>
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-h"><b>LoRA — low-rank adaptation</b><span>freeze the model, train tiny matrices</span></div>
+      <div class="flow">
+        <div class="fstep is-act" data-order="2"><span class="fidx">2</span><div class="fbody"><b class="ft">Freeze the original model weights</b><p class="desc">The base model's knowledge stays intact and untouched.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="3"><span class="fidx">3</span><div class="fbody"><b class="ft">Inject small trainable matrices into specific layers</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="4"><span class="fidx">4</span><div class="fbody"><b class="ft">Their product forms a low-rank update</b><p class="desc">A small pair of matrices per layer; the update lives in a <span class="tip" data-tip="the 'low rank' in the name — a much smaller dimensional space than the full weight matrix it adjusts">far smaller space</span> than the full weight matrix.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="5"><span class="fidx">5</span><div class="fbody"><span class="qtag good">PAYOFF</span><b class="ft">Train ~100M parameters instead of 70B</b><p class="desc">A massive reduction in compute, memory and cost.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="6"><span class="fidx">6</span><div class="fbody"><b class="ft">Merge the update back into the frozen weights</b><p class="desc">Done ahead of time — the update is an addition, so it can be merged.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="7"><span class="fidx">7</span><div class="fbody"><b class="ft">Inference with no extra latency or memory overhead</b><p class="desc">And the adapters stay small and separate:<br><span class="chip c-good">store</span><span class="chip c-good">swap</span><span class="chip c-good">compare</span><span class="chip c-good">delete</span><span class="chip">no full copies needed</span></p></div></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-h"><b>QLoRA — quantized low-rank adaptation</b><span>LoRA on a compressed base</span></div>
+      <div class="flow">
+        <div class="fstep is-act" data-order="8"><span class="fidx">8</span><div class="fbody"><b class="ft">Quantize the frozen base model to 4-bit precision</b><p class="desc">A <span class="tip" data-tip="compression: weights stored at much lower numerical precision than training precision — a dramatically smaller memory footprint at some cost in precision">compression step</span> that shrinks the memory footprint.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="9"><span class="fidx">9</span><div class="fbody"><b class="ft">Run LoRA on top of the quantized base</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep" data-order="10"><span class="fidx">10</span><div class="fbody"><b class="ft">Adapters stay at higher precision</b><p class="desc">The adaptation itself is learned precisely even though the base it adjusts is compressed.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="11"><span class="fidx">11</span><div class="fbody"><span class="qtag good">PAYOFF</span><b class="ft">Fine-tune a 70B model on a single H100</b><p class="desc"><span class="chip c-good">default starting point</span><span class="chip">start with Hugging Face PEFT</span></p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Diagram 4 -->
+<section class="panel" id="p4">
+  <div class="phead">
+    <div>
+      <h2>4. Reinforcement Fine-Tuning with Verifiable Rewards</h2>
+      <p class="psec">Article Section 5.1 — the automatic reward loop behind o-series, DeepSeek R1 and modern reasoning models.</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">Message flow between the language model, an automatic verifier, and the training update.</p>
+  <div class="flow">
+    <div class="fstep is-lab" data-order="1"><span class="fidx">1</span><div class="fbody"><span class="qtag acc2">PRECONDITION</span><b class="ft">Pick a task whose answer can be checked automatically</b><p class="desc">A math problem, or a coding problem where you can run a test.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-act" data-order="2"><span class="fidx">2</span><div class="fbody"><span class="who m">Language model</span><span class="arrowglyph">→</span><span class="who m">Language model</span><b class="ft" style="display:inline">Sample several candidate solutions</b><p class="desc">Often complete chains of reasoning, not just final answers.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-act" data-order="3"><span class="fidx">3</span><div class="fbody"><span class="who m">Language model</span><span class="arrowglyph">→</span><span class="who v">Auto-verifier</span><b class="ft" style="display:inline">Submit the candidates for checking</b></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-lab" data-order="4"><span class="fidx">4</span><div class="fbody"><span class="who v">Auto-verifier</span><span class="arrowglyph">→</span><span class="who v">Auto-verifier</span><b class="ft" style="display:inline">Compare each answer with ground truth or a test suite</b></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-good" data-order="5"><span class="fidx">5</span><div class="fbody"><span class="qtag good">IF CORRECT</span><span class="who v">Auto-verifier</span><span class="arrowglyph">→</span><span class="who t">Training update</span><b class="ft" style="display:inline">Reward the reasoning path that led there</b></div></div>
+    <div class="fstep is-bad" data-order="6"><span class="fidx">6</span><div class="fbody"><span class="qtag bad">IF WRONG</span><span class="who v">Auto-verifier</span><span class="arrowglyph">→</span><span class="who t">Training update</span><b class="ft" style="display:inline">Penalize — push that path down</b></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-act" data-order="7"><span class="fidx">7</span><div class="fbody"><span class="who t">Training update</span><span class="arrowglyph">→</span><span class="who m">Language model</span><b class="ft" style="display:inline">Reinforce the rewarded reasoning over time</b><p class="desc">The model learns to reason better as the loop repeats.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-good" data-order="8"><span class="fidx">8</span><div class="fbody"><span class="qtag good">WHY IT SCALES</span><b class="ft">No human labelers at any point</b><p class="desc">That is exactly what makes the loop scalable — use it whenever the answer can be checked automatically.</p></div></div>
+  </div>
+</section>
+
+<!-- Diagram 5 -->
+<section class="panel" id="p5">
+  <div class="phead">
+    <div>
+      <h2>5. RLHF vs. DPO: Two Routes to Preference Alignment</h2>
+      <p class="psec">Article Sections 5.2 and 5.3 — RLHF steers the model with a learned reward model; DPO optimizes the preference pairs directly.</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">Walk the classic RLHF pipeline (left), then the simpler DPO route (right).</p>
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-h"><b>RLHF — human feedback, reward model, PPO</b><span>the classic technique that powered ChatGPT</span></div>
+      <div class="flow">
+        <div class="fstep" data-order="1"><span class="fidx">1</span><div class="fbody"><b class="ft">Collect pairs or rankings of model responses</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-lab" data-order="2"><span class="fidx">2</span><div class="fbody"><span class="qtag acc2">HUMANS</span><b class="ft">Annotators express which responses they prefer</b><p class="desc">Preference data collected from humans.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="3"><span class="fidx">3</span><div class="fbody"><b class="ft">Train a reward model to predict those preferences</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="4"><span class="fidx">4</span><div class="fbody"><b class="ft">PPO steers the language model with the reward model</b><p class="desc">Proximal policy optimization updates the LM toward responses that score higher.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-lab" data-order="5"><span class="fidx">5</span><div class="fbody"><span class="qtag acc2">LOOP</span><b class="ft">Sample new responses, score them, update again</b><p class="desc"><span class="who m">Language model</span><span class="arrowglyph">→</span><span class="who t">Reward model scores</span><span class="arrowglyph">→</span><span class="who m">PPO updates</span></p><p class="desc"><span class="chip c-warn">expensive: heavy human data</span><span class="chip c-warn">complex training loop</span></p></div></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-h"><b>DPO — direct preference optimization</b><span>the simpler third flavor</span></div>
+      <div class="flow">
+        <div class="fstep" data-order="6"><span class="fidx">6</span><div class="fbody"><b class="ft">Start from the same preference pairs</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-act" data-order="7"><span class="fidx">7</span><div class="fbody"><b class="ft">Skip the reward model entirely</b><p class="desc">No separate reward model to train — the core difference from PPO.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="fstep is-good" data-order="8"><span class="fidx">8</span><div class="fbody"><span class="qtag good">PAYOFF</span><b class="ft">Optimize the language model on the pairs in a single step</b><p class="desc"><span class="chip c-good">much easier to implement</span><span class="chip c-good">less compute</span></p><p class="desc"><span class="chip">default for preference tuning on open-weight models</span></p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Diagram 6 -->
+<section class="panel" id="p6">
+  <div class="phead">
+    <div>
+      <h2>6. Choosing the Right Fine-Tuning Method</h2>
+      <p class="psec">Article Section 6, with the full fine-tuning escalation (Section 4) and the experiment baseline and eval habit (Section 7).</p>
+    </div>
+    <div class="ctrls">
+      <button type="button" class="bprev">Back</button>
+      <span class="count"></span>
+      <button type="button" class="bnext">Next</button>
+    </div>
+  </div>
+  <p class="hint">Fine-tuning is not the first lever. Walk the decision chain: prompts, then context, then the method matched to your goal.</p>
+  <div class="flow">
+    <div class="fstep is-start" data-order="1"><span class="fidx">1</span><div class="fbody"><span class="qtag mut">START</span><b class="ft">Model not performing well enough</b></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-act" data-order="2"><span class="fidx">2</span><div class="fbody"><span class="qtag acc">LEVER 1 — PROMPTS</span><b class="ft">Optimize your prompts first</b><p class="desc">Instructions, examples and structure sent with every request.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-act" data-order="3"><span class="fidx">3</span><div class="fbody"><span class="qtag acc">LEVER 2 — CONTEXT</span><b class="ft">Then optimize your context</b><p class="desc">Documents, retrieved knowledge and tool outputs available inside the context window.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-q" data-order="4"><span class="fidx">4</span><div class="fbody"><span class="qtag">DECISION</span><b class="ft">Is there still a gap?</b><p class="desc">Both levers act as a benchmark: whatever gap remains is exactly what fine-tuning must close.<br><span class="chip c-good">No gap → ship prompts + context work</span></p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-q" data-order="5"><span class="fidx">5</span><div class="fbody"><span class="qtag">DECISION</span><b class="ft">What is your goal?</b><p class="desc">Match the method to the objective.</p></div></div>
+  </div>
+  <div class="routes">
+    <div class="route r-good" data-order="6">
+      <span class="qtag good">GOAL: DOMAIN TASK OR TONE</span>
+      <div class="route-h">Better at your specific task or tone</div>
+      <div class="mini"><b>Start with QLoRA</b> — the default for most teams.<br>Quality bar met? <span class="yes">Yes → deploy</span>.<br><span class="no">No (rare)</span> → <b>full fine-tuning</b>: update every parameter — most flexibility and best quality, but expensive, slow, and needs serious GPU infrastructure.</div>
+    </div>
+    <div class="route r-violet" data-order="7">
+      <span class="qtag acc2">GOAL: PREFERENCE ALIGNMENT</span>
+      <div class="route-h">Style, safety or tone alignment</div>
+      <div class="mini">Use <b>RLHF or DPO</b> on preference data when you care about aligning the model to human preferences.</div>
+    </div>
+    <div class="route r-violet" data-order="8">
+      <span class="qtag acc2">GOAL: REASONING</span>
+      <div class="route-h">Reasoning on auto-verifiable tasks</div>
+      <div class="mini">Use <b>reinforcement fine-tuning with verifiable rewards</b> when training a reasoning model on tasks with automatic verification.</div>
+    </div>
+  </div>
+  <div class="converge">↓ all fine-tuning routes converge ↓</div>
+  <div class="flow">
+    <div class="fstep is-q" data-order="9"><span class="fidx">9</span><div class="fbody"><span class="qtag">EXPERIMENT HABIT</span><b class="ft">Treat fine-tuning like an experiment</b><p class="desc">Fix the <b>baseline</b>, a representative <b>held-out eval set</b>, and a <b>clear metric</b> before you start — otherwise you cannot tell whether fine-tuning improved anything.</p></div></div>
+    <div class="arrow">↓</div>
+    <div class="fstep is-bad" data-order="10"><span class="fidx">10</span><div class="fbody"><span class="qtag bad">WATCH OUT</span><b class="ft">Data quality beats clever machinery</b><p class="desc">Fine-tuning with a bad dataset on a good model makes the model <b>bad — not better</b>. Wrong answers, inconsistent formats, and task-misrepresenting examples all become behavior.</p></div></div>
+  </div>
+</section>
+
+<footer>
+  Interactive diagrams for "LLM Fine-Tuning Explained: The Complete Guide" by Aishwarya Srinivasan. Plain HTML and CSS — no external resources. Use the step controls to walk each flow.
+</footer>
+
+<script>
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){
+      tabs.forEach(function(x,k){x.classList.toggle('active',k===i);});
+      panels.forEach(function(p,k){p.classList.toggle('active',k===i);});
+      window.scrollTo(0,0);
+    });
+  });
+  function render(p){
+    var n=p._steps.length;
+    p._steps.forEach(function(el,i){
+      el.classList.toggle('done', i < p._cur);
+      el.classList.toggle('active', i === p._cur-1);
+    });
+    if(p._count){ p._count.textContent = p._cur === 0 ? '0 / '+n : p._cur+' / '+n; }
+    if(p._prev){ p._prev.disabled = p._cur === 0; }
+    if(p._next){ p._next.disabled = p._cur >= n; }
+  }
+  panels.forEach(function(p){
+    p._steps = Array.prototype.slice.call(p.querySelectorAll('[data-order]'))
+      .sort(function(a,b){ return parseInt(a.getAttribute('data-order'),10) - parseInt(b.getAttribute('data-order'),10); });
+    p._cur = 0;
+    p._count = p.querySelector('.count');
+    p._prev = p.querySelector('.bprev');
+    p._next = p.querySelector('.bnext');
+    var r = p.querySelector('.breset');
+    if(p._prev){ p._prev.addEventListener('click',function(){ p._cur = Math.max(0,p._cur-1); render(p); }); }
+    if(p._next){ p._next.addEventListener('click',function(){ p._cur = Math.min(p._steps.length,p._cur+1); render(p); }); }
+    if(r){ r.addEventListener('click',function(){ p._cur = 0; render(p); }); }
+    render(p);
+  });
+})();
+</script>
+</main>
+</div>
+  <pre id="mermaid-errors" hidden></pre>
+</section>
+</article>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "dark",
+  securityLevel: "strict",
+  themeVariables: {
+    background: "#141b2d", primaryColor: "#1a2338", primaryTextColor: "#e9edf6",
+    primaryBorderColor: "#6ea8fe", lineColor: "#94a0b8",
+    secondaryColor: "#141b2d", tertiaryColor: "#0b101c"
+  }
+});
+mermaid.parseError = function (err) {
+  var el = document.getElementById("mermaid-errors");
+  if (el) { el.hidden = false; el.textContent += err.str + "\n"; }
+};
+document.addEventListener("DOMContentLoaded", function () {
+  mermaid.run().catch(function (e) { console.error(e); });
+});
+document.querySelectorAll("#diagram-switch .view-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var v = btn.dataset.view;
+    document.querySelectorAll("#diagram-switch .view-btn").forEach(function (x) {
+      x.classList.toggle("active", x === btn);
+    });
+    document.getElementById("view-mermaid").hidden = v !== "mermaid";
+    document.getElementById("view-workflow").hidden = v !== "workflow";
+  });
+});
+</script>
+</body>
+</html>
