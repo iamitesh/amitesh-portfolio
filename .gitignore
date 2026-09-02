@@ -40,3 +40,9 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+
+# youtube learning pipeline artifacts
+/pipeline/output/
+
+# local Claude Code permissions
+.claude/settings.local.json
